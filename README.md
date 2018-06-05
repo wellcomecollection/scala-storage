@@ -1,6 +1,10 @@
 # scala-storage
 
-A library for providing Akka Streams from objects in a Sierra API.
+Storage libraries in use at Wellcome comprising:
+
+- `VersionedDao`: A DynamoDB wrapper allowing strongly typed _and_ strongly consistent updates.
+- `ObjectStore`: A storage agnostic strongly typed large object store library (an `S3StorageBackend` is provided).
+- `VersionedHybridStore`: A strongly typed _and_ strongly consistent large object store with indexes provided by DynamoDB.
 
 [![Build Status](https://travis-ci.org/wellcometrust/scala-storage.svg?branch=master)](https://travis-ci.org/wellcometrust/scala-storage)
 
