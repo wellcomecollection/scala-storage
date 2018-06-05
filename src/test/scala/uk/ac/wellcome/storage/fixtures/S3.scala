@@ -1,4 +1,4 @@
-package uk.ac.wellcome.storage.test.fixtures
+package uk.ac.wellcome.storage.fixtures
 
 import com.amazonaws.services.s3.AmazonS3
 import grizzled.slf4j.Logging
@@ -6,12 +6,10 @@ import io.circe.Json
 import io.circe.parser.parse
 import org.scalatest.concurrent.Eventually
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3StorageBackend}
-import uk.ac.wellcome.test.fixtures._
 
 import scala.collection.JavaConverters._
-import scala.util.Random
-
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Random
 
 object S3 {
 

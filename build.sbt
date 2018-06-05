@@ -3,33 +3,56 @@ import sbtrelease.{Version, versionFormatError}
 
 organization := "uk.ac.wellcome"
 
-name := "sierra-streams-source"
+name := "storage"
 
 crossScalaVersions := Seq("2.11.11", "2.12.6")
 
-
 val versions = new {
   val logback = "1.1.8"
+  val mockito = "1.9.5"
   val scalatest = "3.0.1"
-  val circeVersion = "0.8.0"
+  val circeVersion = "0.9.0"
+  val guice = "4.2.0"
+  val scanamo = "1.0.0-M3"
+  val aws = "1.11.95"
+  val akka = "2.5.9"
 }
 
 val circeDependencies = Seq(
   "io.circe" %% "circe-core" % versions.circeVersion,
   "io.circe" %% "circe-generic"% versions.circeVersion,
+  "io.circe" %% "circe-generic-extras"% versions.circeVersion,
   "io.circe" %% "circe-parser"% versions.circeVersion,
-  "io.circe" %% "circe-optics" % versions.circeVersion
+  "io.circe" %% "circe-java8" % versions.circeVersion
+)
+
+val testDependencies = Seq(
+  "org.scalatest" %% "scalatest" % versions.scalatest % Test,
+  "org.mockito" % "mockito-core" % versions.mockito % Test,
+  "com.google.inject.extensions" % "guice-testlib" % versions.guice % Test,
+  "com.typesafe.akka" %% "akka-actor" % versions.akka % Test,
+  "com.typesafe.akka" %% "akka-stream" % versions.akka % Test
+)
+
+val loggingDependencies = Seq(
+  "org.clapper" %% "grizzled-slf4j" % "1.3.2",
+  "ch.qos.logback" % "logback-classic" % versions.logback,
+  "org.slf4j" % "slf4j-api" % "1.7.25"
+)
+
+val diDependencies = Seq(
+  "com.google.inject" % "guice" % versions.guice
 )
 
 libraryDependencies := Seq(
-  "com.github.tomakehurst" % "wiremock" % "2.11.0" % Test,
-  "org.scalaj" %% "scalaj-http" % "2.3.0",
-  "org.scalatest" %% "scalatest" % versions.scalatest % Test,
-  "ch.qos.logback" % "logback-classic" % versions.logback,
-  "org.slf4j" % "slf4j-api" % "1.7.25",
-  "com.typesafe.akka" %% "akka-stream" % "2.5.6",
-  "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.6" % Test
-) ++ circeDependencies
+  "com.amazonaws" % "aws-java-sdk-dynamodb" % versions.aws,
+  "com.amazonaws" % "aws-java-sdk-s3" % versions.aws,
+  "com.gu" %% "scanamo" % versions.scanamo,
+) ++
+  circeDependencies ++
+  loggingDependencies ++
+  diDependencies ++
+  testDependencies
 
 resolvers += Resolver.sonatypeRepo("releases")
 
@@ -63,6 +86,8 @@ releaseVersion := { ver: String =>Version(ver)
   .map(_.withoutQualifier)
   .map(_.bump(suggestedBump.value).string).getOrElse(versionFormatError)
 }
+
+enablePlugins(DockerComposePlugin)
 
 // we hide the existing definition for setReleaseVersion to replace it with our own
 import sbtrelease.ReleaseStateTransformations.{setReleaseVersion=>_,_}

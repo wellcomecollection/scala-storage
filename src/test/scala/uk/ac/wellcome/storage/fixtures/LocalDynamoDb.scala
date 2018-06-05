@@ -1,10 +1,9 @@
-package uk.ac.wellcome.storage.test.fixtures
+package uk.ac.wellcome.storage.fixtures
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import org.scalatest.concurrent.Eventually
 import uk.ac.wellcome.storage.dynamo.DynamoClientFactory
-import uk.ac.wellcome.test.fixtures._
-import uk.ac.wellcome.test.utils.ExtendedPatience
+import uk.ac.wellcome.storage.utils.ExtendedPatience
 
 import scala.collection.JavaConverters._
 import scala.util.Random

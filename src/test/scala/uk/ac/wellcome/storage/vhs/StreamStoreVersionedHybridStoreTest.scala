@@ -5,12 +5,11 @@ import java.io.{ByteArrayInputStream, InputStream}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.storage.ObjectStore
+import uk.ac.wellcome.storage.fixtures.{LocalVersionedHybridStore, TestWith}
 import uk.ac.wellcome.storage.s3.S3Config
-import uk.ac.wellcome.storage.test.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.test.fixtures.LocalVersionedHybridStore
-import uk.ac.wellcome.storage.test.fixtures.S3.Bucket
-import uk.ac.wellcome.test.fixtures._
-import uk.ac.wellcome.test.utils.ExtendedPatience
+import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
+import uk.ac.wellcome.storage.fixtures.S3.Bucket
+import uk.ac.wellcome.storage.utils.ExtendedPatience
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random

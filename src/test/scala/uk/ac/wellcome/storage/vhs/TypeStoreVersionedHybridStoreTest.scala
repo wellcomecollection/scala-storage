@@ -2,22 +2,22 @@ package uk.ac.wellcome.storage.vhs
 
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FunSpec, Matchers}
-import uk.ac.wellcome.models.Id
 import uk.ac.wellcome.storage.ObjectStore
-import uk.ac.wellcome.storage.test.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.test.fixtures.LocalVersionedHybridStore
-import uk.ac.wellcome.storage.test.fixtures.S3.Bucket
-import uk.ac.wellcome.test.fixtures._
-import uk.ac.wellcome.test.utils.ExtendedPatience
-import uk.ac.wellcome.utils.JsonUtil._
+import uk.ac.wellcome.storage.fixtures.S3.Bucket
+import uk.ac.wellcome.storage.fixtures.{LocalVersionedHybridStore, TestWith}
+import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
+import uk.ac.wellcome.storage.fixtures.S3.Bucket
+import uk.ac.wellcome.storage.utils.ExtendedPatience
+
+import uk.ac.wellcome.storage.utils.JsonUtil._
 
 import scala.util.Random
 import scala.concurrent.ExecutionContext.Implicits.global
 
 case class ExampleRecord(
-  override val id: String,
+  id: String,
   content: String
-) extends Id
+)
 
 class TypeStoreVersionedHybridStoreTest
     extends FunSpec
@@ -57,7 +57,7 @@ class TypeStoreVersionedHybridStoreTest
             (record, EmptyMetadata()))(ifExisting = (t, m) => (t, m))
 
           whenReady(future) { _ =>
-            getJsonFor(bucket, table, record) shouldBe toJson(record).get
+            getJsonFor(bucket, table, record, record.id) shouldBe toJson(record).get
           }
       }
     }

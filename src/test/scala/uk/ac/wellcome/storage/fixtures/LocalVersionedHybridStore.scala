@@ -1,29 +1,25 @@
-package uk.ac.wellcome.storage.test.fixtures
+package uk.ac.wellcome.storage.fixtures
 
-import com.gu.scanamo._
+import com.gu.scanamo.{DynamoFormat, Scanamo}
 import com.gu.scanamo.syntax._
 import io.circe.Encoder
 import org.scalatest.Matchers
-import uk.ac.wellcome.models.Id
 import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.dynamo.DynamoConfig
+import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
+import uk.ac.wellcome.storage.fixtures.S3.Bucket
 import uk.ac.wellcome.storage.s3._
-import uk.ac.wellcome.storage.test.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.test.fixtures.S3.Bucket
-import uk.ac.wellcome.storage.vhs.{
-  HybridRecord,
-  VHSConfig,
-  VersionedHybridStore
-}
-import uk.ac.wellcome.test.fixtures._
-import uk.ac.wellcome.test.utils.JsonTestUtil
-import uk.ac.wellcome.utils.JsonUtil._
+import uk.ac.wellcome.storage.utils.JsonUtil
+import uk.ac.wellcome.storage.vhs.{HybridRecord, VHSConfig, VersionedHybridStore}
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 trait LocalVersionedHybridStore
     extends LocalDynamoDbVersioned
     with S3
-    with JsonTestUtil
     with Matchers {
+
+  import JsonUtil._
 
   val defaultGlobalS3Prefix = "testing"
 
@@ -36,7 +32,7 @@ trait LocalVersionedHybridStore
       "aws.vhs.dynamo.tableName" -> table.name
     ) ++ s3ClientLocalFlags ++ dynamoClientLocalFlags
 
-  def withTypeVHS[T <: Id, Metadata, R](bucket: Bucket,
+  def withTypeVHS[T, Metadata, R](bucket: Bucket,
                                         table: Table,
                                         globalS3Prefix: String =
                                           defaultGlobalS3Prefix)(
@@ -61,15 +57,8 @@ trait LocalVersionedHybridStore
     testWith(store)
   }
 
-  def assertStored[T <: Id](bucket: Bucket, table: Table, record: T)(
-    implicit encoder: Encoder[T]) =
-    assertJsonStringsAreEqual(
-      getJsonFor[T](bucket, table, record),
-      toJson(record).get
-    )
-
-  def getJsonFor[T <: Id](bucket: Bucket, table: Table, record: T) = {
-    val hybridRecord = getHybridRecord(table, record.id)
+  def getJsonFor[T](bucket: Bucket, table: Table, record: T, id: String) = {
+    val hybridRecord = getHybridRecord(table, id)
 
     getJsonFromS3(bucket, hybridRecord.s3key).noSpaces
   }

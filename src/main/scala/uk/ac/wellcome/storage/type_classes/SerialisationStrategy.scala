@@ -34,14 +34,14 @@ object SerialisationStrategy {
     implicit jsonStorageStrategy: SerialisationStrategy[Json],
     encoder: Encoder[T],
     decoder: Decoder[T]
-  ) = new SerialisationStrategy[T] {
+  ): SerialisationStrategy[T] = new SerialisationStrategy[T] {
     def toStream(t: T): StorageStream = jsonStorageStrategy.toStream(t.asJson)
     def fromStream(input: InputStream) =
       jsonStorageStrategy.fromStream(input).flatMap(_.as[T].toTry)
 
   }
 
-  implicit def streamStorageStrategy: SerialisationStrategy[InputStream] =
+  implicit def streamSerialisationStrategy: SerialisationStrategy[InputStream] =
     new SerialisationStrategy[InputStream] {
       def toStream(t: InputStream): StorageStream = {
         val s = fromInputStream(t).mkString
@@ -55,7 +55,7 @@ object SerialisationStrategy {
       def fromStream(input: InputStream) = Success(input)
     }
 
-  implicit def jsonStorageStrategy: SerialisationStrategy[Json] =
+  implicit def jsonSerialisationStrategy: SerialisationStrategy[Json] =
     new SerialisationStrategy[Json] {
       def toStream(t: Json): StorageStream = {
         val key = StorageKey(hash(t.noSpaces))
@@ -69,7 +69,7 @@ object SerialisationStrategy {
 
     }
 
-  implicit def stringStorageStrategy: SerialisationStrategy[String] =
+  implicit def stringSerialisationStrategy: SerialisationStrategy[String] =
     new SerialisationStrategy[String] {
       def toStream(t: String): StorageStream = {
         val key = StorageKey(hash(t))
