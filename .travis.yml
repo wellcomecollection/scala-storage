@@ -7,11 +7,12 @@ branches:
   only:
     - master
 
-script:
- - sbt ++$TRAVIS_SCALA_VERSION ";dockerComposeUp;test;dockerComposeStop"
-
 jobs:
   include:
+   - stage: test
+     script:
+      - sbt ++$TRAVIS_SCALA_VERSION ";dockerComposeUp;test;dockerComposeStop"
+
    - stage: check_commits
      script:
      - sbt "show suggestedBump";
