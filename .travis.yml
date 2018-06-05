@@ -22,9 +22,8 @@ jobs:
 
    - stage: release
      script:
-     - openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in credentials.sbt.enc -out credentials.sbt -d
-     - openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in keys.zip.enc -out keys.zip -d
-     - unzip keys.zip;
+     - openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in secrets.zip.enc -out secrets.zip -d
+     - unzip secrets.zip;
      - git config user.name "Travis CI on behalf of Wellcome"
      - git config user.email "wellcomedigitalplatform@wellcome.ac.uk"
      - git config core.sshCommand "ssh -i ssh-key/id_rsa"

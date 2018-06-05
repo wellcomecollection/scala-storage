@@ -7,4 +7,5 @@ credentials.sbt
 
 pgp-key
 ssh-key
-keys.zip
+
+secrets.zip

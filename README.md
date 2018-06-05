@@ -41,25 +41,3 @@ Then run `publishSigned` and `sonatypeRelease` in sbt to push a release:
 sbt ++2.11.11 publishSigned sonatypeRelease;
 ```
 
-### Packaging for Travis
-
-To encrypt `credentials.sbt` for Travis you can use the following command:
-
-```sh
-docker run -v $(pwd):/project \
-  -v  ~/.travis:/root/.travis \
-  -it skandyla/travis-cli \
-  encrypt-file credentials.sbt
-```
-
-You will then need to copy the specified output to `.travis.yml` if different from what is already in that file.
-
-For example:
-
-```yml
-  - stage: release
-     scala: 2.12.6
-     script:
-     # Output like this will be specified from the travis cli tool
-     - openssl aes-256-cbc -K $encrypted_83630750896a_key -iv $encrypted_83630750896a_iv -in credentials.sbt.enc -out credentials.sbt -d
-```
