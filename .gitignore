@@ -1,0 +1,10 @@
+*.class
+*.log
+.idea
+target
+
+credentials.sbt
+
+pgp-key
+ssh-key
+keys.zip
