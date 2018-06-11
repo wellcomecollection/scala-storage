@@ -115,7 +115,9 @@ git.useGitDescribe := true
 // strategy as the minorRegexes matches any string.
 // Let's override that so figuring out the next version fails if
 // there are no commits that explicitly specify the bumping strategy
-minorRegexes := List("""\[?minor\]?.*""").map(_.r)
+bugfixRegexes := List(""".*\[patch\]""").map { _.r }
+minorRegexes := List(""".*\[minor\]""").map { _.r }
+majorRegexes := List(""".*\[major\]""").map { _.r }
 
 releaseProcess := Seq(
   checkSnapshotDependencies,
