@@ -71,6 +71,8 @@ scalacOptions ++= Seq(
 
 publishTo := Some(Opts.resolver.sonatypeStaging)
 
+publishArtifact in Test := true
+
 useGpg := false
 
 parallelExecution in Test := false
