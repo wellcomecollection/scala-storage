@@ -12,11 +12,13 @@ Storage libraries in use at Wellcome comprising:
 
 ```scala
 libraryDependencies ++= Seq(
-  "uk.ac.wellcome" %% "storage" % "0.1"
+  "uk.ac.wellcome" %% "storage" % "<LATEST_VERSION>"
 )
 ```
 
 `storage` is published for Scala 2.11 and Scala 2.12.
+
+Read [the changelog][CHANGELOG.md] to find the latest version.
 
 ## Development
 
@@ -40,4 +42,3 @@ Then run `publishSigned` and `sonatypeRelease` in sbt to push a release:
 ```sh
 sbt ++2.11.11 publishSigned sonatypeRelease;
 ```
-
