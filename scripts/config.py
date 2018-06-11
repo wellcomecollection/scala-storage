@@ -1,5 +1,8 @@
 # -*- encoding: utf-8
 
+import os
+
+
 REPO_NAME = 'scala-storage'
 
 TRAVIS_KEY = os.environ['encrypted_12c8071d2874_key']
