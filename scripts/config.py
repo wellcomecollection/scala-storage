@@ -16,6 +16,6 @@ def has_source_changes(version=None):
         version = latest_version()
 
     changed_files = [
-        f for f in modified_files() if f.strip().endswith('.sbt', '.scala')
+        f for f in modified_files() if f.strip().endswith(('.sbt', '.scala'))
     ]
     return len(changed_files) != 0
