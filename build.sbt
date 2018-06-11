@@ -1,11 +1,13 @@
 import sbt.Resolver
 import sbtrelease.{Version, versionFormatError}
 
+enablePlugins(GitVersioning)
+
 organization := "uk.ac.wellcome"
 
 name := "storage"
 
-crossScalaVersions := Seq("2.12.6")
+scalaVersion := "2.12.6"
 
 val versions = new {
   val logback = "1.1.8"
@@ -67,12 +69,6 @@ scalacOptions ++= Seq(
   "-language:postfixOps"
 )
 
-// We don't publish SNAPSHOTS but the checkSnapshotDependencies
-// step in the releaseProcess checks that the SNAPSHOT version is
-// compatible with sonatype and fails without these two lines.
-dynverSonatypeSnapshots in ThisBuild := true
-version in ThisBuild ~= (_.replace('+', '-'))
-
 publishTo := Some(Opts.resolver.sonatypeStaging)
 
 useGpg := false
@@ -111,6 +107,9 @@ lazy val setReleaseVersion: ReleaseStep = { st: State =>
     else version := selectedVersion
   ), st)
 }
+
+git.baseVersion := "0.0.1"
+git.useGitDescribe := true
 
 // In sbt-autoversion plugin, minor is the default bump
 // strategy as the minorRegexes matches any string.

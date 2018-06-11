@@ -1,6 +1,6 @@
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.0")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
-addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.0.0")
+addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.8")
 addSbtPlugin("org.scala-sbt" % "sbt-autoversion" % "1.0.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
