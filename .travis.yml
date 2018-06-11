@@ -23,9 +23,13 @@ jobs:
      script:
       - sbt ++$TRAVIS_SCALA_VERSION ";dockerComposeUp;test;dockerComposeStop"
 
-   - stage: check_commits
+   - stage: check_release_file
      script:
-     - sbt "show suggestedBump";
+       - python scripts/check_release_file.py
+
+   - stage: build_changelog
+     script:
+       - python scripts/build_and_push_changelog.py
 
    - stage: release
      script:
@@ -39,7 +43,9 @@ jobs:
 
 stages:
  - test
- - name: check_commits
+ - name: check_release_file
    if: type = pull_request
+ - name: build_changelog
+   if: type = push
  - name: release
    if: type = push
