@@ -10,7 +10,7 @@ TRAVIS_IV = os.environ['encrypted_12c8071d2874_iv']
 
 
 def has_source_changes(version=None):
-    from hypothesistooling import modified_files
+    from hypothesistooling import latest_version, modified_files
 
     if version is None:
         version = latest_version()

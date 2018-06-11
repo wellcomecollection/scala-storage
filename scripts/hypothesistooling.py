@@ -238,5 +238,5 @@ def update_for_pending_release():
     git(
         'commit',
         '-m', 'Bump version to %s and update changelog [%s]' % (
-        __version__, release_type)
+            __version__, release_type)
     )

@@ -23,6 +23,7 @@ import os
 import sys
 import subprocess
 
+from config import TRAVIS_KEY, TRAVIS_IV
 import hypothesistooling as tools
 
 
