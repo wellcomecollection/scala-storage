@@ -224,18 +224,21 @@ def update_changelog_and_version():
     with open(CHANGELOG_FILE, 'w') as o:
         o.write('\n'.join(new_changelog_parts))
 
+    return release_type
+
 
 def update_for_pending_release():
     git('config', 'user.name', 'Travis CI on behalf of Wellcome')
     git('config', 'user.email', 'wellcomedigitalplatform@wellcome.ac.uk')
-    update_changelog_and_version()
+    release_type = update_changelog_and_version()
 
     git('rm', RELEASE_FILE)
     git('add', CHANGELOG_FILE)
 
     git(
         'commit',
-        '-m', 'Bump version to %s and update changelog' % (__version__,)
+        '-m', 'Bump version to %s and update changelog [%s]' % (
+        __version__, release_type)
     )
 
 
