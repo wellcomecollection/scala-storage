@@ -100,10 +100,7 @@ def git(*args):
 
 
 def create_tag_and_push():
-    git('tag', __version__)
-
     subprocess.check_call(['git', 'push', 'origin', 'HEAD:master'])
-    subprocess.check_call(['git', 'push', 'origin', '--tags'])
 
 
 def modified_files():
