@@ -21,6 +21,8 @@ env:
 
 jobs:
   include:
+    - stage: format
+      env: TASK=autoformat
     - stage: test
       env: TASK=test
       sudo: required
