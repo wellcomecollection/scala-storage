@@ -53,6 +53,6 @@ if __name__ == '__main__':
     else:
         print('Attempting a release.')
         subprocess.check_call([
-            'sbt' '++%s' % os.environ['TRAVIS_SCALA_VERSION'], 'release'
+            'sbt', '++%s' % os.environ['TRAVIS_SCALA_VERSION'], 'release'
         ])
         sys.exit(0)
