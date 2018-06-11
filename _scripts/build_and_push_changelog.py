@@ -75,4 +75,4 @@ if __name__ == '__main__':
 
     tools.create_tag_and_push()
 
-    sys.exit(0)
+    sys.exit(1)
