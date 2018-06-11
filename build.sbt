@@ -108,7 +108,7 @@ lazy val setReleaseVersion: ReleaseStep = { st: State =>
   ), st)
 }
 
-git.baseVersion := "0.0.1"
+git.baseVersion := "0.0.0"
 git.useGitDescribe := true
 
 // In sbt-autoversion plugin, minor is the default bump
