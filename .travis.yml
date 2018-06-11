@@ -6,6 +6,13 @@ services:
 scala:
 - 2.12.6
 
+cache:
+  directories:
+    - $HOME/.sbt
+    - $HOME/.ivy2/cache
+    - project/target
+    - target
+
 branches:
   only:
     - master
