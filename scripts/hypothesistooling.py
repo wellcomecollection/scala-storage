@@ -193,6 +193,8 @@ def update_changelog_and_version():
     new_version = tuple(new_version)
     new_version_string = 'v' + '.'.join(map(str, new_version))
 
+    __version__ = new_version_string
+
     now = datetime.utcnow()
 
     date = max([
