@@ -27,13 +27,10 @@ jobs:
      script:
        - python scripts/check_release_file.py
 
-   - stage: build_changelog
-     script:
-       - python scripts/build_and_push_changelog.py
-
    - stage: release
      script:
-     - sbt ++$TRAVIS_SCALA_VERSION release;
+       - python scripts/build_and_push_changelog.py
+       - if [[ "$?" == "0" ]]; then sbt ++$TRAVIS_SCALA_VERSION release; end
 
 before_script:
   - openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in secrets.zip.enc -out secrets.zip -d
@@ -47,7 +44,5 @@ stages:
  - test
  - name: check_release_file
    if: type = pull_request
- - name: build_changelog
-   if: type = push
  - name: release
    if: type = push
