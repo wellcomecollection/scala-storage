@@ -3,12 +3,6 @@
 import os
 
 
-REPO_NAME = 'scala-storage'
-
-TRAVIS_KEY = os.environ['encrypted_12c8071d2874_key']
-TRAVIS_IV = os.environ['encrypted_12c8071d2874_iv']
-
-
 def has_source_changes(version=None):
     from hypothesistooling import latest_version, modified_files
 

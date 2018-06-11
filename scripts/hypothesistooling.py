@@ -23,8 +23,6 @@ import sys
 import subprocess
 from datetime import datetime, timedelta
 
-from config import REPO_NAME
-
 
 def tags():
     result = [t.decode('ascii') for t in subprocess.check_output([
@@ -102,18 +100,10 @@ def git(*args):
 
 
 def create_tag_and_push():
-    assert __version__ not in tags()
-    git('config', 'user.name', 'Travis CI on behalf of Wellcome')
-    git('config', 'user.email', 'wellcomedigitalplatform@wellcome.ac.uk')
-    git('config', 'core.sshCommand', 'ssh -i deploy_key')
-    git(
-        'remote', 'add', 'ssh-origin',
-        'git@github.com:wellcometrust/%s.git' % REPO_NAME
-    )
     git('tag', __version__)
 
-    subprocess.check_call(['git', 'push', 'ssh-origin', 'HEAD:master'])
-    subprocess.check_call(['git', 'push', 'ssh-origin', '--tags'])
+    subprocess.check_call(['git', 'push', 'origin', 'HEAD:master'])
+    subprocess.check_call(['git', 'push', 'origin', '--tags'])
 
 
 def modified_files():

@@ -23,7 +23,6 @@ import os
 import sys
 import subprocess
 
-from config import TRAVIS_KEY, TRAVIS_IV
 import hypothesistooling as tools
 
 
@@ -51,20 +50,6 @@ if __name__ == '__main__':
     if not has_release:
         print('Not deploying due to no release')
         sys.exit(0)
-
-    if os.environ.get('TRAVIS_SECURE_ENV_VARS', None) != 'true':
-        print("But we don't have the keys to do it")
-        sys.exit(1)
-
-    print('Decrypting secrets')
-    subprocess.check_call([
-        'openssl', 'aes-256-cbc',
-        '-K', TRAVIS_KEY,
-        '-iv', TRAVIS_IV,
-        '-in', 'deploy_key.enc',
-        '-out', 'deploy_key', '-d'
-    ])
-    subprocess.check_call(['chmod', '400', 'deploy_key'])
 
     print('Release seems good. Pushing to GitHub now.')
 
