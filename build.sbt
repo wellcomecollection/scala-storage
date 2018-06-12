@@ -16,7 +16,7 @@ val versions = new {
   val circeVersion = "0.9.0"
   val guice = "4.2.0"
   val scanamo = "1.0.0-M3"
-  val aws = "1.11.95"
+  val aws = "1.11.225"
   val akka = "2.5.9"
 }
 
