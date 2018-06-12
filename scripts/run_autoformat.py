@@ -7,7 +7,6 @@ import os
 import subprocess
 import sys
 
-from config import REPO_NAME
 from hypothesistooling import ROOT, branch_name, git
 
 
