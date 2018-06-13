@@ -2,7 +2,7 @@ package uk.ac.wellcome.storage.fixtures
 
 import com.gu.scanamo.{DynamoFormat, Scanamo}
 import com.gu.scanamo.syntax._
-import io.circe.Encoder
+import io.circe.{Encoder, Json}
 import org.scalatest.Matchers
 import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.dynamo.DynamoConfig
@@ -60,7 +60,7 @@ trait LocalVersionedHybridStore
   @deprecated(
     "Call getJsonFor without passing the record parameter",
     "storage 2.0")
-  def getJsonFor[T](bucket: Bucket, table: Table, record: T, id: String) =
+  def getJsonFor[T](bucket: Bucket, table: Table, record: T, id: String): Json =
     getJsonFor(bucket = bucket, table = table, id = id)
 
   def getJsonFor(bucket: Bucket, table: Table, id: String): Json = {
