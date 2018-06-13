@@ -63,7 +63,7 @@ trait LocalVersionedHybridStore
   def getJsonFor[T](bucket: Bucket, table: Table, record: T, id: String) =
     getJsonFor(bucket = bucket, table = table, id = id)
 
-  def getJsonFor[T](bucket: Bucket, table: Table, id: String): Json = {
+  def getJsonFor(bucket: Bucket, table: Table, id: String): Json = {
     val hybridRecord = getHybridRecord(table, id)
 
     getJsonFromS3(bucket, hybridRecord.s3key).noSpaces
