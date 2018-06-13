@@ -57,7 +57,13 @@ trait LocalVersionedHybridStore
     testWith(store)
   }
 
-  def getJsonFor[T](bucket: Bucket, table: Table, record: T, id: String) = {
+  @deprecated(
+    "Call getJsonFor without passing the record parameter",
+    "storage 2.0")
+  def getJsonFor[T](bucket: Bucket, table: Table, record: T, id: String) =
+    getJsonFor(bucket = bucket, table = table, id = id)
+
+  def getJsonFor[T](bucket: Bucket, table: Table, id: String): Json = {
     val hybridRecord = getHybridRecord(table, id)
 
     getJsonFromS3(bucket, hybridRecord.s3key).noSpaces
