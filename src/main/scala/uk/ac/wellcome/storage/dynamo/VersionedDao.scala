@@ -74,10 +74,10 @@ class VersionedDao @Inject()(
         }
       }
       case None => ()
-    }.recover {
-      case t: ProvisionedThroughputExceededException =>
-        throw DynamoNonFatalError(t)
     }
+  }.recover {
+    case t: ProvisionedThroughputExceededException =>
+      throw DynamoNonFatalError(t)
   }
 
   def getRecord[T](id: String)(
