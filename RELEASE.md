@@ -1,4 +1,4 @@
-# RELEASE_TYPE: minor
+RELEASE_TYPE: minor
 
 This release deprecates the following method in `LocalVersionedHybridStore`:
 
