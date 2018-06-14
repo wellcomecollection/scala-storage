@@ -4,6 +4,7 @@ import com.amazonaws.services.s3.AmazonS3
 import grizzled.slf4j.Logging
 import io.circe.Json
 import io.circe.parser.parse
+import org.scalatest.Matchers
 import org.scalatest.concurrent.Eventually
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3StorageBackend}
 
@@ -23,7 +24,7 @@ object S3 {
 
 }
 
-trait S3 extends Logging with Eventually {
+trait S3 extends Logging with Eventually with Matchers {
 
   import S3._
 
@@ -50,6 +51,12 @@ trait S3 extends Logging with Eventually {
     accessKey = accessKey,
     secretKey = secretKey
   )
+
+
+  // Wait for the s3 container to start responding to requests
+  eventually {
+    s3Client.listBuckets().asScala shouldBe Nil
+  }
 
   implicit val storageBackend = new S3StorageBackend(s3Client)
 
