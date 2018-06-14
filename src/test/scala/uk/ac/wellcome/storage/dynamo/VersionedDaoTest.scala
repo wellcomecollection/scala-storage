@@ -188,8 +188,8 @@ class VersionedDaoTest
           Scanamo.put(dynamoDbClient)(table.name)(newerTestVersioned)
 
           whenReady(versionedDao.updateRecord(testVersioned).failed) { ex =>
-            ex shouldBe a[RuntimeException]
-            ex.getMessage should include("ConditionalCheckFailedException")
+            ex shouldBe a[DynamoNonFatalError]
+            ex.getMessage should include("The conditional request failed")
 
             Scanamo
               .get[TestVersioned](dynamoDbClient)(table.name)(
