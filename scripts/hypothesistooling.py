@@ -99,10 +99,6 @@ def git(*args):
     subprocess.check_call(('git',) + args)
 
 
-def create_tag_and_push():
-    subprocess.check_call(['git', 'push', 'origin', 'HEAD:master'])
-
-
 def modified_files():
     files = set()
     for command in [

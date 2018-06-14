@@ -47,12 +47,9 @@ if __name__ == '__main__':
         print('Not deploying due to not being on master')
         sys.exit(0)
 
-    if has_release:
-        print('Release seems good. Pushing changelog to GitHub now.')
-        tools.create_tag_and_push()
-    else:
-        print('Attempting a release.')
-        subprocess.check_call([
-            'sbt', '++%s' % os.environ['TRAVIS_SCALA_VERSION'], 'release'
-        ])
-        sys.exit(0)
+    print('Attempting a release.')
+    subprocess.check_call([
+        'sbt', '++%s' % os.environ['TRAVIS_SCALA_VERSION'], 'release'
+    ])
+
+    git('push', 'origin', 'HEAD:master')
