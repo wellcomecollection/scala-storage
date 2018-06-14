@@ -12,7 +12,6 @@ import com.gu.scanamo.query.{KeyEquals, UniqueKey}
 import com.gu.scanamo.syntax.{attributeExists, not, _}
 import com.gu.scanamo.{DynamoFormat, Scanamo, Table}
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.dynamo.DynamoNonFatalError
 import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter, VersionUpdater}
 
 import scala.concurrent.{ExecutionContext, Future}
