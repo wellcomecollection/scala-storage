@@ -52,4 +52,4 @@ if __name__ == '__main__':
         'sbt', '++%s' % os.environ['TRAVIS_SCALA_VERSION'], 'release'
     ])
 
-    git('push', 'origin', 'HEAD:master')
+    tools.git('push', 'origin', 'HEAD:master')
