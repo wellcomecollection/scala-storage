@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## v1.2.0 - 2018-06-14
+
+This release deprecates the following method in `LocalVersionedHybridStore`:
+
+```scala
+def getJsonFor[T](bucket: Bucket, table: Table, record: T, id: String): String
+```
+
+in favour of:
+
+```scala
+def getJsonFor(bucket: Bucket, table: Table, id: String): String
+```
+
+Both methods behave in the same way -- the `record` parameter in the original
+method had no effect.  Callers can remove the `record` parameter to upgrade.
+
+(A bug in our automated release mechanism means there is no v1.1.0!)
+
 ## v1.0.3 - 2018-06-12
 
 This release upgrades the AWS SDK used by scala-storage from 1.11.95 to
