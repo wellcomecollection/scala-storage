@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v1.0.4 - 2018-06-14
+
+This release fixes some reliability issues in tests caused by the s3 mock container not starting fast enough.
+
 ## v1.1.0 - 2018-06-14
 
 This release deprecates the following method in `LocalVersionedHybridStore`:
