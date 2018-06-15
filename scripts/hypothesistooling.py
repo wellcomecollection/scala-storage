@@ -24,6 +24,10 @@ import subprocess
 from datetime import datetime, timedelta
 
 
+def git(*args):
+    subprocess.check_call(('git',) + args)
+
+
 def tags():
     git('fetch', '--tags')
     result = [t.decode('ascii') for t in subprocess.check_output([
@@ -94,10 +98,6 @@ CHANGELOG_FILE = os.path.join(ROOT, 'CHANGELOG.md')
 def changelog():
     with open(CHANGELOG_FILE) as i:
         return i.read()
-
-
-def git(*args):
-    subprocess.check_call(('git',) + args)
 
 
 def modified_files():
