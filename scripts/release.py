@@ -42,9 +42,6 @@ if __name__ == '__main__':
     if has_release:
         print('Updating changelog and version')
         tools.update_for_pending_release()
-    else:
-        print('Not deploying due to no release.')
-        sys.exit(0)
 
     if not on_master:
         print('Not deploying due to not being on master')
