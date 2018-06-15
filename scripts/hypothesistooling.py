@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 
 
 def tags():
+    git('fetch', '--tags')
     result = [t.decode('ascii') for t in subprocess.check_output([
         'git', 'tag'
     ]).split(b"\n")]
