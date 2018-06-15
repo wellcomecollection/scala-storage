@@ -99,6 +99,7 @@ lazy val setReleaseVersion: ReleaseStep = { st: State =>
 
   val getReleaseVersionFunction = extracted.runTask(releaseVersion, st)._2
   val selectedVersion = getReleaseVersionFunction(currentVersion)
+  val selectedVersion = "1.2.1"
 
   st.log.info("Setting version to '%s'." format selectedVersion)
   val useGlobal =Project.extract(st).get(releaseUseGlobalVersion)
