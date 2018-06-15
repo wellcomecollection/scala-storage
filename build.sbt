@@ -124,5 +124,9 @@ majorRegexes := List(""".*\[major\]""").map { _.r }
 
 releaseProcess := Seq(
   checkSnapshotDependencies,
-  setReleaseVersion
+  setReleaseVersion,
+  tagRelease,
+  releaseStepCommandAndRemaining("+publishSigned"),
+  releaseStepCommand("sonatypeReleaseAll"),
+  releaseStepCommand(s"git push origin --tags")
 )
