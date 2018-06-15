@@ -31,26 +31,25 @@ if __name__ == '__main__':
 
     print('Latest released version: %s' % last_release)
 
-    assert False
-    # HEAD = tools.hash_for_name('HEAD')
-    # MASTER = tools.hash_for_name('origin/master')
-    # print('Current head:', HEAD)
-    # print('Current master:', MASTER)
-    #
-    # on_master = tools.is_ancestor(HEAD, MASTER)
-    # has_release = tools.has_release()
-    #
-    # if has_release:
-    #     print('Updating changelog and version')
-    #     tools.update_for_pending_release()
-    #
-    # if not on_master:
-    #     print('Not deploying due to not being on master')
-    #     sys.exit(0)
-    #
-    # print('Attempting a release.')
-    # subprocess.check_call([
-    #     'sbt', '++%s' % os.environ['TRAVIS_SCALA_VERSION'], 'release'
-    # ])
-    #
-    # tools.git('push', 'origin', 'HEAD:master')
+    HEAD = tools.hash_for_name('HEAD')
+    MASTER = tools.hash_for_name('origin/master')
+    print('Current head:', HEAD)
+    print('Current master:', MASTER)
+
+    on_master = tools.is_ancestor(HEAD, MASTER)
+    has_release = tools.has_release()
+
+    if has_release:
+        print('Updating changelog and version')
+        tools.update_for_pending_release()
+
+    if not on_master:
+        print('Not deploying due to not being on master')
+        sys.exit(0)
+
+    print('Attempting a release.')
+    subprocess.check_call([
+        'sbt', '++%s' % os.environ['TRAVIS_SCALA_VERSION'], 'release'
+    ])
+
+    tools.git('push', 'origin', 'HEAD:master')
