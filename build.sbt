@@ -80,10 +80,11 @@ parallelExecution in Test := false
 pgpPublicRing := baseDirectory.value / "pgp-key" / "pubring.asc"
 pgpSecretRing := baseDirectory.value / "pgp-key" / "secring.asc"
 
-releaseVersion := { ver: String =>Version(ver)
-  .map(_.withoutQualifier)
-  .map(_.bump(suggestedBump.value).string).getOrElse(versionFormatError)
-}
+// releaseVersion := { ver: String =>Version(ver)
+//   .map(_.withoutQualifier)
+//   .map(_.bump(suggestedBump.value).string).getOrElse(versionFormatError)
+// }
+releaseVersion := "1.2.1"
 
 enablePlugins(DockerComposePlugin)
 
@@ -98,8 +99,7 @@ lazy val setReleaseVersion: ReleaseStep = { st: State =>
   val currentVersion = extracted.get(version)
 
   val getReleaseVersionFunction = extracted.runTask(releaseVersion, st)._2
-//  val selectedVersion = getReleaseVersionFunction(currentVersion)
-  val selectedVersion = "1.2.1"
+  val selectedVersion = getReleaseVersionFunction(currentVersion)
 
   st.log.info("Setting version to '%s'." format selectedVersion)
   val useGlobal =Project.extract(st).get(releaseUseGlobalVersion)
