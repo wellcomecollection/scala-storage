@@ -31,9 +31,9 @@ env:
 
 jobs:
   include:
-   - stage: test
-     script:
-      - sbt ++$TRAVIS_SCALA_VERSION ";dockerComposeUp;test;dockerComposeStop"
+   # - stage: test
+   #   script:
+   #    - sbt ++$TRAVIS_SCALA_VERSION ";dockerComposeUp;test;dockerComposeStop"
 
    - stage: check_release_file
      script:
@@ -52,7 +52,7 @@ before_script:
   - git remote set-url origin "git@github.com:wellcometrust/scala-storage.git"
 
 stages:
- - test
+ # - test
  - name: check_release_file
    if: type = pull_request
  - name: release
