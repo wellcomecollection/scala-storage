@@ -80,11 +80,10 @@ parallelExecution in Test := false
 pgpPublicRing := baseDirectory.value / "pgp-key" / "pubring.asc"
 pgpSecretRing := baseDirectory.value / "pgp-key" / "secring.asc"
 
-// releaseVersion := { ver: String =>Version(ver)
-//   .map(_.withoutQualifier)
-//   .map(_.bump(suggestedBump.value).string).getOrElse(versionFormatError)
-// }
-releaseVersion := "1.2.1"
+releaseVersion := { ver: String =>Version(ver)
+  .map(_.withoutQualifier)
+  .map(_.bump(suggestedBump.value).string).getOrElse(versionFormatError)
+}
 
 enablePlugins(DockerComposePlugin)
 
@@ -125,8 +124,5 @@ majorRegexes := List(""".*\[major\]""").map { _.r }
 releaseProcess := Seq(
   checkSnapshotDependencies,
   setReleaseVersion,
-  tagRelease,
-  releaseStepCommandAndRemaining("+publishSigned"),
-  releaseStepCommand("sonatypeReleaseAll"),
-  releaseStepCommand(s"git push origin --tags")
+  tagRelease
 )
