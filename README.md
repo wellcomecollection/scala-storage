@@ -18,7 +18,7 @@ libraryDependencies ++= Seq(
 
 `storage` is published for Scala 2.11 and Scala 2.12.
 
-Read [the changelog][CHANGELOG.md] to find the latest version.
+Read [the changelog](CHANGELOG.md) to find the latest version.
 
 ## Development
 
