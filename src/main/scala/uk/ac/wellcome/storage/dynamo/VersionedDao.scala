@@ -1,8 +1,12 @@
 package uk.ac.wellcome.storage.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
+import com.amazonaws.services.dynamodbv2.model.{
+  ConditionalCheckFailedException,
+  ProvisionedThroughputExceededException
+}
 import com.google.inject.Inject
-import com.gu.scanamo.error.ScanamoError
+import com.gu.scanamo.error.{ConditionNotMet, ScanamoError}
 import com.gu.scanamo.ops.ScanamoOps
 import com.gu.scanamo.query.{KeyEquals, UniqueKey}
 import com.gu.scanamo.syntax.{attributeExists, not, _}
@@ -53,8 +57,10 @@ class VersionedDao @Inject()(
     val id = idGetter.id(record)
     debug(s"Attempting to update Dynamo record: $id")
 
-    updateBuilder(record).map { ops =>
-      Scanamo.exec(dynamoDbClient)(ops) match {
+    updateBuilder(record) match {
+      case Some(ops) => Scanamo.exec(dynamoDbClient)(ops) match {
+        case Left(ConditionNotMet(e: ConditionalCheckFailedException)) =>
+          throw DynamoNonFatalError(e)
         case Left(scanamoError) => {
           val exception = new RuntimeException(scanamoError.toString)
 
@@ -66,7 +72,11 @@ class VersionedDao @Inject()(
           debug(s"Successfully updated Dynamo record: $id")
         }
       }
+      case None => ()
     }
+  }.recover {
+    case t: ProvisionedThroughputExceededException =>
+      throw DynamoNonFatalError(t)
   }
 
   def getRecord[T](id: String)(

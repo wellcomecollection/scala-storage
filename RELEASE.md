@@ -1,3 +1,10 @@
-RELEASE_TYPE: patch
+RELEASE_TYPE: minor
 
-This release fixes some reliability issues in tests caused by the s3 mock container not starting fast enough.
+This change causes `VersionedDao.updateRecord` to throw a new exception
+`DynamoNonFatalError` when encountering the following errors in DynamoDB:
+
+-   Exceeding provisioned throughput limits
+-   Hitting a conditional update exception
+
+Both of these are errors where the caller can back off and retry -- as opposed
+to an error that cannot be retried (for example, an authentication error).
