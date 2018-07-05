@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v2.0.0 - 2018-07-05
+
+Trigger for release automation
+
 ## v1.3.0 - 2018-07-04
 
 This change causes `VersionedDao.updateRecord` to throw a new exception
