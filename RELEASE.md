@@ -1,3 +1,3 @@
-RELEASE_TYPE: patch
+RELEASE_TYPE: major 
 
 Trigger for release automation
