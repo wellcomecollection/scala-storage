@@ -272,7 +272,19 @@ def update_for_pending_release():
     )
 
 
+def configure_secrets():
+    subprocess.check_call(['unzip', 'secrets.zip'])
+    os.makedirs(os.path.join(os.environ['HOME'], '.aws'))
+    shutil.copyfile(
+        src='secrets/credentials',
+        dst=os.path.join(os.environ['HOME'], '.aws', 'credentials')
+    )
+    git('config', 'core.sshCommand', 'ssh -i secrets/id_rsa')
+
+
 def release():
+    configure_secrets()
+
     last_release = latest_version()
 
     print('Latest released version: %s' % last_release)
