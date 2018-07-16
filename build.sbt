@@ -18,16 +18,10 @@ scalacOptions ++= Seq(
   "-language:postfixOps"
 )
 
-lazy val project = Project(
-  name,
-  file("."),
-  settings = Defaults.defaultSettings ++ S3Resolver.defaults)
-
-s3region      := Region.EU_Ireland,
-s3credentials := file("~/.aws/credentials"),
-publishMavenStyle := false,
+s3region      := Region.EU_Ireland
+publishMavenStyle := false
 publishTo := Some(
   s3resolver.value(
     s"releases s3 bucket",
-    s3(prefix+"mvn-repo.wellcomecollection.org")) withIvyPatterns
+    s3("releases.mvn-repo.wellcomecollection.org")) withIvyPatterns
 )
