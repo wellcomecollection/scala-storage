@@ -24,12 +24,11 @@ env:
 
 jobs:
   include:
-   - stage: check_release_file
-     script:
-       - python scripts/check_release_file.py
+   # - stage: check_release_file
+   #   script:
+   #     - python scripts/check_release_file.py
 
-   - stage: release
-     script:
+   - script:
        - python scripts/release.py
 
 before_script:
@@ -41,10 +40,10 @@ before_script:
   - git config user.email "wellcomedigitalplatform@wellcome.ac.uk"
   - git config core.sshCommand "ssh -i secrets/id_rsa"
   - git remote set-url origin "git@github.com:wellcometrust/scala-storage.git"
-
-stages:
- # - test
- - name: check_release_file
-   if: type = pull_request
- - name: release
-   if: type = push
+#
+# stages:
+#  # - test
+#  - name: check_release_file
+#    if: type = pull_request
+#  - name: release
+#    if: type = push
