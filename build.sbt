@@ -2,7 +2,7 @@ import ohnosequences.sbt.SbtS3Resolver._
 import com.amazonaws.services.s3.model.Region
 
 name    := "storage"
-version := "0.2"
+version := "0.2.0"
 
 organization := "uk.ac.wellcome"
 scalaVersion := "2.12.6"
