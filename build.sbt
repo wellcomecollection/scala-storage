@@ -5,6 +5,8 @@ organization := "uk.ac.wellcome"
 name         := "storage"
 scalaVersion := "2.12.6"
 
+version := "0.2"
+
 libraryDependencies := Dependencies.libraryDependencies
 
 scalacOptions ++= Seq(
@@ -22,6 +24,8 @@ s3region      := Region.EU_Ireland
 publishMavenStyle := false
 publishTo := Some(
   s3resolver.value(
-    s"releases s3 bucket",
+    "releases s3 bucket",
     s3("releases.mvn-repo.wellcomecollection.org")) withIvyPatterns
 )
+
+publishArtifact in Test := true
