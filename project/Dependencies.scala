@@ -3,22 +3,22 @@ import sbt._
 object Dependencies {
 
   lazy val versions = new {
+    val akka = "2.5.9"
+    val aws = "1.11.225"
+    val circe = "0.9.0"
+    val guice = "4.2.0"
     val logback = "1.1.8"
     val mockito = "1.9.5"
     val scalatest = "3.0.1"
-    val circeVersion = "0.9.0"
-    val guice = "4.2.0"
     val scanamo = "1.0.0-M3"
-    val aws = "1.11.225"
-    val akka = "2.5.9"
   }
 
   val circeDependencies = Seq(
-    "io.circe" %% "circe-core" % versions.circeVersion,
-    "io.circe" %% "circe-generic"% versions.circeVersion,
-    "io.circe" %% "circe-generic-extras"% versions.circeVersion,
-    "io.circe" %% "circe-parser"% versions.circeVersion,
-    "io.circe" %% "circe-java8" % versions.circeVersion
+    "io.circe" %% "circe-core" % versions.circe,
+    "io.circe" %% "circe-generic"% versions.circe,
+    "io.circe" %% "circe-generic-extras"% versions.circe,
+    "io.circe" %% "circe-parser"% versions.circe,
+    "io.circe" %% "circe-java8" % versions.circe
   )
 
   val testDependencies = Seq(
