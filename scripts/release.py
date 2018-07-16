@@ -49,6 +49,6 @@ if __name__ == '__main__':
     #     sys.exit(0)
 
     print('Attempting a release.')
-    subprocess.check_call(['sbt', 'release'])
+    subprocess.check_call(['sbt', 'publish'])
 
     tools.git('push', 'origin', 'HEAD:master')
