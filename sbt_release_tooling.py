@@ -21,7 +21,6 @@ repos for the sake of easy distribution.
 """
 
 import os
-import re
 import subprocess
 
 
@@ -31,16 +30,62 @@ ROOT = subprocess.check_output([
 BUILD_SBT = os.path.join(ROOT, 'build.sbt')
 
 
-def current_version():
-    """Returns the current version, as set in build.sbt."""
-    # We're looking for a line of the form
-    #
-    #       version := "x.y.z"
-    #
-    with open(BUILD_SBT) as infile:
-        for line in infile:
-            m = re.match(r'^version := "(?P<version>\d+\.\d+\.\d+)"\n$', line)
-            if m is not None:
-                return m.group('version')
+def git(*args):
+    """
+    Run a Git command and check it completes successfully.
+    """
+    subprocess.check_call(('git',) + args)
 
-    raise ValueError('Unable to find a version in build.sbt?')
+
+def tags():
+    """
+    Returns a list of all tags in the repo.
+    """
+    git('fetch', '--tags')
+    result = subprocess.check_output(['git', 'tag']).decode('ascii')
+    all_tags = result.split('\n')
+
+    assert len(set(all_tags)) == len(all_tags)
+
+    return set(all_tags)
+
+
+def latest_version():
+    """
+    Returns the latest version, as specified by the Git tags.
+    """
+    versions = []
+
+    for t in tags():
+        assert t == t.strip()
+        parts = t.split('.')
+        assert len(parts) == 3, t
+        parts[0] = parts[0].lstrip('v')
+        v = tuple(map(int, parts))
+
+        versions.append((v, t))
+
+    _, latest = max(versions)
+
+    assert latest in tags()
+    return latest
+
+
+def modified_files():
+    """
+    Returns a list of all files which have been modified between now
+    and the latest release.
+    """
+    files = set()
+    for command in [
+        ['git', 'diff', '--name-only', '--diff-filter=d',
+            latest_version(), 'HEAD'],
+        ['git', 'diff', '--name-only']
+    ]:
+        diff_output = subprocess.check_output(command).decode('ascii')
+        for l in diff_output.split('\n'):
+            filepath = l.strip()
+            if filepath:
+                assert os.path.exists(filepath)
+                files.add(filepath)
+    return files
