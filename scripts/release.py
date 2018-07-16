@@ -44,13 +44,11 @@ if __name__ == '__main__':
         print('Updating changelog and version')
         tools.update_for_pending_release()
 
-    if not on_master:
-        print('Not deploying due to not being on master')
-        sys.exit(0)
+    # if not on_master:
+    #     print('Not deploying due to not being on master')
+    #     sys.exit(0)
 
     print('Attempting a release.')
-    subprocess.check_call([
-        'sbt', '++%s' % os.environ['TRAVIS_SCALA_VERSION'], 'release'
-    ])
+    subprocess.check_call(['sbt', 'publish'])
 
     tools.git('push', 'origin', 'HEAD:master')

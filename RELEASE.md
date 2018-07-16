@@ -1,3 +1,3 @@
-RELEASE_TYPE: major 
+RELEASE_TYPE: major
 
 Testin release automation again.
