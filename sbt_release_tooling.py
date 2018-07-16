@@ -20,6 +20,7 @@ repos for the sake of easy distribution.
 
 """
 
+import datetime as dt
 import os
 import re
 import subprocess
@@ -164,6 +165,139 @@ def check_release_file():
         parse_release_file()
 
 
+def hash_for_name(name):
+    return subprocess.check_output([
+        'git', 'rev-parse', name
+    ]).decode('ascii').strip()
+
+
+def is_ancestor(a, b):
+    check = subprocess.call([
+        'git', 'merge-base', '--is-ancestor', a, b
+    ])
+    assert 0 <= check <= 1
+    return check == 0
+
+
+CHANGELOG_HEADER = re.compile(r"^## v\d+\.\d+\.\d+ - \d\d\d\d-\d\d-\d\d$")
+CHANGELOG_FILE = os.path.join(ROOT, 'CHANGELOG.md')
+
+
+def changelog():
+    with open(CHANGELOG_FILE) as i:
+        return i.read()
+
+
+def update_changelog_and_version():
+    contents = changelog()
+    assert '\r' not in contents
+    lines = contents.split('\n')
+    assert contents == '\n'.join(lines)
+    for i, l in enumerate(lines):
+        if CHANGELOG_HEADER.match(l):
+            beginning = '\n'.join(lines[:i])
+            rest = '\n'.join(lines[i:])
+            assert '\n'.join((beginning, rest)) == contents
+            break
+
+    release_type, release_contents = parse_release_file()
+
+    version = latest_version()
+    version_info = [int(i) for i in version.lstrip('v').split('.')]
+
+    new_version = list(version_info)
+    bump = VALID_RELEASE_TYPES.index(release_type)
+    new_version[bump] += 1
+    for i in range(bump + 1, len(new_version)):
+        new_version[i] = 0
+    new_version = tuple(new_version)
+    new_version_string = 'v' + '.'.join(map(str, new_version))
+
+    print('New version: %s' % new_version_string)
+
+    __version__ = new_version_string
+
+    now = dt.datetime.utcnow()
+
+    date = max([
+        d.strftime('%Y-%m-%d') for d in (now, now + dt.timedelta(hours=1))
+    ])
+
+    heading_for_new_version = '## ' + ' - '.join((new_version_string, date))
+
+    new_changelog_parts = [
+        beginning.strip(),
+        '',
+        heading_for_new_version,
+        '',
+        release_contents,
+        '',
+        rest
+    ]
+
+    with open(CHANGELOG_FILE, 'w') as o:
+        o.write('\n'.join(new_changelog_parts))
+
+    # Update the version specified in build.sbt.  We're looking to replace
+    # a line of the form:
+    #
+    #       version := "x.y.z"
+    #
+    lines = list(open(BUILD_SBT))
+    for idx, l in enumerate(lines):
+        if l.startswith('version := '):
+            lines[idx] = 'version := "%s"\n' % new_version_string.strip('v')
+            break
+    else:  # no break
+        raise RuntimeError('Never updated version in build.sbt?')
+
+    with open(BUILD_SBT, 'w') as f:
+        f.write(''.join(lines))
+
+    return release_type
+
+
+def update_for_pending_release():
+    git('config', 'user.name', 'Travis CI on behalf of Wellcome')
+    git('config', 'user.email', 'wellcomedigitalplatform@wellcome.ac.uk')
+    release_type = update_changelog_and_version()
+
+    git('rm', RELEASE_FILE)
+    git('add', CHANGELOG_FILE)
+
+    git(
+        'commit',
+        '-m', 'Bump version to %s and update changelog [%s]\n\n[skip ci]' % (
+            __version__, release_type)
+    )
+
+
+def release():
+    last_release = latest_version()
+
+    print('Latest released version: %s' % last_release)
+
+    HEAD = hash_for_name('HEAD')
+    MASTER = hash_for_name('origin/master')
+
+    print('Current head:   %s' % HEAD)
+    print('Current master: %s' % MASTER)
+
+    on_master = is_ancestor(HEAD, MASTER)
+
+    if has_release():
+        print('Updating changelog and version')
+        update_for_pending_release()
+    else:
+        print('Not releasing due to no release file')
+        sys.exit(0)
+
+    print('Attempting a release.')
+    subprocess.check_call(['sbt', 'publish'])
+
+    git('push', 'origin', 'HEAD:master')
+
+
 if __name__ == '__main__':
 
     # Rudimentary command-line argument parsing.
@@ -182,3 +316,7 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'check_release_file':
         check_release_file()
+    elif sys.argv[1] == 'release':
+        release()
+    else:
+        assert False, sys.argv
