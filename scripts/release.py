@@ -33,6 +33,7 @@ if __name__ == '__main__':
 
     HEAD = tools.hash_for_name('HEAD')
     MASTER = tools.hash_for_name('origin/master')
+
     print('Current head:', HEAD)
     print('Current master:', MASTER)
 
