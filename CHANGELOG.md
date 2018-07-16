@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v4.0.0 - 2018-07-16
+
+Testin release automation again.
+
 ## v2.0.0 - 2018-07-05
 
 Trigger for release automation
