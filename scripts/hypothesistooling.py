@@ -223,6 +223,6 @@ def update_for_pending_release():
 
     git(
         'commit',
-        '-m', 'Bump version to %s and update changelog [%s]' % (
+        '-m', 'Bump version to %s and update changelog [%s]\n\n[skip ci]' % (
             __version__, release_type)
     )
