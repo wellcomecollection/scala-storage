@@ -5,7 +5,7 @@ organization := "uk.ac.wellcome"
 name         := "storage"
 scalaVersion := "2.12.6"
 
-version := "0.2"
+version := "0.4"
 
 libraryDependencies := Dependencies.libraryDependencies
 
