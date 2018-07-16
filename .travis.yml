@@ -39,7 +39,7 @@ before_script:
   - cp secrets/credentials ~/.aws/credentials
   - git config user.name "Travis CI on behalf of Wellcome"
   - git config user.email "wellcomedigitalplatform@wellcome.ac.uk"
-  - git config core.sshCommand "ssh -i ssh-key/id_rsa"
+  - git config core.sshCommand "ssh -i secrets/id_rsa"
   - git remote set-url origin "git@github.com:wellcometrust/scala-storage.git"
 
 stages:
