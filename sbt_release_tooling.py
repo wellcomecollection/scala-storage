@@ -18,6 +18,9 @@ The canonical version of this script is kept in the platform repo
 (https://github.com/wellcometrust/platform), but copied into our other
 repos for the sake of easy distribution.
 
+Implementor note: any repo-specific config should be kept *outside* this
+script.  Put it in .travis.yml or build.sbt.
+
 """
 
 import datetime as dt
