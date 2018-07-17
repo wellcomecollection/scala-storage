@@ -13,6 +13,7 @@ import uk.ac.wellcome.storage.dynamo.{
 import uk.ac.wellcome.storage.utils.ExtendedPatience
 
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
 object LocalDynamoDb {
