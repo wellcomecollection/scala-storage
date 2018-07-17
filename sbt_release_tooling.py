@@ -1,4 +1,4 @@
-#!/usr/bin/env python -u
+#!/usr/bin/env python
 # -*- encoding: utf-8
 """
 This script contains all our release tooling for sbt libraries.
@@ -191,6 +191,19 @@ def changelog():
         return i.read()
 
 
+def new_version(release_type):
+    version = latest_version()
+    version_info = [int(i) for i in version.lstrip('v').split('.')]
+
+    new_version = list(version_info)
+    bump = VALID_RELEASE_TYPES.index(release_type)
+    new_version[bump] += 1
+    for i in range(bump + 1, len(new_version)):
+        new_version[i] = 0
+    new_version = tuple(new_version)
+    return 'v' + '.'.join(map(str, new_version))
+
+
 def update_changelog_and_version():
     contents = changelog()
     assert '\r' not in contents
@@ -205,16 +218,7 @@ def update_changelog_and_version():
 
     release_type, release_contents = parse_release_file()
 
-    version = latest_version()
-    version_info = [int(i) for i in version.lstrip('v').split('.')]
-
-    new_version = list(version_info)
-    bump = VALID_RELEASE_TYPES.index(release_type)
-    new_version[bump] += 1
-    for i in range(bump + 1, len(new_version)):
-        new_version[i] = 0
-    new_version = tuple(new_version)
-    new_version_string = 'v' + '.'.join(map(str, new_version))
+    new_version_string = new_version(release_type)
 
     print('New version: %s' % new_version_string)
 
@@ -270,8 +274,8 @@ def update_for_pending_release():
 
     git(
         'commit',
-        '-m', 'Bump version to %s and update changelog [%s]\n\n[skip ci]' % (
-            __version__, release_type)
+        '-m', 'Bump version to %s and update changelog\n\n[skip ci]' % (
+            new_version(release_type))
     )
 
 
