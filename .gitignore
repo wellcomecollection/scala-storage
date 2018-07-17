@@ -12,3 +12,7 @@ secrets.zip
 secrets
 
 *.pyc
+
+awscredentials
+id_rsa
+id_rsa.pub
