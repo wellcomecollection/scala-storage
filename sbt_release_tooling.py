@@ -332,6 +332,7 @@ def release():
     sbt('publish')
 
     git('push', 'origin', 'HEAD:master')
+    git('push', 'origin', '--tag')
 
 
 if __name__ == '__main__':
