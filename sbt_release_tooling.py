@@ -297,6 +297,9 @@ def configure_secrets():
     )
     git('config', 'core.sshCommand', 'ssh -i secrets/id_rsa')
 
+    print('SSH public key:')
+    subprocess.check_call(['ssh-keygen', '-y', '-f', 'secrets/id_rsa'])
+
 
 def release():
     configure_secrets()
