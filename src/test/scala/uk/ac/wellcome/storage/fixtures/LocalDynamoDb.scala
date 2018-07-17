@@ -50,17 +50,9 @@ trait LocalDynamoDb extends Eventually with ExtendedPatience {
       createTable(Table(tableName, indexName))
     },
     destroy = { _ =>
-      deleteAllTables()
+      dynamoDbClient.deleteTable(table.name)
     }
   )
 
   def createTable(table: LocalDynamoDb.Table): Table
-
-  private def deleteAllTables() = {
-    dynamoDbClient
-      .listTables()
-      .getTableNames
-      .asScala
-      .foreach(dynamoDbClient.deleteTable)
-  }
 }
