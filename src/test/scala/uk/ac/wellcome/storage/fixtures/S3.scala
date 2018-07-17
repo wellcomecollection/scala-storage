@@ -7,6 +7,7 @@ import io.circe.parser.parse
 import org.scalatest.Matchers
 import org.scalatest.concurrent.Eventually
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3StorageBackend}
+import uk.ac.wellcome.storage.utils.ExtendedPatience
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,7 +25,7 @@ object S3 {
 
 }
 
-trait S3 extends Logging with Eventually with Matchers {
+trait S3 extends ExtendedPatience with Logging with Eventually with Matchers {
 
   import S3._
 
@@ -52,20 +53,16 @@ trait S3 extends Logging with Eventually with Matchers {
     secretKey = secretKey
   )
 
-
-  // Wait for the s3 container to start responding to requests
-  eventually {
-    s3Client.listBuckets().asScala shouldBe Nil
-  }
-
   implicit val storageBackend = new S3StorageBackend(s3Client)
 
   def withLocalS3Bucket[R] =
     fixture[Bucket, R](
       create = {
+        eventually {
+          s3Client.listBuckets().asScala.size should be >= 0
+        }
         val bucketName: String =
           (Random.alphanumeric take 10 mkString).toLowerCase
-
         s3Client.createBucket(bucketName)
         eventually { s3Client.doesBucketExistV2(bucketName) }
 
