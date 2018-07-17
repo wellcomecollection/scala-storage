@@ -6,6 +6,7 @@ This script contains all our release tooling for sbt libraries.
 Usage:
     sbt_release_tooling.py check_release_file
     sbt_release_tooling.py release
+    sbt_release_tooling.py test
     sbt_release_tooling.py -h | --help
 
 Commands:
@@ -13,6 +14,7 @@ Commands:
                             file is well-formatted.  Exits with 0 if correct,
                             exits with 1 if not.
     release                 Publish a new release of the library.
+    test                    Run Scala tests.
 
 The canonical version of this script is kept in the platform repo
 (https://github.com/wellcometrust/platform), but copied into our other
@@ -41,6 +43,13 @@ def git(*args):
     Run a Git command and check it completes successfully.
     """
     subprocess.check_call(('git',) + args)
+
+
+def sbt(*args):
+    """
+    Run an sbt command and check it completes successfully.
+    """
+    subprocess.check_call(('sbt',) + args)
 
 
 def tags():
@@ -312,7 +321,7 @@ def release():
         sys.exit(0)
 
     print('Attempting a release.')
-    subprocess.check_call(['sbt', 'publish'])
+    sbt('publish')
 
     git('push', 'origin', 'HEAD:master')
 
@@ -337,5 +346,10 @@ if __name__ == '__main__':
         check_release_file()
     elif sys.argv[1] == 'release':
         release()
+    elif sys.argv[1] == 'test':
+        if os.path.exists('docker-compose.yml'):
+            sbt('dockerComposeUp;test;dockerComposeDown')
+        else:
+            sbt('test')
     else:
         assert False, sys.argv
