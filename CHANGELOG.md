@@ -2,6 +2,17 @@
 
 ## v0.0.2 - 2018-07-17
 
+This patch fixes a bug in `S3StorageBackend`, where the following warning
+would be emitted when uploading a file to S3:
+
+> No content length specified for stream data.  Stream contents will be
+> buffered in memory and could result in out of memory errors.
+
+We're now using the S3 API correctly, so this error can't occur (and the
+warning goes away).
+
+## v0.0.2 - 2018-07-17
+
 First release cut with the automated releases to S3!
 
 This release fixes a race condition in the `LocalDynamoDb` fixture.  When
