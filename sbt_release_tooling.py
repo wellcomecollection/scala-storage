@@ -302,8 +302,6 @@ def configure_secrets():
 
 
 def release():
-    configure_secrets()
-
     last_release = latest_version()
 
     print('Latest released version: %s' % last_release)
@@ -344,6 +342,8 @@ if __name__ == '__main__':
     ):
         print(__doc__.strip())
         sys.exit(1)
+
+    configure_secrets()
 
     if sys.argv[1] == 'check_release_file':
         check_release_file()
