@@ -25,7 +25,7 @@ env:
 jobs:
   include:
     - stage: test
-      script: sbt test
+      script: sbt "dockerComposeUp;test;dockerComposeDown"
     - script: ./sbt_release_tooling.py check_release_file
     - stage: release
       script: ./sbt_release_tooling.py release
