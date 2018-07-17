@@ -289,17 +289,15 @@ def update_for_pending_release():
 
 def configure_secrets():
     subprocess.check_call(['unzip', 'secrets.zip'])
-    for root, _, filenames in os.walk('.'):
-        print(root, filenames)
     os.makedirs(os.path.join(os.environ['HOME'], '.aws'))
     shutil.copyfile(
-        src='secrets/awscredentials',
+        src='awscredentials',
         dst=os.path.join(os.environ['HOME'], '.aws', 'credentials')
     )
-    git('config', 'core.sshCommand', 'ssh -i secrets/id_rsa')
+    git('config', 'core.sshCommand', 'ssh -i id_rsa')
 
     print('SSH public key:')
-    subprocess.check_call(['ssh-keygen', '-y', '-f', 'secrets/id_rsa'])
+    subprocess.check_call(['ssh-keygen', '-y', '-f', 'id_rsa'])
 
 
 def release():
