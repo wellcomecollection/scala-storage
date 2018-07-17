@@ -5,7 +5,6 @@ import org.scalatest.concurrent.Eventually
 import uk.ac.wellcome.storage.dynamo.DynamoClientFactory
 import uk.ac.wellcome.storage.utils.ExtendedPatience
 
-import scala.collection.JavaConverters._
 import scala.util.Random
 
 object LocalDynamoDb {
@@ -49,7 +48,7 @@ trait LocalDynamoDb extends Eventually with ExtendedPatience {
 
       createTable(Table(tableName, indexName))
     },
-    destroy = { _ =>
+    destroy = { table =>
       dynamoDbClient.deleteTable(table.name)
     }
   )
