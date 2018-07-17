@@ -2,13 +2,14 @@ package uk.ac.wellcome.storage.fixtures
 
 import com.gu.scanamo.{DynamoFormat, Scanamo}
 import com.gu.scanamo.syntax._
+import io.circe.Encoder
 import org.scalatest.Matchers
 import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.dynamo.DynamoConfig
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
 import uk.ac.wellcome.storage.s3._
-import uk.ac.wellcome.storage.utils.JsonUtil
+import uk.ac.wellcome.storage.utils.JsonUtil._
 import uk.ac.wellcome.storage.vhs.{HybridRecord, VHSConfig, VersionedHybridStore}
 
 import scala.concurrent.ExecutionContext.Implicits.global
