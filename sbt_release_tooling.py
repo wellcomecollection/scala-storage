@@ -289,6 +289,8 @@ def update_for_pending_release():
 
 def configure_secrets():
     subprocess.check_call(['unzip', 'secrets.zip'])
+    for root, _, filenames in os.walk('.'):
+        print(root, filenames)
     os.makedirs(os.path.join(os.environ['HOME'], '.aws'))
     shutil.copyfile(
         src='secrets/awscredentials',
