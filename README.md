@@ -10,35 +10,10 @@ Storage libraries in use at Wellcome comprising:
 
 ## Installation
 
-```scala
-libraryDependencies ++= Seq(
-  "uk.ac.wellcome" %% "storage" % "<LATEST_VERSION>"
-)
-```
+This library is only published to a private S3 bucket.
 
-`storage` is published for Scala 2.11 and Scala 2.12.
+Wellcome projects have access to this S3 bucket -- you can use our build
+scripts to publish a copy to your own private package repository, or vendor
+the library by copying the code into your own repository.
 
 Read [the changelog](CHANGELOG.md) to find the latest version.
-
-## Development
-
-If you want to release this library you'll need credentials to authenticate with Travis and Sonatype.
-
-### Releasing to Sonatype
-
-Create a file `credentials.sbt` in the root of the repo with the following contents (but with the correct details).
-
-```sbt
-credentials += Credentials("Sonatype Nexus Repository Manager",
-       "oss.sonatype.org",
-       "(Sonatype user name)",
-       "(Sonatype password)")
-
-pgpPassphrase := Some("(PGP password)".toCharArray)
-```
-
-Then run `publishSigned` and `sonatypeRelease` in sbt to push a release:
-
-```sh
-sbt ++2.11.11 publishSigned sonatypeRelease;
-```
