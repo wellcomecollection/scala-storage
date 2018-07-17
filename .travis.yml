@@ -1,8 +1,5 @@
 language: scala
 
-services:
-  - docker
-
 scala:
 - 2.12.6
 
@@ -24,26 +21,23 @@ env:
 
 jobs:
   include:
-   # - stage: check_release_file
-   #   script:
-   #     - python scripts/check_release_file.py
+    - stage: test
+      env: TASK=test
+      sudo: required
+      services:
+        - docker
+    - env: TASK=check_release_file
+    - stage: release
+      env: TASK=release
 
-   - script:
-       - python scripts/release.py
+script:
+  - ./sbt_release_tooling.py "$TASK"
 
 before_script:
   - openssl aes-256-cbc -K $encrypted_83630750896a_key -iv $encrypted_83630750896a_iv -in secrets.zip.enc -out secrets.zip -d
-  - unzip secrets.zip;
-  - mkdir -p ~/.aws
-  - cp secrets/credentials ~/.aws/credentials
-  - git config user.name "Travis CI on behalf of Wellcome"
-  - git config user.email "wellcomedigitalplatform@wellcome.ac.uk"
-  - git config core.sshCommand "ssh -i secrets/id_rsa"
   - git remote set-url origin "git@github.com:wellcometrust/scala-storage.git"
-#
-# stages:
-#  # - test
-#  - name: check_release_file
-#    if: type = pull_request
-#  - name: release
-#    if: type = push
+
+stages:
+  - test
+  - name: release
+    if: type = push

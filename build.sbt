@@ -1,11 +1,11 @@
 import ohnosequences.sbt.SbtS3Resolver._
 import com.amazonaws.services.s3.model.Region
 
-organization := "uk.ac.wellcome"
-name         := "storage"
-scalaVersion := "2.12.6"
+name    := "storage"
+version := "0.0.1"
 
-version := "0.4"
+organization := "uk.ac.wellcome"
+scalaVersion := "2.12.6"
 
 libraryDependencies := Dependencies.libraryDependencies
 
@@ -20,8 +20,10 @@ scalacOptions ++= Seq(
   "-language:postfixOps"
 )
 
-s3region      := Region.EU_Ireland
+s3region := Region.EU_Ireland
+
 publishMavenStyle := false
+
 publishTo := Some(
   s3resolver.value(
     "releases s3 bucket",
@@ -29,3 +31,5 @@ publishTo := Some(
 )
 
 publishArtifact in Test := true
+
+enablePlugins(DockerComposePlugin)
