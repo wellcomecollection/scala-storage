@@ -357,7 +357,7 @@ if __name__ == '__main__':
         release()
     elif sys.argv[1] == 'test':
         if os.path.exists('docker-compose.yml'):
-            sbt('dockerComposeUp;test;dockerComposeDown')
+            sbt('dockerComposeUp;test;dockerComposeStop')
         else:
             sbt('test')
     else:

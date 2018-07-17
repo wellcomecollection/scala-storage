@@ -31,3 +31,5 @@ publishTo := Some(
 )
 
 publishArtifact in Test := true
+
+enablePlugins(DockerComposePlugin)
