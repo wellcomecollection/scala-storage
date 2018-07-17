@@ -279,6 +279,7 @@ def update_for_pending_release():
 
     git('rm', RELEASE_FILE)
     git('add', CHANGELOG_FILE)
+    git('add', BUILD_SBT)
 
     git(
         'commit',
