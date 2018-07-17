@@ -328,14 +328,6 @@ def release():
 
 if __name__ == '__main__':
 
-    # Travis can set environment variables, so fudge it in this way.
-    try:
-        task = os.environ['TASK']
-        if len(sys.argv) == 1:
-            sys.argv.append(task)
-    except KeyError:
-        pass
-
     # Rudimentary command-line argument parsing.
     #
     # It would be nice to replace this with something more robust using
@@ -345,7 +337,7 @@ if __name__ == '__main__':
     if (
         len(sys.argv) != 2 or
         sys.argv[1] in ('-h', '--help') or
-        sys.argv[1] not in ('check_release_file', 'release')
+        sys.argv[1] not in ('check_release_file', 'release', 'test')
     ):
         print(__doc__.strip())
         sys.exit(1)
