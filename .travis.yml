@@ -1,8 +1,5 @@
 language: scala
 
-services:
-  - docker
-
 scala:
 - 2.12.6
 
@@ -26,6 +23,9 @@ jobs:
   include:
     - stage: test
       env: TASK=test
+      sudo: required
+      services:
+        - docker
     - env: TASK=check_release_file
     - stage: release
       env: TASK=release
