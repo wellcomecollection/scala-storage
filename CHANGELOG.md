@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## v0.1.0 - 2018-07-17
+
+This release adds two new fixtures to `LocalDynamoDb`:
+
+```scala
+def withSpecifiedLocalDynamoDbTable[R](
+  createTable: (AmazonDynamoDB) => Table): Fixture[Table, R]
+
+def withVersionedDao[R](table: Table)(testWith: TestWith[VersionedDao, R]): R
+```
+
+and some new helper methods for use in tests:
+
+```scala
+def givenTableHasItem[T: DynamoFormat](item: T, table: Table): Assertion
+
+def getTableItem[T: DynamoFormat](id: String, table: Table): Assertion
+
+def getExistingTableItem[T: DynamoFormat](id: String, table: Table): Assertion
+
+def assertTableEmpty[T: DynamoFormat](table: Table): Assertion
+
+def assertTableHasItem[T: DynamoFormat](
+  id: String, item: T, table: Table): Assertion
+
+def assertTableOnlyHasItem[T: DynamoFormat](item: T, table: Table): Assertion
+```
+
 ## v0.0.3 - 2018-07-17
 
 This patch fixes a bug in the `S3` fixture where it could attempt to create
