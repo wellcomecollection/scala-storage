@@ -296,7 +296,7 @@ def configure_secrets():
         dst=os.path.join(os.environ['HOME'], '.aws', 'credentials')
     )
 
-    subprocess.check_call(['chmod', '644', 'id_rsa'])
+    subprocess.check_call(['chmod', '600', 'id_rsa'])
     git('config', 'core.sshCommand', 'ssh -i id_rsa')
 
     print('SSH public key:')
