@@ -7,6 +7,7 @@ import io.circe.parser.parse
 import org.scalatest.Matchers
 import org.scalatest.concurrent.Eventually
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3StorageBackend}
+import uk.ac.wellcome.storage.utils.ExtendedPatience
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
