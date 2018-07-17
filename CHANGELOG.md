@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v0.2.0 - 2018-07-17
+
+This patch adds two helpers to the S3 fixture:
+
+```scala
+def getObjectFromS3[T](bucket: Bucket, key: String)(
+  implicit decoder: Decoder[T]): T
+
+def listKeysInBucket(bucket: Bucket): List[String]
+```
+
 ## v0.1.0 - 2018-07-17
 
 This release adds two new fixtures to `LocalDynamoDb`:
