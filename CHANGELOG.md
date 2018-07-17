@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v1.1.0 - 2018-07-17
+
+This adds a helper to `LocalVersionedHybridStore` that was missing from the
+migration from the main repo:
+
+```scala
+def assertStored[T](bucket: Bucket, table: Table, id: String, record: T)(
+  implicit encoder: Encoder[T])
+```
+
 ## v1.0.0 - 2018-07-17
 
 This release has no code changes, but marks parity with the storage library
