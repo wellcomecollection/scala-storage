@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v1.0.0 - 2018-07-17
+
+This release has no code changes, but marks parity with the storage library
+from the [main platform repo](https://github.com/wellcometrust/platform).
+
 ## v0.2.0 - 2018-07-17
 
 This patch adds two helpers to the S3 fixture:
