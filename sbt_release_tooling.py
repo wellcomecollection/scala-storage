@@ -286,6 +286,7 @@ def update_for_pending_release():
         '-m', 'Bump version to %s and update changelog\n\n[skip ci]' % (
             new_version(release_type))
     )
+    git('tag', new_version(release_type))
 
 
 def configure_secrets():
