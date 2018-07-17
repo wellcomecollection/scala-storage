@@ -28,6 +28,7 @@ script.  Put it in .travis.yml or build.sbt.
 import datetime as dt
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -231,8 +232,6 @@ def update_changelog_and_version():
 
     print('New version: %s' % new_version_string)
 
-    __version__ = new_version_string
-
     now = dt.datetime.utcnow()
 
     date = max([
@@ -313,6 +312,10 @@ def release():
     print('Current master: %s' % MASTER)
 
     on_master = is_ancestor(HEAD, MASTER)
+
+    if not on_master:
+        print('Trying to release while not on master?')
+        sys.exit(1)
 
     if has_release():
         print('Updating changelog and version')
