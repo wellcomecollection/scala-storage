@@ -1,4 +1,3 @@
-import ohnosequences.sbt.SbtS3Resolver._
 import com.amazonaws.services.s3.model.Region
 
 name    := "storage"
@@ -20,14 +19,10 @@ scalacOptions ++= Seq(
   "-language:postfixOps"
 )
 
-s3region := Region.EU_Ireland
-
-publishMavenStyle := false
+publishMavenStyle := true
 
 publishTo := Some(
-  s3resolver.value(
-    "releases s3 bucket",
-    s3("releases.mvn-repo.wellcomecollection.org")) withIvyPatterns
+  "S3 releases" at "s3://releases.mvn-repo.wellcomecollection.org/"
 )
 
 publishArtifact in Test := true
