@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v1.2.0 - 2018-07-18
+
+This release has no changes, it just switches our automated release process to
+[fm-sbt-s3-resolver](https://github.com/frugalmechanic/fm-sbt-s3-resolver).
+
 ## v1.1.0 - 2018-07-17
 
 This adds a helper to `LocalVersionedHybridStore` that was missing from the
