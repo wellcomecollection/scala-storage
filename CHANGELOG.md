@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## v1.3.0 - 2018-07-20
+
+This patch adds a new helper to `S3` for saving a complete record of
+everything in the bucket:
+
+```scala
+def getAllObjectContents(bucket: Bucket): Map[String, String]
+```
+
 ## v1.2.0 - 2018-07-18
 
 This release has no changes, it just switches our automated release process to
