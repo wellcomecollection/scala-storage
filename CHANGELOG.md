@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v1.4.0 - 2018-07-23
+
+This removes the `GlobalExecutionContext` from the library, an internal helper
+that was never actually used, and a holdover from when this library was
+part of the main platform repo.
+
 ## v1.3.0 - 2018-07-20
 
 This patch adds a new helper to `S3` for saving a complete record of
