@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## v1.5.0 - 2018-07-24
+
+This release changes the hashing algorithm used in `SerialisationStrategy`.
+
+Previously we used MurmurHash3, which turned out to be more vulnerable to
+collisions than we expected -- now we use SHA-256 instead.
+
 ## v1.4.0 - 2018-07-23
 
 This removes the `GlobalExecutionContext` from the library, an internal helper
