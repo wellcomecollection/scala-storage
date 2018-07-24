@@ -2,17 +2,16 @@ package uk.ac.wellcome.storage.type_classes
 
 import java.io.{ByteArrayInputStream, InputStream}
 
+import io.circe.parser._
+import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}
+import org.apache.commons.codec.digest.DigestUtils
 
 import scala.io.Source
 import scala.io.Source.fromInputStream
-import io.circe.parser._
-import io.circe.syntax._
-
 import scala.util.{Success, Try}
-import scala.util.hashing.MurmurHash3
 
-case class StorageKey(val value: String) extends AnyVal
+case class StorageKey(value: String) extends AnyVal
 case class StorageStream(inputStream: InputStream, storageKey: StorageKey)
 
 // This type class describes an implementation that takes a type T
@@ -36,7 +35,7 @@ object SerialisationStrategy {
     decoder: Decoder[T]
   ): SerialisationStrategy[T] = new SerialisationStrategy[T] {
     def toStream(t: T): StorageStream = jsonStorageStrategy.toStream(t.asJson)
-    def fromStream(input: InputStream) =
+    def fromStream(input: InputStream): Try[T] =
       jsonStorageStrategy.fromStream(input).flatMap(_.as[T].toTry)
 
   }
@@ -84,8 +83,5 @@ object SerialisationStrategy {
     }
 
   private def hash(s: String) =
-    MurmurHash3
-      .stringHash(s, MurmurHash3.stringSeed)
-      .toHexString
-
+    DigestUtils.sha256Hex(s)
 }
