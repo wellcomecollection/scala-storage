@@ -1,18 +1,13 @@
 package uk.ac.wellcome.storage.fixtures
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.gu.scanamo.{DynamoFormat, Scanamo}
 import com.gu.scanamo.syntax._
+import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.Matchers
 import org.scalatest.concurrent.Eventually
-import uk.ac.wellcome.storage.dynamo.{
-  DynamoClientFactory,
-  DynamoConfig,
-  VersionedDao
-}
+import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig, VersionedDao}
 import uk.ac.wellcome.storage.utils.ExtendedPatience
 
-import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 

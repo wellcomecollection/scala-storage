@@ -9,6 +9,7 @@ object Dependencies {
     val guice = "4.2.0"
     val logback = "1.1.8"
     val mockito = "1.9.5"
+    val scalaCheck = "1.13.4"
     val scalatest = "3.0.1"
     val scanamo = "1.0.0-M3"
   }
@@ -39,6 +40,10 @@ object Dependencies {
     "com.google.inject" % "guice" % versions.guice
   )
 
+  val scalacheckDependencies = Seq(
+    "org.scalacheck" %% "scalacheck" % versions.scalaCheck % "test"
+  )
+
   val libraryDependencies = Seq(
     "com.amazonaws" % "aws-java-sdk-dynamodb" % versions.aws,
     "com.amazonaws" % "aws-java-sdk-s3" % versions.aws,
@@ -47,5 +52,6 @@ object Dependencies {
     circeDependencies ++
     loggingDependencies ++
     diDependencies ++
+    scalacheckDependencies ++
     testDependencies
 }
