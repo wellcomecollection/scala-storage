@@ -40,6 +40,7 @@ before_script:
   - git remote set-url origin "git@github.com:wellcometrust/scala-storage.git"
 
 stages:
+  - format
   - test
   - name: release
     if: type = push
