@@ -358,7 +358,7 @@ def autoformat():
 
         # We checkout the branch before we add the commit, so we don't
         # include the merge commit that Travis makes.
-        git('fetch', 'origin')
+        git('fetch', 'origin', '--verbose')
         git('checkout', branch_name())
 
         git('add', '--verbose', '--updated')
