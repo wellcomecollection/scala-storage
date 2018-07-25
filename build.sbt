@@ -1,7 +1,7 @@
 import com.amazonaws.services.s3.model.Region
 
 name    := "storage"
-version := "1.5.0"
+version := "1.5.1"
 
 organization := "uk.ac.wellcome"
 scalaVersion := "2.12.6"

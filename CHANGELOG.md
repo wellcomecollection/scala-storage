@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v1.5.1 - 2018-07-25
+
+This is a change to the repo build scripts that enable auto-formatting with
+scalafmt, but there shouldn't be any change to the external APIs.
+
 ## v1.5.0 - 2018-07-24
 
 This release changes the hashing algorithm used in `SerialisationStrategy`.
