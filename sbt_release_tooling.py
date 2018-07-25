@@ -361,7 +361,7 @@ def autoformat():
         git('fetch', 'origin')
         git('checkout', branch_name())
 
-        git('add', '--verbose', '--all')
+        git('add', '--verbose', '--updated')
         git('commit', '-m', 'Apply auto-formatting rules')
         git('push', 'origin', 'HEAD:%s' % branch_name())
 
