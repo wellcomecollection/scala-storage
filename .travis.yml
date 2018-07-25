@@ -1,5 +1,16 @@
 language: scala
 
+before_script:
+  - openssl aes-256-cbc -K $encrypted_83630750896a_key -iv $encrypted_83630750896a_iv -in secrets.zip.enc -out secrets.zip -d
+  - git remote add ssh-origin "git@github.com:wellcometrust/scala-storage.git"
+
+
+
+# Everything below this line is boilerplate that should be reusable,
+# unmodified, in any of our Scala library repos.
+
+sudo: false
+
 scala:
 - 2.12.6
 
@@ -21,6 +32,8 @@ env:
 
 jobs:
   include:
+    - stage: format
+      env: TASK=autoformat
     - stage: test
       env: TASK=test
       sudo: required
@@ -33,11 +46,8 @@ jobs:
 script:
   - ./sbt_release_tooling.py "$TASK"
 
-before_script:
-  - openssl aes-256-cbc -K $encrypted_83630750896a_key -iv $encrypted_83630750896a_iv -in secrets.zip.enc -out secrets.zip -d
-  - git remote set-url origin "git@github.com:wellcometrust/scala-storage.git"
-
 stages:
+  - format
   - test
   - name: release
     if: type = push
