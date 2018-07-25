@@ -4,6 +4,7 @@
 This script contains all our release tooling for sbt libraries.
 
 Usage:
+    sbt_release_tooling.py autoformat
     sbt_release_tooling.py check_release_file
     sbt_release_tooling.py release
     sbt_release_tooling.py test
@@ -273,8 +274,6 @@ def update_changelog_and_version():
 
 
 def update_for_pending_release():
-    git('config', 'user.name', 'Travis CI on behalf of Wellcome')
-    git('config', 'user.email', 'wellcomedigitalplatform@wellcome.ac.uk')
     release_type = update_changelog_and_version()
 
     git('rm', RELEASE_FILE)
@@ -300,6 +299,9 @@ def configure_secrets():
 
     subprocess.check_call(['chmod', '600', 'id_rsa'])
     git('config', 'core.sshCommand', 'ssh -i id_rsa')
+
+    git('config', 'user.name', 'Travis CI on behalf of Wellcome')
+    git('config', 'user.email', 'wellcomedigitalplatform@wellcome.ac.uk')
 
     print('SSH public key:')
     subprocess.check_call(['ssh-keygen', '-y', '-f', 'id_rsa'])
@@ -336,6 +338,40 @@ def release():
     git('push', 'origin', '--tag')
 
 
+def branch_name():
+    """Return the name of the branch under test."""
+    # See https://graysonkoonce.com/getting-the-current-branch-name-during-a-pull-request-in-travis-ci/
+    if os.environ['TRAVIS_PULL_REQUEST'] == 'false':
+        return os.environ['TRAVIS_BRANCH']
+    else:
+        return os.environ['TRAVIS_PULL_REQUEST_BRANCH']
+
+
+def autoformat():
+    sbt('scalafmt')
+
+    # If there are any changes, push to GitHub immediately and fail the
+    # build.  This will abort the remaining jobs, and trigger a new build
+    # with the reformatted code.
+    if subprocess.call(['git', 'diff', '--exit-code']):
+        print('There were changes from formatting, creating a commit')
+
+        # We checkout the branch before we add the commit, so we don't
+        # include the merge commit that Travis makes.
+        git('fetch', 'origin')
+        git('checkout', branch_name())
+
+        git('add', '--verbose', '--all')
+        git('commit', '-m', 'Apply auto-formatting rules')
+        git('push', 'origin', 'HEAD:%s' % branch_name())
+
+        # We exit here to fail the build, so Travis will skip to the next
+        # build, which includes the autoformat commit.
+        sys.exit(1)
+    else:
+        print('There were no changes from auto-formatting')
+
+
 if __name__ == '__main__':
 
     # Rudimentary command-line argument parsing.
@@ -347,7 +383,8 @@ if __name__ == '__main__':
     if (
         len(sys.argv) != 2 or
         sys.argv[1] in ('-h', '--help') or
-        sys.argv[1] not in ('check_release_file', 'release', 'test')
+        sys.argv[1] not in (
+            'autoformat', 'check_release_file', 'release', 'test')
     ):
         print(__doc__.strip())
         sys.exit(1)
@@ -364,5 +401,7 @@ if __name__ == '__main__':
             sbt('test')
         else:
             sbt('test')
+    elif sys.argv[1] == 'autoformat':
+        autoformat()
     else:
         assert False, sys.argv
