@@ -6,7 +6,12 @@ import com.gu.scanamo.DynamoFormat
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.type_classes.Migration._
 import uk.ac.wellcome.storage.dynamo.{UpdateExpressionGenerator, VersionedDao}
-import uk.ac.wellcome.storage.type_classes.{HybridRecordEnricher, IdGetter, VersionGetter, VersionUpdater}
+import uk.ac.wellcome.storage.type_classes.{
+  HybridRecordEnricher,
+  IdGetter,
+  VersionGetter,
+  VersionUpdater
+}
 import uk.ac.wellcome.storage.type_classes._
 import uk.ac.wellcome.storage.{KeyPrefix, ObjectLocation, ObjectStore}
 
@@ -18,7 +23,8 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
   vhsConfig: VHSConfig,
   objectStore: Store,
   dynamoDbClient: AmazonDynamoDB
-)(implicit ec: ExecutionContext) extends Logging {
+)(implicit ec: ExecutionContext)
+    extends Logging {
   val versionedDao = new VersionedDao(
     dynamoDbClient = dynamoDbClient,
     dynamoConfig = vhsConfig.dynamoConfig

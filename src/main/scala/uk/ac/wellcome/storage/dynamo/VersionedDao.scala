@@ -12,14 +12,19 @@ import com.gu.scanamo.query.{KeyEquals, UniqueKey}
 import com.gu.scanamo.syntax.{attributeExists, not, _}
 import com.gu.scanamo.{DynamoFormat, Scanamo, Table}
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter, VersionUpdater}
+import uk.ac.wellcome.storage.type_classes.{
+  IdGetter,
+  VersionGetter,
+  VersionUpdater
+}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class VersionedDao @Inject()(
   dynamoDbClient: AmazonDynamoDB,
   dynamoConfig: DynamoConfig
-)(implicit ec: ExecutionContext) extends Logging {
+)(implicit ec: ExecutionContext)
+    extends Logging {
 
   private def updateBuilder[T](record: T)(
     implicit evidence: DynamoFormat[T],
@@ -53,31 +58,33 @@ class VersionedDao @Inject()(
     idGetter: IdGetter[T],
     versionGetter: VersionGetter[T],
     updateExpressionGenerator: UpdateExpressionGenerator[T]
-  ): Future[Unit] = Future {
-    val id = idGetter.id(record)
-    debug(s"Attempting to update Dynamo record: $id")
+  ): Future[Unit] =
+    Future {
+      val id = idGetter.id(record)
+      debug(s"Attempting to update Dynamo record: $id")
 
-    updateBuilder(record) match {
-      case Some(ops) => Scanamo.exec(dynamoDbClient)(ops) match {
-        case Left(ConditionNotMet(e: ConditionalCheckFailedException)) =>
-          throw DynamoNonFatalError(e)
-        case Left(scanamoError) => {
-          val exception = new RuntimeException(scanamoError.toString)
+      updateBuilder(record) match {
+        case Some(ops) =>
+          Scanamo.exec(dynamoDbClient)(ops) match {
+            case Left(ConditionNotMet(e: ConditionalCheckFailedException)) =>
+              throw DynamoNonFatalError(e)
+            case Left(scanamoError) => {
+              val exception = new RuntimeException(scanamoError.toString)
 
-          warn(s"Failed to update Dynamo record: $id", exception)
+              warn(s"Failed to update Dynamo record: $id", exception)
 
-          throw exception
-        }
-        case Right(_) => {
-          debug(s"Successfully updated Dynamo record: $id")
-        }
+              throw exception
+            }
+            case Right(_) => {
+              debug(s"Successfully updated Dynamo record: $id")
+            }
+          }
+        case None => ()
       }
-      case None => ()
+    }.recover {
+      case t: ProvisionedThroughputExceededException =>
+        throw DynamoNonFatalError(t)
     }
-  }.recover {
-    case t: ProvisionedThroughputExceededException =>
-      throw DynamoNonFatalError(t)
-  }
 
   def getRecord[T](id: String)(
     implicit evidence: DynamoFormat[T]): Future[Option[T]] = Future {
