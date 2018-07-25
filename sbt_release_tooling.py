@@ -313,7 +313,7 @@ def release():
     print('Latest released version: %s' % last_release)
 
     HEAD = hash_for_name('HEAD')
-    MASTER = hash_for_name('ssh-origin/master')
+    MASTER = hash_for_name('origin/master')
 
     print('Current head:   %s' % HEAD)
     print('Current master: %s' % MASTER)
