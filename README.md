@@ -1,12 +1,16 @@
 # scala-storage
 
+[![Build Status](https://travis-ci.org/wellcometrust/scala-storage.svg?branch=master)](https://travis-ci.org/wellcometrust/scala-storage)
+
 Storage libraries in use at Wellcome comprising:
 
 - `VersionedDao`: A DynamoDB wrapper allowing strongly typed _and_ strongly consistent updates.
 - `ObjectStore`: A storage agnostic strongly typed large object store library (an `S3StorageBackend` is provided).
 - `VersionedHybridStore`: A strongly typed _and_ strongly consistent large object store with indexes provided by DynamoDB.
 
-[![Build Status](https://travis-ci.org/wellcometrust/scala-storage.svg?branch=master)](https://travis-ci.org/wellcometrust/scala-storage)
+These libraries are used as part of the [Wellcome Digital Platform][platform].
+
+[platform]: https://github.com/wellcometrust/platform
 
 ## Installation
 
