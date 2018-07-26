@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v1.5.2 - 2018-07-26
+
+This is a no-op release that changes our sbt build settings.
+
 ## v1.5.1 - 2018-07-25
 
 This is a change to the repo build scripts that enable auto-formatting with
