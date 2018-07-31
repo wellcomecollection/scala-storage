@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v1.6.0 - 2018-07-31
+
+This patch removes the following test helpers, which were vendored from
+the main repo and never intended to be part of the public storage API:
+
+*   uk.ac.wellcome.storage.fixtures.Akka
+*   uk.ac.wellcome.storage.utils.ExtendedPatience
+
 ## v1.5.2 - 2018-07-26
 
 This is a no-op release that changes our sbt build settings.
