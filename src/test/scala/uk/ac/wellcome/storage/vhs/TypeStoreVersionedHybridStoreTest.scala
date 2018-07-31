@@ -1,14 +1,11 @@
 package uk.ac.wellcome.storage.vhs
 
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
 import uk.ac.wellcome.storage.fixtures.{LocalVersionedHybridStore, TestWith}
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.fixtures.S3.Bucket
-import uk.ac.wellcome.storage.utils.ExtendedPatience
-
 import uk.ac.wellcome.storage.utils.JsonUtil._
 
 import scala.util.Random
@@ -23,7 +20,7 @@ class TypeStoreVersionedHybridStoreTest
     extends FunSpec
     with Matchers
     with ScalaFutures
-    with ExtendedPatience
+    with IntegrationPatience
     with LocalVersionedHybridStore {
 
   import uk.ac.wellcome.storage.dynamo._

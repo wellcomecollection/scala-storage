@@ -11,14 +11,13 @@ import com.gu.scanamo.Scanamo
 import com.gu.scanamo.syntax._
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSpec, Matchers}
 import shapeless._
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDbVersioned
 import uk.ac.wellcome.storage.fixtures._
-import uk.ac.wellcome.storage.utils.ExtendedPatience
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -28,7 +27,7 @@ class VersionedDaoTest
     extends FunSpec
     with LocalDynamoDbVersioned
     with ScalaFutures
-    with ExtendedPatience
+    with IntegrationPatience
     with MockitoSugar
     with Matchers {
 

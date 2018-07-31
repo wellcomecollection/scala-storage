@@ -4,9 +4,8 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.gu.scanamo.syntax._
 import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.Matchers
-import org.scalatest.concurrent.Eventually
+import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig, VersionedDao}
-import uk.ac.wellcome.storage.utils.ExtendedPatience
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
@@ -15,7 +14,7 @@ object LocalDynamoDb {
   case class Table(name: String, index: String)
 }
 
-trait LocalDynamoDb extends Eventually with Matchers with ExtendedPatience {
+trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
 
   import LocalDynamoDb._
 
