@@ -5,9 +5,8 @@ import grizzled.slf4j.Logging
 import io.circe.{Decoder, Json}
 import io.circe.parser.parse
 import org.scalatest.Matchers
-import org.scalatest.concurrent.Eventually
+import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3StorageBackend}
-import uk.ac.wellcome.storage.utils.ExtendedPatience
 import uk.ac.wellcome.storage.utils.JsonUtil._
 
 import scala.collection.JavaConverters._
@@ -26,7 +25,7 @@ object S3 {
 
 }
 
-trait S3 extends ExtendedPatience with Logging with Eventually with Matchers {
+trait S3 extends IntegrationPatience with Logging with Eventually with Matchers {
 
   import S3._
 
