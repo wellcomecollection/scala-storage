@@ -3,7 +3,6 @@ import sbt._
 object Dependencies {
 
   lazy val versions = new {
-    val akka = "2.5.9"
     val aws = "1.11.225"
     val circe = "0.9.0"
     val guice = "4.2.0"
@@ -26,8 +25,6 @@ object Dependencies {
     "org.scalatest" %% "scalatest" % versions.scalatest % Test,
     "org.mockito" % "mockito-core" % versions.mockito % Test,
     "com.google.inject.extensions" % "guice-testlib" % versions.guice % Test,
-    "com.typesafe.akka" %% "akka-actor" % versions.akka % Test,
-    "com.typesafe.akka" %% "akka-stream" % versions.akka % Test
   )
 
   val loggingDependencies = Seq(
