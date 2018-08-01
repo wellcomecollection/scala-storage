@@ -5,7 +5,7 @@ import com.gu.scanamo.syntax._
 import io.circe.Encoder
 import org.scalatest.Matchers
 import uk.ac.wellcome.json.JsonUtil._
-import uk.ac.wellcome.json.JsonAssertions
+import uk.ac.wellcome.json.utils.JsonAssertions
 import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.dynamo.DynamoConfig
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
