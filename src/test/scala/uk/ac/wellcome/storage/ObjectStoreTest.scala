@@ -3,10 +3,10 @@ package uk.ac.wellcome.storage
 import org.scalatest.FunSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.PropertyChecks
+import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.fixtures.S3
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.ac.wellcome.storage.utils.JsonUtil._
 
 import scala.concurrent.Future
 
