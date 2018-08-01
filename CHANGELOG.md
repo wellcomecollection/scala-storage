@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v1.6.1 - 2018-08-01
+
+This is an internal refactoring to use the new
+[scala-json](https://github.com/wellcometrust/scala-json) library rather than
+vendoring our JSON-related helpers.  No change to the external API.
+
 ## v1.6.0 - 2018-07-31
 
 This patch removes the following test helpers, which were vendored from
