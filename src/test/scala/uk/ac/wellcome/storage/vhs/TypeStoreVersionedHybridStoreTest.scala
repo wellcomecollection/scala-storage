@@ -2,11 +2,11 @@ package uk.ac.wellcome.storage.vhs
 
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FunSpec, Matchers}
+import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
 import uk.ac.wellcome.storage.fixtures.{LocalVersionedHybridStore, TestWith}
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.utils.JsonUtil._
 
 import scala.util.Random
 import scala.concurrent.ExecutionContext.Implicits.global

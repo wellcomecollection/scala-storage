@@ -6,8 +6,8 @@ import io.circe.{Decoder, Json}
 import io.circe.parser.parse
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
+import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3StorageBackend}
-import uk.ac.wellcome.storage.utils.JsonUtil._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
