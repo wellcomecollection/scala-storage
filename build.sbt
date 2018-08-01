@@ -28,4 +28,8 @@ publishTo := Some(
 
 publishArtifact in Test := true
 
+resolvers ++= Seq(
+  "S3 releases" at "s3://releases.mvn-repo.wellcomecollection.org/"
+)
+
 enablePlugins(DockerComposePlugin)
