@@ -1,5 +1,16 @@
 import sbt._
 
+object WellcomeDependencies {
+  private lazy val versions = new {
+    val json = "1.0.0"
+  }
+
+  val jsonLibrary: Seq[ModuleID] = Seq(
+    "uk.ac.wellcome" % "json_2.12" % versions.json,
+    "uk.ac.wellcome" % "json_2.12" % versions.json % "test" classifier "tests"
+  )
+}
+
 object Dependencies {
 
   lazy val versions = new {
@@ -50,5 +61,6 @@ object Dependencies {
     loggingDependencies ++
     diDependencies ++
     scalacheckDependencies ++
-    testDependencies
+    testDependencies ++
+    WellcomeDependencies.jsonLibrary
 }
