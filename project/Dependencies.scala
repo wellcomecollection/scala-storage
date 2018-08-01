@@ -25,10 +25,7 @@ object Dependencies {
 
   val circeDependencies = Seq(
     "io.circe" %% "circe-core" % versions.circe,
-    "io.circe" %% "circe-generic"% versions.circe,
-    "io.circe" %% "circe-generic-extras"% versions.circe,
     "io.circe" %% "circe-parser"% versions.circe,
-    "io.circe" %% "circe-java8" % versions.circe
   )
 
   val testDependencies = Seq(
@@ -47,10 +44,6 @@ object Dependencies {
     "com.google.inject" % "guice" % versions.guice
   )
 
-  val scalacheckDependencies = Seq(
-    "org.scalacheck" %% "scalacheck" % versions.scalaCheck % "test"
-  )
-
   val libraryDependencies = Seq(
     "com.amazonaws" % "aws-java-sdk-dynamodb" % versions.aws,
     "com.amazonaws" % "aws-java-sdk-s3" % versions.aws,
@@ -59,7 +52,6 @@ object Dependencies {
     circeDependencies ++
     loggingDependencies ++
     diDependencies ++
-    scalacheckDependencies ++
     testDependencies ++
     WellcomeDependencies.jsonLibrary
 }
