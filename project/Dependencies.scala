@@ -35,6 +35,10 @@ object Dependencies {
     "com.google.inject.extensions" % "guice-testlib" % versions.guice % Test,
   )
 
+  val scalacheckDependencies = Seq(
+    "org.scalacheck" %% "scalacheck" % versions.scalaCheck % "test"
+  )
+
   val loggingDependencies = Seq(
     "org.clapper" %% "grizzled-slf4j" % "1.3.2",
     "ch.qos.logback" % "logback-classic" % versions.logback,
@@ -53,6 +57,7 @@ object Dependencies {
     circeDependencies ++
     loggingDependencies ++
     diDependencies ++
+    scalacheckDependencies ++
     testDependencies ++
     WellcomeDependencies.jsonLibrary
 }
