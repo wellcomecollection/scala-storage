@@ -9,7 +9,7 @@ import scala.concurrent.{ExecutionContext, Future}
 case class KeyPrefix(value: String) extends AnyVal
 case class KeySuffix(value: String) extends AnyVal
 
-trait ObjectStore[+T] {
+trait ObjectStore[T] {
   def put(namespace: String)(
     input: T,
     keyPrefix: KeyPrefix = KeyPrefix(""),
