@@ -55,7 +55,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow],
     migrationH: Migration[DynamoRow, HybridRecord],
     migrationM: Migration[DynamoRow, Metadata]
-  ): Future[Unit] = {
+  ): Future[(HybridRecord, Metadata)] = {
 
     getObject[DynamoRow](id).flatMap {
       case Some(
@@ -77,10 +77,10 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
                 id = id,
                 metadata = transformedMetadata,
                 version = storedHybridRecord.version)
-          )
+          ).map { objectLocation => (HybridRecord("",1,""), storedMetadata)}
         } else {
           debug("existing object unchanged, not updating")
-          Future.successful(())
+          Future.successful((HybridRecord("",1,""), storedMetadata))
         }
       case None =>
         debug("NotExisting object")
@@ -94,7 +94,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
             metadata = metadata,
             version = 0
           )
-        )
+        ).map {objectLocation => (HybridRecord(id = id,version = 1,s3key = objectLocation.key), metadata)}
     }
   }
 
@@ -120,17 +120,14 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     idGetter: IdGetter[DynamoRow],
     versionGetter: VersionGetter[DynamoRow],
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow]
-  ) = {
-
-    val futureUri = objectStore.put(vhsConfig.s3Config.bucketName)(
+  ) =
+    for {
+    objectLocation <- objectStore.put(vhsConfig.s3Config.bucketName)(
       t,
       keyPrefix = KeyPrefix(buildKeyPrefix(id))
     )
-
-    futureUri.flatMap {
-      case ObjectLocation(_, key) => versionedDao.updateRecord(f(key))
-    }
-  }
+    _ <- versionedDao.updateRecord(f(objectLocation.key))
+  } yield objectLocation
 
   // To spread objects evenly in our S3 bucket, we take the last two
   // characters of the ID and reverse them.  This ensures that:

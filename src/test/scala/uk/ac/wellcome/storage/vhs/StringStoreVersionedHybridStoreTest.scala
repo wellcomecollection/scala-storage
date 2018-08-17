@@ -76,8 +76,13 @@ class StringStoreVersionedHybridStoreTest
           val future = hybridStore.updateRecord(id)(ifNotExisting =
             (record, EmptyMetadata()))(ifExisting = (t, m) => (t, m))
 
-          whenReady(future) { _ =>
-            getContentFor(bucket, table, id) shouldBe record
+          whenReady(future) { case (hybridRecord, metadata) =>
+            metadata shouldBe EmptyMetadata()
+            hybridRecord.id shouldBe id
+            hybridRecord.version shouldBe 1
+
+
+            assertStoredCorrectly(hybridRecord, record, bucket, table)
           }
       }
     }
