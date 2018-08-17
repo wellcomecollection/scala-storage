@@ -103,8 +103,12 @@ class StringStoreVersionedHybridStoreTest
               (updatedRecord, EmptyMetadata()))
           }
 
-          whenReady(updatedFuture) { _ =>
-            getContentFor(bucket, table, id) shouldBe updatedRecord
+          whenReady(updatedFuture) {case (hybridRecord, metadata) =>
+            metadata shouldBe EmptyMetadata()
+            hybridRecord.id shouldBe id
+            hybridRecord.version shouldBe 2
+
+            assertStoredCorrectly(hybridRecord, updatedRecord, bucket, table)
           }
       }
     }
