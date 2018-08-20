@@ -77,7 +77,9 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
                 id = id,
                 metadata = transformedMetadata,
                 version = storedHybridRecord.version)
-          ).map { hybridRecord => (hybridRecord, storedMetadata)}
+          ).map { hybridRecord =>
+            (hybridRecord, storedMetadata)
+          }
         } else {
           debug("existing object unchanged, not updating")
           Future.successful((storedHybridRecord, storedMetadata))
@@ -94,7 +96,9 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
             metadata = metadata,
             version = 0
           )
-        ).map {hybridRecord => (hybridRecord, metadata)}
+        ).map { hybridRecord =>
+          (hybridRecord, metadata)
+        }
     }
   }
 
@@ -123,12 +127,12 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow]
   ): Future[HybridRecord] =
     for {
-    objectLocation <- objectStore.put(vhsConfig.s3Config.bucketName)(
-      t,
-      keyPrefix = KeyPrefix(buildKeyPrefix(id))
-    )
-    dynamoRow <- versionedDao.updateRecord(f(objectLocation.key))
-  } yield dynamoRow.migrateTo[HybridRecord]
+      objectLocation <- objectStore.put(vhsConfig.s3Config.bucketName)(
+        t,
+        keyPrefix = KeyPrefix(buildKeyPrefix(id))
+      )
+      dynamoRow <- versionedDao.updateRecord(f(objectLocation.key))
+    } yield dynamoRow.migrateTo[HybridRecord]
 
   // To spread objects evenly in our S3 bucket, we take the last two
   // characters of the ID and reverse them.  This ensures that:

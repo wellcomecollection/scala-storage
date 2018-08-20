@@ -37,7 +37,7 @@ class VersionedDao @Inject()(
       val id = idGetter.id(record)
       debug(s"Attempting to update Dynamo record: $id")
 
-      val ops  = updateBuilder(record)
+      val ops = updateBuilder(record)
       Scanamo.exec(dynamoDbClient)(ops) match {
         case Left(ConditionNotMet(e: ConditionalCheckFailedException)) =>
           throw DynamoNonFatalError(e)
@@ -97,8 +97,9 @@ class VersionedDao @Inject()(
 
     val updatedRecord = versionUpdater.updateVersion(record, newVersion)
 
-    updateExpressionGenerator.generateUpdateExpression(updatedRecord).map {
-      updateExpression =>
+    updateExpressionGenerator
+      .generateUpdateExpression(updatedRecord)
+      .map { updateExpression =>
         Table[T](dynamoConfig.table)
           .given(
             not(attributeExists('id)) or
@@ -108,7 +109,7 @@ class VersionedDao @Inject()(
             UniqueKey(KeyEquals('id, idGetter.id(record))),
             updateExpression
           )
-    }
+      }
       .getOrElse(
         // Everything that gets passed into updateBuilder should have an "id"
         // and a "version" field, and the compiler enforces this with the
@@ -118,7 +119,8 @@ class VersionedDao @Inject()(
         // contains an "id" field, so we should always get Some(ops) out
         // of this function.
         //
-        throw new Exception("Trying to update a record that only has an id: this should be impossible!")
+        throw new Exception(
+          "Trying to update a record that only has an id: this should be impossible!")
       )
   }
 }
