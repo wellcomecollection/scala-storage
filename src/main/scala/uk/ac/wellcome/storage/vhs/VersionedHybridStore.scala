@@ -6,7 +6,12 @@ import com.gu.scanamo.DynamoFormat
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.type_classes.Migration._
 import uk.ac.wellcome.storage.dynamo.{UpdateExpressionGenerator, VersionedDao}
-import uk.ac.wellcome.storage.type_classes.{HybridRecordEnricher, IdGetter, VersionGetter, VersionUpdater}
+import uk.ac.wellcome.storage.type_classes.{
+  HybridRecordEnricher,
+  IdGetter,
+  VersionGetter,
+  VersionUpdater
+}
 import uk.ac.wellcome.storage.type_classes._
 import uk.ac.wellcome.storage.{KeyPrefix, ObjectLocation, ObjectStore}
 
@@ -113,7 +118,9 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     }
   }
 
-  private def putObject[DynamoRow](id: String, t: T, f: ObjectLocation => DynamoRow)(
+  private def putObject[DynamoRow](id: String,
+                                   t: T,
+                                   f: ObjectLocation => DynamoRow)(
     implicit dynamoFormat: DynamoFormat[DynamoRow],
     versionUpdater: VersionUpdater[DynamoRow],
     idGetter: IdGetter[DynamoRow],

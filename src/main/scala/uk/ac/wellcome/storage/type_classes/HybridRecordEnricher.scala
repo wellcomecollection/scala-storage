@@ -39,9 +39,10 @@ object HybridRecordEnricher {
   def create[M, O](f: (String, M, Int, ObjectLocation) => O) =
     new HybridRecordEnricher[M] {
       type Out = O
-      override def enrichedHybridRecordHList(id: String,
-                                             metadata: M,
-                                             version: Int)(location: ObjectLocation): Out =
+      override def enrichedHybridRecordHList(
+        id: String,
+        metadata: M,
+        version: Int)(location: ObjectLocation): Out =
         f(id, metadata, version, location)
     }
 
