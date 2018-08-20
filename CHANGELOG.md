@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## v2.0.0 - 2018-08-20
+
+HybridRecord (the internal model used in the VHS) now stores the S3 bucket
+name as well as the key.  This will break existing instances of the VHS.
+
+There are also some new helpers on `LocalVersionedHybriStore`.
+
 ## v1.7.0 - 2018-08-20
 
 VersionedDao: updateRecord[T] now returns the instance of T that was stored
