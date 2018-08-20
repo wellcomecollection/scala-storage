@@ -2,6 +2,7 @@ package uk.ac.wellcome.storage.type_classes
 
 import shapeless._
 import shapeless.ops.hlist.Prepend
+import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.vhs.HybridRecord
 
 // Type class that returns a HList with all the fields from HybridRecord,
@@ -20,7 +21,7 @@ import uk.ac.wellcome.storage.vhs.HybridRecord
 trait HybridRecordEnricher[T] {
   type Out
   def enrichedHybridRecordHList(id: String, metadata: T, version: Int)(
-    s3key: String): Out
+    location: ObjectLocation): Out
 }
 
 object HybridRecordEnricher {
@@ -35,13 +36,14 @@ object HybridRecordEnricher {
   //    add to the HybridRecord.
   //  - O is the type of the combined output class.
   //
-  def create[M, O](f: (String, M, Int, String) => O) =
+  def create[M, O](f: (String, M, Int, ObjectLocation) => O) =
     new HybridRecordEnricher[M] {
       type Out = O
-      override def enrichedHybridRecordHList(id: String,
-                                             metadata: M,
-                                             version: Int)(s3key: String): Out =
-        f(id, metadata, version, s3key)
+      override def enrichedHybridRecordHList(
+        id: String,
+        metadata: M,
+        version: Int)(location: ObjectLocation): Out =
+        f(id, metadata, version, location)
     }
 
   // This method takes three type parameters:
@@ -58,9 +60,9 @@ object HybridRecordEnricher {
     implicit tgen: LabelledGeneric.Aux[M, R],
     hybridGen: LabelledGeneric.Aux[HybridRecord, L],
     prepend: Prepend[L, R]) = create {
-    (id: String, metadata: M, version: Int, s3key: String) =>
+    (id: String, metadata: M, version: Int, location: ObjectLocation) =>
       {
-        val hybridRecord = HybridRecord(id, version, s3key)
+        val hybridRecord = HybridRecord(id, version, location)
         val metadataAsHlist = tgen.to(metadata)
 
         hybridGen.to(hybridRecord) ::: metadataAsHlist

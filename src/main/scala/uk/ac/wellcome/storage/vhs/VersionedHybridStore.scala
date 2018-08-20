@@ -118,7 +118,9 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     }
   }
 
-  private def putObject[DynamoRow](id: String, t: T, f: (String) => DynamoRow)(
+  private def putObject[DynamoRow](id: String,
+                                   t: T,
+                                   f: ObjectLocation => DynamoRow)(
     implicit dynamoFormat: DynamoFormat[DynamoRow],
     versionUpdater: VersionUpdater[DynamoRow],
     idGetter: IdGetter[DynamoRow],
@@ -131,7 +133,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
         t,
         keyPrefix = KeyPrefix(buildKeyPrefix(id))
       )
-      dynamoRow <- versionedDao.updateRecord(f(objectLocation.key))
+      dynamoRow <- versionedDao.updateRecord(f(objectLocation))
     } yield dynamoRow.migrateTo[HybridRecord]
 
   // To spread objects evenly in our S3 bucket, we take the last two
@@ -164,12 +166,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
         val metadata = dynamoRow.migrateTo[Metadata]
 
         objectStore
-          .get(
-            ObjectLocation(
-              namespace = vhsConfig.s3Config.bucketName,
-              key = hybridRecord.s3key
-            )
-          )
+          .get(hybridRecord.location)
           .map { s3Record =>
             Some(VersionedHybridObject(hybridRecord, s3Record, metadata))
           }

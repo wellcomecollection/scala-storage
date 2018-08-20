@@ -7,6 +7,7 @@ import io.circe.parser.parse
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.json.JsonUtil._
+import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3StorageBackend}
 
 import scala.collection.JavaConverters._
@@ -84,9 +85,14 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
       )
       .mkString
 
-  def getJsonFromS3(bucket: Bucket, key: String): Json = {
+  def getContentFromS3(location: ObjectLocation): String =
+    getContentFromS3(bucket = Bucket(location.namespace), key = location.key)
+
+  def getJsonFromS3(bucket: Bucket, key: String): Json =
     parse(getContentFromS3(bucket, key)).right.get
-  }
+
+  def getJsonFromS3(location: ObjectLocation): Json =
+    getJsonFromS3(bucket = Bucket(location.namespace), key = location.key)
 
   /** Returns a decoded object of type T from S3. */
   def getObjectFromS3[T](bucket: Bucket, key: String)(

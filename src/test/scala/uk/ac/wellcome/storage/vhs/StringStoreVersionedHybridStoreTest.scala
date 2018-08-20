@@ -81,7 +81,6 @@ class StringStoreVersionedHybridStoreTest
             hybridRecord.id shouldBe id
             hybridRecord.version shouldBe 1
 
-
             assertStoredCorrectly(hybridRecord, record, bucket, table)
           }
       }

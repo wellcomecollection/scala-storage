@@ -60,8 +60,7 @@ class StreamStoreVersionedHybridStoreTest
   }
 
   def withS3StreamStoreFixtures[R](
-    testWith: TestWith[(Bucket,
-                        Table,
+    testWith: TestWith[(Table,
                         VersionedHybridStore[InputStream,
                                              EmptyMetadata,
                                              ObjectStore[InputStream]]),
@@ -69,7 +68,7 @@ class StreamStoreVersionedHybridStoreTest
     withLocalS3Bucket[R] { bucket =>
       withLocalDynamoDbTable[R] { table =>
         withStreamVHS[EmptyMetadata, R](bucket, table) { vhs =>
-          testWith((bucket, table, vhs))
+          testWith((table, vhs))
         }
       }
     }
@@ -77,7 +76,7 @@ class StreamStoreVersionedHybridStoreTest
   describe("with S3StreamStore") {
     it("stores an InputStream") {
       withS3StreamStoreFixtures {
-        case (bucket, table, hybridStore) =>
+        case (table, hybridStore) =>
           val id = Random.nextString(5)
           val content = "A thousand thinking thanes thanking a therapod"
           val inputStream = new ByteArrayInputStream(content.getBytes)
@@ -86,14 +85,14 @@ class StreamStoreVersionedHybridStoreTest
             (inputStream, emptyMetadata))(ifExisting = (t, m) => (t, m))
 
           whenReady(future) { _ =>
-            getContentFor(bucket, table, id) shouldBe content
+            getContentFor(table, id) shouldBe content
           }
       }
     }
 
     it("retrieves an InputStream") {
       withS3StreamStoreFixtures {
-        case (_, _, hybridStore) =>
+        case (_, hybridStore) =>
           val id = Random.nextString(5)
           val content = "Five fishing flinging flint"
           val inputStream = new ByteArrayInputStream(content.getBytes)

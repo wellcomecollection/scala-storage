@@ -60,32 +60,26 @@ trait LocalVersionedHybridStore
   def assertStored[T](bucket: Bucket, table: Table, id: String, record: T)(
     implicit encoder: Encoder[T]) =
     assertJsonStringsAreEqual(
-      getJsonFor(bucket, table, id),
+      getJsonFor(table, id),
       toJson(record).get
     )
 
-  @deprecated(
-    "Call getJsonFor without passing the record parameter",
-    "storage 2.0")
-  def getJsonFor[T](bucket: Bucket, table: Table, record: T, id: String): String =
-    getJsonFor(bucket = bucket, table = table, id = id)
-
-  def getJsonFor(bucket: Bucket, table: Table, id: String): String = {
+  def getJsonFor(table: Table, id: String): String = {
     val hybridRecord = getHybridRecord(table, id)
 
-    getJsonFromS3(bucket, hybridRecord.s3key).noSpaces
+    getJsonFromS3(hybridRecord.location).noSpaces
   }
 
-  def getContentFor(bucket: Bucket, table: Table, id: String) = {
+  def getContentFor(table: Table, id: String): String = {
     val hybridRecord = getHybridRecord(table, id)
 
-    getContentFromS3(bucket, hybridRecord.s3key)
+    getContentFromS3(hybridRecord.location)
   }
 
   def assertStoredCorrectly[T](expectedHybridRecord: HybridRecord, expectedContents: T, bucket: Bucket, table: Table) = {
     val hybridRecord = getHybridRecord(table, expectedHybridRecord.id)
     hybridRecord shouldBe expectedHybridRecord
-    getContentFromS3(bucket, hybridRecord.s3key) shouldBe expectedContents
+    getContentFromS3(hybridRecord.location) shouldBe expectedContents
   }
 
   protected def getHybridRecord(table: Table, id: String): HybridRecord =

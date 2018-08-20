@@ -54,7 +54,7 @@ class TypeStoreVersionedHybridStoreTest
             (record, EmptyMetadata()))(ifExisting = (t, m) => (t, m))
 
           whenReady(future) { _ =>
-            getJsonFor(bucket, table, id = record.id) shouldBe toJson(record).get
+            getJsonFor(table, id = record.id) shouldBe toJson(record).get
           }
       }
     }
