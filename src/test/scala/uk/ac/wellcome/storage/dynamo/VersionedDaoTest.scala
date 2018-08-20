@@ -104,11 +104,13 @@ class VersionedDaoTest
 
           val expectedTestVersioned = testVersioned.copy(version = 1)
 
-          whenReady(versionedDao.updateRecord(testVersioned)) { _ =>
+          whenReady(versionedDao.updateRecord(testVersioned)) { result =>
             Scanamo
               .get[TestVersioned](dynamoDbClient)(table.name)(
                 'id -> testVersioned.id)
               .get shouldBe Right(expectedTestVersioned)
+
+            result shouldBe expectedTestVersioned
           }
       }
     }
@@ -128,13 +130,14 @@ class VersionedDaoTest
 
           whenReady(
             versionedDao.updateRecord[TestVersioned](newerTestVersioned)) {
-            _ =>
+            result =>
+              val expectedTestVersioned = newerTestVersioned.copy(version = 3)
               Scanamo
                 .get[TestVersioned](dynamoDbClient)(table.name)(
                   'id -> testVersioned.id)
-                .get shouldBe Right(
-                newerTestVersioned.copy(version = 3)
-              )
+                .get shouldBe Right(expectedTestVersioned)
+
+
           }
       }
     }
@@ -150,13 +153,16 @@ class VersionedDaoTest
 
           Scanamo.put(dynamoDbClient)(table.name)(testVersioned)
 
-          whenReady(versionedDao.updateRecord(testVersioned)) { _ =>
+          whenReady(versionedDao.updateRecord(testVersioned)) { result =>
+            val expectedTestVersioned = testVersioned.copy(version = 2)
             Scanamo
               .get[TestVersioned](dynamoDbClient)(table.name)(
                 'id -> testVersioned.id)
               .get shouldBe Right(
-              testVersioned.copy(version = 2)
+              expectedTestVersioned
             )
+
+            result shouldBe expectedTestVersioned
           }
       }
     }

@@ -26,61 +26,32 @@ class VersionedDao @Inject()(
 )(implicit ec: ExecutionContext)
     extends Logging {
 
-  private def updateBuilder[T](record: T)(
-    implicit evidence: DynamoFormat[T],
-    versionUpdater: VersionUpdater[T],
-    versionGetter: VersionGetter[T],
-    idGetter: IdGetter[T],
-    updateExpressionGenerator: UpdateExpressionGenerator[T]
-  ): Option[ScanamoOps[Either[ScanamoError, T]]] = {
-    val version = versionGetter.version(record)
-    val newVersion = version + 1
-
-    val updatedRecord = versionUpdater.updateVersion(record, newVersion)
-
-    updateExpressionGenerator.generateUpdateExpression(updatedRecord).map {
-      updateExpression =>
-        Table[T](dynamoConfig.table)
-          .given(
-            not(attributeExists('id)) or
-              (attributeExists('id) and 'version < newVersion)
-          )
-          .update(
-            UniqueKey(KeyEquals('id, idGetter.id(record))),
-            updateExpression
-          )
-    }
-  }
-
   def updateRecord[T](record: T)(
     implicit evidence: DynamoFormat[T],
     versionUpdater: VersionUpdater[T],
     idGetter: IdGetter[T],
     versionGetter: VersionGetter[T],
     updateExpressionGenerator: UpdateExpressionGenerator[T]
-  ): Future[Unit] =
+  ): Future[T] =
     Future {
       val id = idGetter.id(record)
       debug(s"Attempting to update Dynamo record: $id")
 
-      updateBuilder(record) match {
-        case Some(ops) =>
-          Scanamo.exec(dynamoDbClient)(ops) match {
-            case Left(ConditionNotMet(e: ConditionalCheckFailedException)) =>
-              throw DynamoNonFatalError(e)
-            case Left(scanamoError) => {
-              val exception = new RuntimeException(scanamoError.toString)
+      val ops  = updateBuilder(record)
+      Scanamo.exec(dynamoDbClient)(ops) match {
+        case Left(ConditionNotMet(e: ConditionalCheckFailedException)) =>
+          throw DynamoNonFatalError(e)
+        case Left(scanamoError) =>
+          val exception = new RuntimeException(scanamoError.toString)
 
-              warn(s"Failed to update Dynamo record: $id", exception)
+          warn(s"Failed to update Dynamo record: $id", exception)
 
-              throw exception
-            }
-            case Right(_) => {
-              debug(s"Successfully updated Dynamo record: $id")
-            }
-          }
-        case None => ()
+          throw exception
+        case Right(result) =>
+          debug(s"Successfully updated Dynamo record: $id")
+          result
       }
+
     }.recover {
       case t: ProvisionedThroughputExceededException =>
         throw DynamoNonFatalError(t)
@@ -112,5 +83,42 @@ class VersionedDao @Inject()(
         None
       }
     }
+  }
+
+  private def updateBuilder[T](record: T)(
+    implicit evidence: DynamoFormat[T],
+    versionUpdater: VersionUpdater[T],
+    versionGetter: VersionGetter[T],
+    idGetter: IdGetter[T],
+    updateExpressionGenerator: UpdateExpressionGenerator[T]
+  ): ScanamoOps[Either[ScanamoError, T]] = {
+    val version = versionGetter.version(record)
+    val newVersion = version + 1
+
+    val updatedRecord = versionUpdater.updateVersion(record, newVersion)
+
+    updateExpressionGenerator.generateUpdateExpression(updatedRecord).map {
+      updateExpression =>
+        Table[T](dynamoConfig.table)
+          .given(
+            not(attributeExists('id)) or
+              (attributeExists('id) and 'version < newVersion)
+          )
+          .update(
+            UniqueKey(KeyEquals('id, idGetter.id(record))),
+            updateExpression
+          )
+    }
+      .getOrElse(
+        // Everything that gets passed into updateBuilder should have an "id"
+        // and a "version" field, and the compiler enforces this with the
+        // implicit IdGetter[T] and VersionGetter[T].
+        //
+        // generateUpdateExpression returns None only if the record only
+        // contains an "id" field, so we should always get Some(ops) out
+        // of this function.
+        //
+        throw new Exception("Trying to update a record that only has an id: this should be impossible!")
+      )
   }
 }
