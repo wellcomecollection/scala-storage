@@ -77,7 +77,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
                 id = id,
                 metadata = transformedMetadata,
                 version = storedHybridRecord.version)
-          ).map { objectLocation => (HybridRecord(id = id,version = storedHybridRecord.version+1,s3key = objectLocation.key), storedMetadata)}
+          ).map { hybridRecord => (hybridRecord, storedMetadata)}
         } else {
           debug("existing object unchanged, not updating")
           Future.successful((storedHybridRecord, storedMetadata))
@@ -94,7 +94,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
             metadata = metadata,
             version = 0
           )
-        ).map {objectLocation => (HybridRecord(id = id,version = 1,s3key = objectLocation.key), metadata)}
+        ).map {hybridRecord => (hybridRecord, metadata)}
     }
   }
 
@@ -119,15 +119,16 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     versionUpdater: VersionUpdater[DynamoRow],
     idGetter: IdGetter[DynamoRow],
     versionGetter: VersionGetter[DynamoRow],
+    migrationH: Migration[DynamoRow, HybridRecord],
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow]
-  ) =
+  ): Future[HybridRecord] =
     for {
     objectLocation <- objectStore.put(vhsConfig.s3Config.bucketName)(
       t,
       keyPrefix = KeyPrefix(buildKeyPrefix(id))
     )
-    _ <- versionedDao.updateRecord(f(objectLocation.key))
-  } yield objectLocation
+    dynamoRow <- versionedDao.updateRecord(f(objectLocation.key))
+  } yield dynamoRow.migrateTo[HybridRecord]
 
   // To spread objects evenly in our S3 bucket, we take the last two
   // characters of the ID and reverse them.  This ensures that:
