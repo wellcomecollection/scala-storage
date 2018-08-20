@@ -80,7 +80,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
           ).map { objectLocation => (HybridRecord(id = id,version = storedHybridRecord.version+1,s3key = objectLocation.key), storedMetadata)}
         } else {
           debug("existing object unchanged, not updating")
-          Future.successful((HybridRecord("",1,""), storedMetadata))
+          Future.successful((storedHybridRecord, storedMetadata))
         }
       case None =>
         debug("NotExisting object")

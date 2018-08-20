@@ -113,6 +113,31 @@ class StringStoreVersionedHybridStoreTest
       }
     }
 
+    it("preserves the existing record if you try to write the same thing twice") {
+      withS3StringStoreFixtures {
+        case (bucket, table, hybridStore) =>
+          val id = Random.nextString(5)
+          val record = "Two teal turtles in Tenerife"
+
+          val future =
+            hybridStore.updateRecord(id)((record, EmptyMetadata()))((t, m) =>
+              (t, m))
+          val updatedFuture = future.flatMap { _ =>
+            hybridStore.updateRecord(id)(ifNotExisting =
+              (record, EmptyMetadata()))(ifExisting = (_, m) =>
+              (record, EmptyMetadata()))
+          }
+
+          whenReady(updatedFuture) {case (hybridRecord, metadata) =>
+            metadata shouldBe EmptyMetadata()
+            hybridRecord.id shouldBe id
+            hybridRecord.version shouldBe 1
+
+            assertStoredCorrectly(hybridRecord, record, bucket, table)
+          }
+      }
+    }
+
     it("returns a future of None for a non-existent record") {
       withS3StringStoreFixtures {
         case (_, _, hybridStore) =>
