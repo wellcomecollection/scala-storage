@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v1.7.0 - 2018-08-20
+
+VersionedDao: updateRecord[T] now returns the instance of T that was stored
+VersionedHybridStore: updateRecord returns the store HybridRecord and Metadata
+
 ## v1.6.1 - 2018-08-01
 
 This is an internal refactoring to use the new
