@@ -55,7 +55,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow],
     migrationH: Migration[DynamoRow, HybridRecord],
     migrationM: Migration[DynamoRow, Metadata]
-  ): Future[Unit] = {
+  ): Future[(HybridRecord, Metadata)] = {
 
     getObject[DynamoRow](id).flatMap {
       case Some(
@@ -77,10 +77,12 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
                 id = id,
                 metadata = transformedMetadata,
                 version = storedHybridRecord.version)
-          )
+          ).map { hybridRecord =>
+            (hybridRecord, storedMetadata)
+          }
         } else {
           debug("existing object unchanged, not updating")
-          Future.successful(())
+          Future.successful((storedHybridRecord, storedMetadata))
         }
       case None =>
         debug("NotExisting object")
@@ -94,7 +96,9 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
             metadata = metadata,
             version = 0
           )
-        )
+        ).map { hybridRecord =>
+          (hybridRecord, metadata)
+        }
     }
   }
 
@@ -119,18 +123,16 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     versionUpdater: VersionUpdater[DynamoRow],
     idGetter: IdGetter[DynamoRow],
     versionGetter: VersionGetter[DynamoRow],
+    migrationH: Migration[DynamoRow, HybridRecord],
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow]
-  ) = {
-
-    val futureUri = objectStore.put(vhsConfig.s3Config.bucketName)(
-      t,
-      keyPrefix = KeyPrefix(buildKeyPrefix(id))
-    )
-
-    futureUri.flatMap {
-      case ObjectLocation(_, key) => versionedDao.updateRecord(f(key))
-    }
-  }
+  ): Future[HybridRecord] =
+    for {
+      objectLocation <- objectStore.put(vhsConfig.s3Config.bucketName)(
+        t,
+        keyPrefix = KeyPrefix(buildKeyPrefix(id))
+      )
+      dynamoRow <- versionedDao.updateRecord(f(objectLocation.key))
+    } yield dynamoRow.migrateTo[HybridRecord]
 
   // To spread objects evenly in our S3 bucket, we take the last two
   // characters of the ID and reverse them.  This ensures that:

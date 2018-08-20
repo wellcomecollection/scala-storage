@@ -76,8 +76,13 @@ class StringStoreVersionedHybridStoreTest
           val future = hybridStore.updateRecord(id)(ifNotExisting =
             (record, EmptyMetadata()))(ifExisting = (t, m) => (t, m))
 
-          whenReady(future) { _ =>
-            getContentFor(bucket, table, id) shouldBe record
+          whenReady(future) { case (hybridRecord, metadata) =>
+            metadata shouldBe EmptyMetadata()
+            hybridRecord.id shouldBe id
+            hybridRecord.version shouldBe 1
+
+
+            assertStoredCorrectly(hybridRecord, record, bucket, table)
           }
       }
     }
@@ -98,8 +103,37 @@ class StringStoreVersionedHybridStoreTest
               (updatedRecord, EmptyMetadata()))
           }
 
-          whenReady(updatedFuture) { _ =>
-            getContentFor(bucket, table, id) shouldBe updatedRecord
+          whenReady(updatedFuture) {case (hybridRecord, metadata) =>
+            metadata shouldBe EmptyMetadata()
+            hybridRecord.id shouldBe id
+            hybridRecord.version shouldBe 2
+
+            assertStoredCorrectly(hybridRecord, updatedRecord, bucket, table)
+          }
+      }
+    }
+
+    it("preserves the existing record if you try to write the same thing twice") {
+      withS3StringStoreFixtures {
+        case (bucket, table, hybridStore) =>
+          val id = Random.nextString(5)
+          val record = "Two teal turtles in Tenerife"
+
+          val future =
+            hybridStore.updateRecord(id)((record, EmptyMetadata()))((t, m) =>
+              (t, m))
+          val updatedFuture = future.flatMap { _ =>
+            hybridStore.updateRecord(id)(ifNotExisting =
+              (record, EmptyMetadata()))(ifExisting = (_, m) =>
+              (record, EmptyMetadata()))
+          }
+
+          whenReady(updatedFuture) {case (hybridRecord, metadata) =>
+            metadata shouldBe EmptyMetadata()
+            hybridRecord.id shouldBe id
+            hybridRecord.version shouldBe 1
+
+            assertStoredCorrectly(hybridRecord, record, bucket, table)
           }
       }
     }

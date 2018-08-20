@@ -82,6 +82,12 @@ trait LocalVersionedHybridStore
     getContentFromS3(bucket, hybridRecord.s3key)
   }
 
+  def assertStoredCorrectly[T](expectedHybridRecord: HybridRecord, expectedContents: T, bucket: Bucket, table: Table) = {
+    val hybridRecord = getHybridRecord(table, expectedHybridRecord.id)
+    hybridRecord shouldBe expectedHybridRecord
+    getContentFromS3(bucket, hybridRecord.s3key) shouldBe expectedContents
+  }
+
   protected def getHybridRecord(table: Table, id: String): HybridRecord =
     Scanamo.get[HybridRecord](dynamoDbClient)(table.name)('id -> id) match {
       case None => throw new RuntimeException(s"No object with id $id found!")
