@@ -94,10 +94,15 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
   def getJsonFromS3(location: ObjectLocation): Json =
     getJsonFromS3(bucket = Bucket(location.namespace), key = location.key)
 
-  /** Returns a decoded object of type T from S3. */
   def getObjectFromS3[T](bucket: Bucket, key: String)(
     implicit decoder: Decoder[T]): T =
     fromJson[T](getContentFromS3(bucket = bucket, key = key)).get
+
+  def getObjectFromS3[T](location: ObjectLocation)(implicit decoder: Decoder[T]): T =
+    getObjectFromS3[T](
+      bucket = Bucket(location.namespace),
+      key = location.key
+    )
 
   /** Returns a list of keys in an S3 bucket.
     *
