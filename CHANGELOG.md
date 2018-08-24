@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v2.1.0 - 2018-08-24
+
+This adds a new helper to the S3 fixture:
+
+```scala
+def getObjectFromS3[T](location: ObjectLocation)(implicit decoder: Decoder[T]): T
+```
+
 ## v2.0.0 - 2018-08-20
 
 HybridRecord (the internal model used in the VHS) now stores the S3 bucket
