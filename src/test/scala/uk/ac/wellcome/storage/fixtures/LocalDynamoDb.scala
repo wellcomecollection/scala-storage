@@ -104,4 +104,8 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
     records.size shouldBe 1
     records.head shouldBe Right(item)
   }
+
+  def listTableItems[T: DynamoFormat](table: Table) = {
+    Scanamo.scan[T](dynamoDbClient)(table.name)
+  }
 }
