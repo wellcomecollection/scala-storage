@@ -58,35 +58,36 @@ class VersionedDao @Inject()(
     }
 
   def getRecord[T](id: String)(
-    implicit evidence: DynamoFormat[T]): Future[Option[T]] = Future {
-    val table = Table[T](dynamoConfig.table)
+    implicit evidence: DynamoFormat[T]): Future[Option[T]] =
+    Future {
+      val table = Table[T](dynamoConfig.table)
 
-    debug(s"Attempting to retrieve Dynamo record: $id")
-    Scanamo.exec(dynamoDbClient)(table.get('id -> id)) match {
-      case Some(Right(record)) => {
-        debug(s"Successfully retrieved Dynamo record: $id")
+      debug(s"Attempting to retrieve Dynamo record: $id")
+      Scanamo.exec(dynamoDbClient)(table.get('id -> id)) match {
+        case Some(Right(record)) => {
+          debug(s"Successfully retrieved Dynamo record: $id")
 
-        Some(record)
+          Some(record)
+        }
+        case Some(Left(scanamoError)) =>
+          val exception = new RuntimeException(scanamoError.toString)
+
+          error(
+            s"An error occurred while retrieving $id from DynamoDB",
+            exception
+          )
+
+          throw exception
+        case None => {
+          debug(s"No Dynamo record found for id: $id")
+
+          None
+        }
       }
-      case Some(Left(scanamoError)) =>
-        val exception = new RuntimeException(scanamoError.toString)
-
-        error(
-          s"An error occurred while retrieving $id from DynamoDB",
-          exception
-        )
-
-        throw exception
-      case None => {
-        debug(s"No Dynamo record found for id: $id")
-
-        None
-      }
+    }.recover {
+      case t: ProvisionedThroughputExceededException =>
+        throw DynamoNonFatalError(t)
     }
-  }.recover {
-    case t: ProvisionedThroughputExceededException =>
-      throw DynamoNonFatalError(t)
-  }
 
   private def updateBuilder[T](record: T)(
     implicit evidence: DynamoFormat[T],
