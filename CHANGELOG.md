@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v2.2.0 - 2018-09-03
+
+When calling `VersionedDao.getRecord`, a `DynamoThroughputExceededException`
+is wrapped as a `DynamoNonFatalError` in the same was as `updateRecord`.
+
 ## v2.1.0 - 2018-08-24
 
 This adds a new helper to the S3 fixture:
