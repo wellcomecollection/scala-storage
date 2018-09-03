@@ -306,18 +306,18 @@ class VersionedDaoTest
         val expectedException = DynamoNonFatalError(exceptionThrownByGetItem)
 
         assertGetFailsWithCorrectException(
-          expectionThrownByGetItem = expectionThrownByGetItem,
+          exceptionThrownByGetItem = exceptionThrownByGetItem,
           expectedException = expectedException
         )
       }
 
       def assertGetFailsWithCorrectException(
-        expectionThrownByGetItem: Throwable,
+        exceptionThrownByGetItem: Throwable,
         expectedException: Throwable) = {
           withLocalDynamoDbTable { table =>
             val mockDynamoDbClient = mock[AmazonDynamoDB]
             when(mockDynamoDbClient.getItem(any[GetItemRequest]))
-              .thenThrow(expectionThrownByGetItem)
+              .thenThrow(exceptionThrownByGetItem)
 
             val failingDao = new VersionedDao(
               dynamoDbClient = mockDynamoDbClient,
