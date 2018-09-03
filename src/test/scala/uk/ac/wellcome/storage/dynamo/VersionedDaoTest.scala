@@ -266,13 +266,13 @@ class VersionedDaoTest
     }
 
     describe("DynamoDB failures") {
-      it("returns a DynamoNonFatalError if we exceed throughput limits") {
+      it("returns a DynamoNonFatalError if we exceed throughput limits on an UpdateItem") {
         val exceptionThrownByUpdateItem = new ProvisionedThroughputExceededException(
           "You tried to write to DynamoDB too quickly!"
         )
         val expectedException = DynamoNonFatalError(exceptionThrownByUpdateItem)
 
-        assertRequestFailsWithCorrectException(
+        assertUpdateFailsWithCorrectException(
           exceptionThrownByUpdateItem = exceptionThrownByUpdateItem,
           expectedException = expectedException
         )
@@ -284,7 +284,7 @@ class VersionedDaoTest
         )
         val expectedException = DynamoNonFatalError(exceptionThrownByUpdateItem)
 
-        assertRequestFailsWithCorrectException(
+        assertUpdateFailsWithCorrectException(
           exceptionThrownByUpdateItem = exceptionThrownByUpdateItem,
           expectedException = expectedException
         )
@@ -293,13 +293,47 @@ class VersionedDaoTest
       it("returns the raw exception if there's an unexpected error") {
         val exception = new RuntimeException("AAAAAARGH!")
 
-        assertRequestFailsWithCorrectException(
+        assertUpdateFailsWithCorrectException(
           exceptionThrownByUpdateItem = exception,
           expectedException = exception
         )
       }
 
-      def assertRequestFailsWithCorrectException(
+      it("returns a DynamoNonFatalError if we exceed throughput limits on a GetItem") {
+        val exceptionThrownByGetItem = new ProvisionedThroughputExceededException(
+          "You tried to read from DynamoDB too quickly!"
+        )
+        val expectedException = DynamoNonFatalError(exceptionThrownByGetItem)
+
+        assertGetFailsWithCorrectException(
+          exceptionThrownByGetItem = exceptionThrownByGetItem,
+          expectedException = expectedException
+        )
+      }
+
+      def assertGetFailsWithCorrectException(
+        exceptionThrownByGetItem: Throwable,
+        expectedException: Throwable) = {
+          withLocalDynamoDbTable { table =>
+            val mockDynamoDbClient = mock[AmazonDynamoDB]
+            when(mockDynamoDbClient.getItem(any[GetItemRequest]))
+              .thenThrow(exceptionThrownByGetItem)
+
+            val failingDao = new VersionedDao(
+              dynamoDbClient = mockDynamoDbClient,
+              dynamoConfig = DynamoConfig(
+                table = table.name,
+                index = table.index
+              )
+            )
+
+            whenReady(failingDao.getRecord[TestVersioned](id = "123").failed) { ex =>
+              ex shouldBe expectedException
+            }
+          }
+        }
+
+      def assertUpdateFailsWithCorrectException(
         exceptionThrownByUpdateItem: Throwable,
         expectedException: Throwable) = {
         withLocalDynamoDbTable { table =>
