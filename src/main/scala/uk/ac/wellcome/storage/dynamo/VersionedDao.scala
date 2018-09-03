@@ -83,6 +83,9 @@ class VersionedDao @Inject()(
         None
       }
     }
+  }.recover {
+    case t: ProvisionedThroughputExceededException =>
+      throw DynamoNonFatalError(t)
   }
 
   private def updateBuilder[T](record: T)(
