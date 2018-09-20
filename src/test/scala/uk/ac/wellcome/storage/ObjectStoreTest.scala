@@ -1,16 +1,22 @@
 package uk.ac.wellcome.storage
 
+import java.io.{File, IOException}
+
+import org.apache.commons.io.{FileUtils, IOUtils}
+import org.mockito.Mockito
 import org.scalatest.FunSpec
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.PropertyChecks
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.fixtures.S3
+import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
 
-import scala.concurrent.Future
-
-class ObjectStoreTest extends FunSpec with S3 with ScalaFutures with PropertyChecks {
+class ObjectStoreTest extends FunSpec with S3 with ScalaFutures with PropertyChecks with MockitoSugar {
   case class TestClass(id: String)
 
 
@@ -79,4 +85,39 @@ class ObjectStoreTest extends FunSpec with S3 with ScalaFutures with PropertyChe
     }
   }
 
+  it("closes the input stream when retrieving an object if the returned type is not input stream") {
+    val storageBackend = mock[StorageBackend]
+
+    val objectStore = ObjectStore.createObjectStore(SerialisationStrategy.stringSerialisationStrategy, storageBackend, implicitly[ExecutionContext])
+    val location = ObjectLocation("bucket", "key")
+
+    val string = "bah buh bih"
+    val file = File.createTempFile("stream-test", ".txt")
+    FileUtils.writeStringToFile(file, string, "UTF-8")
+    val stream = FileUtils.openInputStream(file)
+    Mockito.when(storageBackend.get(location)).thenReturn(Future(stream))
+
+    Await.result(objectStore.get(location), 10 seconds) shouldBe string
+
+    intercept[IOException] {
+      stream.read()
+    }
+  }
+
+  it("does not close the stream when retrieving an object if the returned type is InputStream") {
+    val storageBackend = mock[StorageBackend]
+
+    val objectStore = ObjectStore.createObjectStore(SerialisationStrategy.streamSerialisationStrategy, storageBackend, implicitly[ExecutionContext])
+    val location = ObjectLocation("bucket", "key")
+
+    val string = "bah buh bih"
+    val file = File.createTempFile("stream-test", ".txt")
+    FileUtils.writeStringToFile(file, string, "UTF-8")
+    val stream = FileUtils.openInputStream(file)
+    Mockito.when(storageBackend.get(location)).thenReturn(Future(stream))
+
+    IOUtils.toString(Await.result(objectStore.get(location), 10 seconds), "UTF-8") shouldBe string
+
+    stream.close()
+  }
 }

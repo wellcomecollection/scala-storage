@@ -84,10 +84,8 @@ class S3StorageBackend @Inject()(s3Client: AmazonS3)(
       s3Client.getObject(bucketName, key).getObjectContent
     }
 
-    futureInputStream.foreach {
-      case _ =>
-        debug(s"Success: GET object from s3://$bucketName/$key")
-    }
+    futureInputStream.foreach(_ =>
+      debug(s"Success: GET object from s3://$bucketName/$key"))
 
     futureInputStream
   }
