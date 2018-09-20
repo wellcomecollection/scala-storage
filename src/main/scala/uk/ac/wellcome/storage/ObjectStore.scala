@@ -60,8 +60,11 @@ object ObjectStore {
     }
 
     def get(objectLocation: ObjectLocation): Future[T] = {
-      val input: Future[InputStream] = storageBackend.get(objectLocation)
-      input.flatMap(input => Future.fromTry(storageStrategy.fromStream(input)))
+      for {
+        input <- storageBackend.get(objectLocation)
+        a <- Future.fromTry(storageStrategy.fromStream(input))
+        _  <- Future{if (a.isInstanceOf[InputStream]) () else input.close()}
+      } yield a
     }
   }
 }

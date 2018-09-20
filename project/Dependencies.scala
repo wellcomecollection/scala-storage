@@ -22,6 +22,7 @@ object Dependencies {
     val scalaCheck = "1.13.4"
     val scalatest = "3.0.1"
     val scanamo = "1.0.0-M3"
+    val apacheCommons = "2.6"
   }
 
   val circeDependencies = Seq(
@@ -48,6 +49,9 @@ object Dependencies {
   val diDependencies = Seq(
     "com.google.inject" % "guice" % versions.guice
   )
+  
+  val apacheCommons = Seq(
+    "commons-io" % "commons-io" % versions.apacheCommons % "test")
 
   val libraryDependencies = Seq(
     "com.amazonaws" % "aws-java-sdk-dynamodb" % versions.aws,
@@ -59,5 +63,6 @@ object Dependencies {
     diDependencies ++
     scalacheckDependencies ++
     testDependencies ++
+    apacheCommons ++
     WellcomeDependencies.jsonLibrary
 }
