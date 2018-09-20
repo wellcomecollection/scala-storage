@@ -63,7 +63,7 @@ object ObjectStore {
       for {
         input <- storageBackend.get(objectLocation)
         a <- Future.fromTry(storageStrategy.fromStream(input))
-        _  <- Future{if (a.isInstanceOf[InputStream]) () else input.close()}
+        _ <- Future { if (a.isInstanceOf[InputStream]) () else input.close() }
       } yield a
     }
   }
