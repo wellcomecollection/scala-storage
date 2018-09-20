@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v2.3.0 - 2018-09-20
+
+Close the input stream when retrieving an object with an ObjectStore
+
 ## v2.2.0 - 2018-09-03
 
 When calling `VersionedDao.getRecord`, a `DynamoThroughputExceededException`
