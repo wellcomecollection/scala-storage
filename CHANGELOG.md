@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v2.4.0 - 2018-10-05
+
+Upgrade scanamo version
+
 ## v2.3.0 - 2018-09-20
 
 Close the input stream when retrieving an object with an ObjectStore
