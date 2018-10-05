@@ -21,7 +21,7 @@ object Dependencies {
     val mockito = "1.9.5"
     val scalaCheck = "1.13.4"
     val scalatest = "3.0.1"
-    val scanamo = "1.0.0-M3"
+    val scanamo = "1.0.0-M5"
     val apacheCommons = "2.6"
   }
 
