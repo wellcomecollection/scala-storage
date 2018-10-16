@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v2.4.1 - 2018-10-16
+
+Use `blocking` when necessary and don't create a new thread to close the stream in `ObjectStore`
+
 ## v2.4.0 - 2018-10-05
 
 Upgrade scanamo version
