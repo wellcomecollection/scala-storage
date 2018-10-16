@@ -18,7 +18,7 @@ import uk.ac.wellcome.storage.type_classes.{
   VersionUpdater
 }
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{blocking, ExecutionContext, Future}
 
 class VersionedDao @Inject()(
   dynamoDbClient: AmazonDynamoDB,
@@ -38,7 +38,7 @@ class VersionedDao @Inject()(
       debug(s"Attempting to update Dynamo record: $id")
 
       val ops = updateBuilder(record)
-      Scanamo.exec(dynamoDbClient)(ops) match {
+      blocking(Scanamo.exec(dynamoDbClient)(ops)) match {
         case Left(ConditionNotMet(e: ConditionalCheckFailedException)) =>
           throw DynamoNonFatalError(e)
         case Left(scanamoError) =>
@@ -63,7 +63,7 @@ class VersionedDao @Inject()(
       val table = Table[T](dynamoConfig.table)
 
       debug(s"Attempting to retrieve Dynamo record: $id")
-      Scanamo.exec(dynamoDbClient)(table.get('id -> id)) match {
+      blocking(Scanamo.exec(dynamoDbClient)(table.get('id -> id))) match {
         case Some(Right(record)) => {
           debug(s"Successfully retrieved Dynamo record: $id")
 

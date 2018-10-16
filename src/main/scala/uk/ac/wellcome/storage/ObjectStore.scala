@@ -5,6 +5,7 @@ import java.io.InputStream
 import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 case class KeyPrefix(value: String) extends AnyVal
 case class KeySuffix(value: String) extends AnyVal
@@ -63,7 +64,9 @@ object ObjectStore {
       for {
         input <- storageBackend.get(objectLocation)
         a <- Future.fromTry(storageStrategy.fromStream(input))
-        _ <- Future { if (a.isInstanceOf[InputStream]) () else input.close() }
+        _ <- Future.fromTry(Try {
+          if (a.isInstanceOf[InputStream]) () else input.close()
+        })
       } yield a
     }
   }

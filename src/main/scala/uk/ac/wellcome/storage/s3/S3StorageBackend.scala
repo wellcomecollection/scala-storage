@@ -9,7 +9,7 @@ import com.google.inject.Inject
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.{ObjectLocation, StorageBackend}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{blocking, ExecutionContext, Future}
 import scala.collection.JavaConverters._
 
 class S3StorageBackend @Inject()(s3Client: AmazonS3)(
@@ -65,7 +65,9 @@ class S3StorageBackend @Inject()(s3Client: AmazonS3)(
 
     debug(s"Attempt: PUT object to s3://$bucketName/$key")
     val putObject = Future {
-      s3Client.putObject(putObjectRequest)
+      blocking {
+        s3Client.putObject(putObjectRequest)
+      }
     }
 
     putObject.map { _ =>
@@ -81,7 +83,9 @@ class S3StorageBackend @Inject()(s3Client: AmazonS3)(
     debug(s"Attempt: GET object from s3://$bucketName/$key")
 
     val futureInputStream = Future {
-      s3Client.getObject(bucketName, key).getObjectContent
+      blocking {
+        s3Client.getObject(bucketName, key).getObjectContent
+      }
     }
 
     futureInputStream.foreach(_ =>
