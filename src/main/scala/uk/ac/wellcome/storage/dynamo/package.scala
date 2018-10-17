@@ -8,7 +8,7 @@ import com.gu.scanamo.error.DynamoReadError
 import shapeless.{HList, Lazy}
 
 package object dynamo {
-  implicit val instantLongFormat =
+  implicit val instantLongFormat: AnyRef with DynamoFormat[Instant] =
     DynamoFormat.coercedXmap[Instant, String, IllegalArgumentException](
       Instant.parse
     )(

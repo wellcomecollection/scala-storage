@@ -15,7 +15,6 @@ object LocalDynamoDb {
 }
 
 trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
-
   import LocalDynamoDb._
 
   private val port = 45678
