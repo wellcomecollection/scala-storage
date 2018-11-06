@@ -7,7 +7,6 @@ import org.scalatest.Matchers
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.json.utils.JsonAssertions
 import uk.ac.wellcome.storage.ObjectStore
-import uk.ac.wellcome.storage.dynamo.DynamoConfig
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
 import uk.ac.wellcome.storage.s3._
@@ -41,7 +40,7 @@ trait LocalVersionedHybridStore
   ): R = {
 
     val s3Config = S3Config(bucketName = bucket.name)
-    val dynamoConfig = DynamoConfig(table = table.name, Some(table.index))
+    val dynamoConfig = createDynamoConfigWith(table)
 
     val vhsConfig = VHSConfig(
       dynamoConfig = dynamoConfig,

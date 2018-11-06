@@ -38,8 +38,7 @@ class StreamStoreVersionedHybridStoreTest
   ): R = {
     val s3Config = S3Config(bucketName = bucket.name)
 
-    val dynamoConfig =
-      DynamoConfig(table = table.name, maybeIndex = Some(table.index))
+    val dynamoConfig = createDynamoConfigWith(table)
 
     val vhsConfig = VHSConfig(
       dynamoConfig = dynamoConfig,
