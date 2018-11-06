@@ -70,23 +70,17 @@ class VersionedDaoTest
 
     it("returns a failed future with exception if dynamo read fails") {
       withLocalDynamoDbTable { table =>
-        val dynamoDbClient = mock[AmazonDynamoDB]
+        val mockDynamoDbClient = mock[AmazonDynamoDB]
         val expectedException = new RuntimeException("AAAAAARGH!")
-        when(dynamoDbClient.getItem(any[GetItemRequest]))
+        when(mockDynamoDbClient.getItem(any[GetItemRequest]))
           .thenThrow(expectedException)
 
-        val testVersionedDaoMockedDynamoClient =
-          new VersionedDao(
-            dynamoDbClient,
-            dynamoConfig = createDynamoConfigWith(table)
-          )
+        withVersionedDao(mockDynamoDbClient, table = table) { versionedDao =>
+          val future = versionedDao.getRecord[TestVersioned]("testSource/b88888")
 
-        val future =
-          testVersionedDaoMockedDynamoClient.getRecord[TestVersioned](
-            "testSource/b88888")
-
-        whenReady(future.failed) { ex =>
-          ex shouldBe expectedException
+          whenReady(future.failed) { ex =>
+            ex shouldBe expectedException
+          }
         }
       }
     }
@@ -319,13 +313,10 @@ class VersionedDaoTest
             when(mockDynamoDbClient.getItem(any[GetItemRequest]))
               .thenThrow(exceptionThrownByGetItem)
 
-            val failingDao = new VersionedDao(
-              dynamoDbClient = mockDynamoDbClient,
-              dynamoConfig = createDynamoConfigWith(table)
-            )
-
-            whenReady(failingDao.getRecord[TestVersioned](id = "123").failed) { ex =>
-              ex shouldBe expectedException
+            withVersionedDao(mockDynamoDbClient, table) { failingDao =>
+              whenReady(failingDao.getRecord[TestVersioned](id = "123").failed) { ex =>
+                ex shouldBe expectedException
+              }
             }
           }
         }
@@ -338,19 +329,16 @@ class VersionedDaoTest
           when(mockDynamoDbClient.updateItem(any[UpdateItemRequest]))
             .thenThrow(exceptionThrownByUpdateItem)
 
-          val failingDao = new VersionedDao(
-            dynamoDbClient = mockDynamoDbClient,
-            dynamoConfig = createDynamoConfigWith(table)
-          )
-
           val testVersioned = TestVersioned(
             id = "testSource/b1111",
             data = "whatever",
             version = 1
           )
 
-          whenReady(failingDao.updateRecord(testVersioned).failed) { ex =>
-            ex shouldBe expectedException
+          withVersionedDao(mockDynamoDbClient, table) { failingDao =>
+            whenReady(failingDao.updateRecord(testVersioned).failed) { ex =>
+              ex shouldBe expectedException
+            }
           }
         }
       }
