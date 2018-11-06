@@ -32,19 +32,14 @@ trait LocalVersionedHybridStore
     ) ++ s3ClientLocalFlags ++ dynamoClientLocalFlags
 
   def withTypeVHS[T, Metadata, R](bucket: Bucket,
-                                        table: Table,
-                                        globalS3Prefix: String =
-                                          defaultGlobalS3Prefix)(
+                                  table: Table,
+                                  globalS3Prefix: String = defaultGlobalS3Prefix)(
     testWith: TestWith[VersionedHybridStore[T, Metadata, ObjectStore[T]], R])(
     implicit objectStore: ObjectStore[T]
   ): R = {
-
-    val s3Config = createS3ConfigWith(bucket)
-    val dynamoConfig = createDynamoConfigWith(table)
-
-    val vhsConfig = VHSConfig(
-      dynamoConfig = dynamoConfig,
-      s3Config = s3Config,
+    val vhsConfig = createVHSConfigWith(
+      table = table,
+      bucket = bucket,
       globalS3Prefix = globalS3Prefix
     )
 
@@ -103,4 +98,15 @@ trait LocalVersionedHybridStore
           case Right(record) => record
         }
     }
+
+  def createVHSConfigWith(
+    table: Table,
+    bucket: Bucket,
+    globalS3Prefix: String
+  ): VHSConfig =
+    VHSConfig(
+      dynamoConfig = createDynamoConfigWith(table),
+      s3Config = createS3ConfigWith(bucket),
+      globalS3Prefix = globalS3Prefix
+    )
 }

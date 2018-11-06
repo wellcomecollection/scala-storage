@@ -35,13 +35,9 @@ class StreamStoreVersionedHybridStoreTest
       R])(
     implicit objectStore: ObjectStore[InputStream]
   ): R = {
-    val s3Config = createS3ConfigWith(bucket)
-
-    val dynamoConfig = createDynamoConfigWith(table)
-
-    val vhsConfig = VHSConfig(
-      dynamoConfig = dynamoConfig,
-      s3Config = s3Config,
+    val vhsConfig = createVHSConfigWith(
+      table = table,
+      bucket = bucket,
       globalS3Prefix = globalS3Prefix
     )
 
