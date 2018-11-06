@@ -129,4 +129,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
     listKeysInBucket(bucket).map { key =>
       key -> getContentFromS3(bucket = bucket, key = key)
     }.toMap
+
+  def createS3ConfigWith(bucket: Bucket): S3Config =
+    S3Config(bucketName = bucket.name)
 }

@@ -6,7 +6,6 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.fixtures.{LocalVersionedHybridStore, TestWith}
-import uk.ac.wellcome.storage.s3.S3Config
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
 
@@ -36,7 +35,7 @@ class StreamStoreVersionedHybridStoreTest
       R])(
     implicit objectStore: ObjectStore[InputStream]
   ): R = {
-    val s3Config = S3Config(bucketName = bucket.name)
+    val s3Config = createS3ConfigWith(bucket)
 
     val dynamoConfig = createDynamoConfigWith(table)
 

@@ -39,7 +39,7 @@ trait LocalVersionedHybridStore
     implicit objectStore: ObjectStore[T]
   ): R = {
 
-    val s3Config = S3Config(bucketName = bucket.name)
+    val s3Config = createS3ConfigWith(bucket)
     val dynamoConfig = createDynamoConfigWith(table)
 
     val vhsConfig = VHSConfig(
