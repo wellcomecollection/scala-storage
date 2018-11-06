@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v2.5.0 - 2018-11-06
+
+This patch adds three new helpers to the test fixtures:
+
+```scala
+trait S3 {
+  def createS3ConfigWith(bucket: Bucket): S3Config
+}
+
+trait LocalDynamoDB {
+  def createDynamoConfigWith(table: Table): DynamoConfig
+}
+
+trait LocalVersionedHybridStore {
+  def createVHSConfigWith(table: Table, bucket: Bucket, globalS3Prefix: String): VHSConfig
+}
+```
+
 ## v2.4.1 - 2018-10-16
 
 Use `blocking` when necessary and don't create a new thread to close the stream in `ObjectStore`
