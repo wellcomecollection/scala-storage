@@ -7,10 +7,8 @@ import org.scalatest.Matchers
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.json.utils.JsonAssertions
 import uk.ac.wellcome.storage.ObjectStore
-import uk.ac.wellcome.storage.dynamo.DynamoConfig
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
-import uk.ac.wellcome.storage.s3._
 import uk.ac.wellcome.storage.vhs.{HybridRecord, VHSConfig, VersionedHybridStore}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -33,19 +31,14 @@ trait LocalVersionedHybridStore
     ) ++ s3ClientLocalFlags ++ dynamoClientLocalFlags
 
   def withTypeVHS[T, Metadata, R](bucket: Bucket,
-                                        table: Table,
-                                        globalS3Prefix: String =
-                                          defaultGlobalS3Prefix)(
+                                  table: Table,
+                                  globalS3Prefix: String = defaultGlobalS3Prefix)(
     testWith: TestWith[VersionedHybridStore[T, Metadata, ObjectStore[T]], R])(
     implicit objectStore: ObjectStore[T]
   ): R = {
-
-    val s3Config = S3Config(bucketName = bucket.name)
-    val dynamoConfig = DynamoConfig(table = table.name, Some(table.index))
-
-    val vhsConfig = VHSConfig(
-      dynamoConfig = dynamoConfig,
-      s3Config = s3Config,
+    val vhsConfig = createVHSConfigWith(
+      table = table,
+      bucket = bucket,
       globalS3Prefix = globalS3Prefix
     )
 
@@ -104,4 +97,15 @@ trait LocalVersionedHybridStore
           case Right(record) => record
         }
     }
+
+  def createVHSConfigWith(
+    table: Table,
+    bucket: Bucket,
+    globalS3Prefix: String
+  ): VHSConfig =
+    VHSConfig(
+      dynamoConfig = createDynamoConfigWith(table),
+      s3Config = createS3ConfigWith(bucket),
+      globalS3Prefix = globalS3Prefix
+    )
 }

@@ -65,8 +65,14 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
   )
 
   def withVersionedDao[R](table: Table)(
+    testWith: TestWith[VersionedDao, R]): R =
+    withVersionedDao(dynamoDbClient, table = table) { dao =>
+      testWith(dao)
+    }
+
+  def withVersionedDao[R](dynamoDbClient: AmazonDynamoDB, table: Table)(
     testWith: TestWith[VersionedDao, R]): R = {
-    val dynamoConfig = DynamoConfig(table = table.name, index = table.index)
+    val dynamoConfig = createDynamoConfigWith(table)
     val dao = new VersionedDao(dynamoDbClient, dynamoConfig)
     testWith(dao)
   }
@@ -107,4 +113,10 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
   def listTableItems[T: DynamoFormat](table: Table) = {
     Scanamo.scan[T](dynamoDbClient)(table.name)
   }
+
+  def createDynamoConfigWith(table: Table): DynamoConfig =
+    DynamoConfig(
+      table = table.name,
+      maybeIndex = Some(table.index)
+    )
 }

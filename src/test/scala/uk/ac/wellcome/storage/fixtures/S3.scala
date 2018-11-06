@@ -8,7 +8,7 @@ import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.ObjectLocation
-import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3StorageBackend}
+import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config, S3StorageBackend}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -129,4 +129,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
     listKeysInBucket(bucket).map { key =>
       key -> getContentFromS3(bucket = bucket, key = key)
     }.toMap
+
+  def createS3ConfigWith(bucket: Bucket): S3Config =
+    S3Config(bucketName = bucket.name)
 }

@@ -6,7 +6,6 @@ import uk.ac.wellcome.storage.fixtures.{LocalVersionedHybridStore, TestWith}
 import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
-import uk.ac.wellcome.storage.s3.S3Config
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
@@ -29,14 +28,9 @@ class StringStoreVersionedHybridStoreTest
       R])(
     implicit objectStore: ObjectStore[String]
   ): R = {
-    val s3Config = S3Config(bucketName = bucket.name)
-
-    val dynamoConfig =
-      DynamoConfig(table = table.name, maybeIndex = Some(table.index))
-
-    val vhsConfig = VHSConfig(
-      dynamoConfig = dynamoConfig,
-      s3Config = s3Config,
+    val vhsConfig = createVHSConfigWith(
+      table = table,
+      bucket = bucket,
       globalS3Prefix = globalS3Prefix
     )
 
