@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v2.6.0 - 2018-11-08
+
+Adds a new class `VHSIndexEntry[M](hybridRecord: HybridRecord, metadata: M)` which is
+returned as the result of a call to `updateRecord`.
+
+Additionally, fixes a bug where `updateRecord` would return incorrect metadata when
+updating an existing record.
+
 ## v2.5.0 - 2018-11-06
 
 This patch adds three new helpers to the test fixtures:
