@@ -61,7 +61,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
             VHSIndexEntry(storedHybridRecord, storedMetadata),
             storedS3Record
           )
-        ) =>
+          ) =>
         debug(s"Existing object $id")
         val (transformedS3Record, transformedMetadata) =
           ifExisting(storedS3Record, storedMetadata)
@@ -182,10 +182,10 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
         objectStore
           .get(hybridRecord.location)
           .map { s3Object =>
-            Some(VersionedHybridObject(
-              vhsIndexEntry = vhsIndexEntry,
-              s3Object = s3Object)
-            )
+            Some(
+              VersionedHybridObject(
+                vhsIndexEntry = vhsIndexEntry,
+                s3Object = s3Object))
           }
       }
       case None => Future.successful(None)
