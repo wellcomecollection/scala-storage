@@ -54,8 +54,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow],
     migrationH: Migration[DynamoRow, HybridRecord],
     migrationM: Migration[DynamoRow, Metadata]
-  ): Future[(HybridRecord, Metadata)] = {
-
+  ): Future[VHSEntry[Metadata]] =
     getObject[DynamoRow](id).flatMap {
       case Some(
           VersionedHybridObject(
@@ -78,11 +77,19 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
                 metadata = transformedMetadata,
                 version = storedHybridRecord.version)
           ).map { hybridRecord =>
-            (hybridRecord, storedMetadata)
+            VHSEntry(
+              hybridRecord = hybridRecord,
+              metadata = storedMetadata
+            )
           }
         } else {
           debug("existing object unchanged, not updating")
-          Future.successful((storedHybridRecord, storedMetadata))
+          Future.successful(
+            VHSEntry(
+              hybridRecord = storedHybridRecord,
+              metadata = storedMetadata
+            )
+          )
         }
       case None =>
         debug("NotExisting object")
@@ -97,10 +104,12 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
             version = 0
           )
         ).map { hybridRecord =>
-          (hybridRecord, metadata)
+          VHSEntry(
+            hybridRecord = hybridRecord,
+            metadata = metadata
+          )
         }
     }
-  }
 
   def getRecord[DynamoRow](id: String)(
     implicit enricher: HybridRecordEnricher.Aux[Metadata, DynamoRow],

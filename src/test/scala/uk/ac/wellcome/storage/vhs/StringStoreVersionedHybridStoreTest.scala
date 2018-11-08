@@ -207,7 +207,8 @@ class StringStoreVersionedHybridStoreTest
                   (t, updatedMetadata))
               }
 
-              whenReady(updatedFuture) { _ =>
+              whenReady(updatedFuture) { vhsEntry: VHSEntry =>
+                vhsEntry.metadata shouldBe updatedMetadata
                 getRecordMetadata[ExtraData](table, id) shouldBe updatedMetadata
               }
             }
