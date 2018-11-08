@@ -70,7 +70,7 @@ class StringStoreVersionedHybridStoreTest
           val future = hybridStore.updateRecord(id)(ifNotExisting =
             (record, EmptyMetadata()))(ifExisting = (t, m) => (t, m))
 
-          whenReady(future) { case (hybridRecord, metadata) =>
+          whenReady(future) { case VHSEntry(hybridRecord, metadata) =>
             metadata shouldBe EmptyMetadata()
             hybridRecord.id shouldBe id
             hybridRecord.version shouldBe 1
@@ -96,7 +96,7 @@ class StringStoreVersionedHybridStoreTest
               (updatedRecord, EmptyMetadata()))
           }
 
-          whenReady(updatedFuture) {case (hybridRecord, metadata) =>
+          whenReady(updatedFuture) {case VHSEntry(hybridRecord, metadata) =>
             metadata shouldBe EmptyMetadata()
             hybridRecord.id shouldBe id
             hybridRecord.version shouldBe 2
@@ -121,7 +121,7 @@ class StringStoreVersionedHybridStoreTest
               (record, EmptyMetadata()))
           }
 
-          whenReady(updatedFuture) {case (hybridRecord, metadata) =>
+          whenReady(updatedFuture) {case VHSEntry(hybridRecord, metadata) =>
             metadata shouldBe EmptyMetadata()
             hybridRecord.id shouldBe id
             hybridRecord.version shouldBe 1
