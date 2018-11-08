@@ -31,9 +31,8 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
   )
 
   private case class VersionedHybridObject(
-    hybridRecord: HybridRecord,
-    s3Object: T,
-    metadata: Metadata
+    vhsIndexEntry: VHSIndexEntry[Metadata],
+    s3Object: T
   )
 
   // Store a single record in DynamoDB.
@@ -55,14 +54,14 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow],
     migrationH: Migration[DynamoRow, HybridRecord],
     migrationM: Migration[DynamoRow, Metadata]
-  ): Future[(HybridRecord, Metadata)] = {
-
+  ): Future[VHSIndexEntry[Metadata]] =
     getObject[DynamoRow](id).flatMap {
       case Some(
           VersionedHybridObject(
-            storedHybridRecord,
-            storedS3Record,
-            storedMetadata)) =>
+            VHSIndexEntry(storedHybridRecord, storedMetadata),
+            storedS3Record
+          )
+          ) =>
         debug(s"Existing object $id")
         val (transformedS3Record, transformedMetadata) =
           ifExisting(storedS3Record, storedMetadata)
@@ -78,11 +77,19 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
                 metadata = transformedMetadata,
                 version = storedHybridRecord.version)
           ).map { hybridRecord =>
-            (hybridRecord, storedMetadata)
+            VHSIndexEntry(
+              hybridRecord = hybridRecord,
+              metadata = transformedMetadata
+            )
           }
         } else {
           debug("existing object unchanged, not updating")
-          Future.successful((storedHybridRecord, storedMetadata))
+          Future.successful(
+            VHSIndexEntry(
+              hybridRecord = storedHybridRecord,
+              metadata = storedMetadata
+            )
+          )
         }
       case None =>
         debug("NotExisting object")
@@ -97,10 +104,12 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
             version = 0
           )
         ).map { hybridRecord =>
-          (hybridRecord, metadata)
+          VHSIndexEntry(
+            hybridRecord = hybridRecord,
+            metadata = metadata
+          )
         }
     }
-  }
 
   def getRecord[DynamoRow](id: String)(
     implicit enricher: HybridRecordEnricher.Aux[Metadata, DynamoRow],
@@ -165,10 +174,18 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
         val hybridRecord = dynamoRow.migrateTo[HybridRecord]
         val metadata = dynamoRow.migrateTo[Metadata]
 
+        val vhsIndexEntry = VHSIndexEntry(
+          hybridRecord = hybridRecord,
+          metadata = metadata
+        )
+
         objectStore
           .get(hybridRecord.location)
-          .map { s3Record =>
-            Some(VersionedHybridObject(hybridRecord, s3Record, metadata))
+          .map { s3Object =>
+            Some(
+              VersionedHybridObject(
+                vhsIndexEntry = vhsIndexEntry,
+                s3Object = s3Object))
           }
       }
       case None => Future.successful(None)
