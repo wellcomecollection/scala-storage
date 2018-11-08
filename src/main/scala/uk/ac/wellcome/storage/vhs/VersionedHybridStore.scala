@@ -79,7 +79,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
           ).map { hybridRecord =>
             VHSEntry(
               hybridRecord = hybridRecord,
-              metadata = storedMetadata
+              metadata = transformedMetadata
             )
           }
         } else {
