@@ -31,9 +31,8 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
   )
 
   private case class VersionedHybridObject(
-    hybridRecord: HybridRecord,
-    s3Object: T,
-    metadata: Metadata
+    vhsEntry: VHSEntry[Metadata],
+    s3Object: T
   )
 
   // Store a single record in DynamoDB.
@@ -60,9 +59,10 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     getObject[DynamoRow](id).flatMap {
       case Some(
           VersionedHybridObject(
-            storedHybridRecord,
-            storedS3Record,
-            storedMetadata)) =>
+            VHSEntry(storedHybridRecord, storedMetadata),
+            storedS3Record
+          )
+        ) =>
         debug(s"Existing object $id")
         val (transformedS3Record, transformedMetadata) =
           ifExisting(storedS3Record, storedMetadata)
@@ -165,10 +165,18 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
         val hybridRecord = dynamoRow.migrateTo[HybridRecord]
         val metadata = dynamoRow.migrateTo[Metadata]
 
+        val vhsEntry = VHSEntry(
+          hybridRecord = hybridRecord,
+          metadata = metadata
+        )
+
         objectStore
           .get(hybridRecord.location)
-          .map { s3Record =>
-            Some(VersionedHybridObject(hybridRecord, s3Record, metadata))
+          .map { s3Object =>
+            Some(VersionedHybridObject(
+              vhsEntry = vhsEntry,
+              s3Object = s3Object)
+            )
           }
       }
       case None => Future.successful(None)
