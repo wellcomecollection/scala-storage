@@ -1,6 +1,6 @@
 package uk.ac.wellcome.storage.vhs
 
-case class VHSEntry[M](
+case class VHSIndexEntry[M](
   hybridRecord: HybridRecord,
   metadata: M
 )

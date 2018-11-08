@@ -31,7 +31,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
   )
 
   private case class VersionedHybridObject(
-    vhsEntry: VHSEntry[Metadata],
+    vhsIndexEntry: VHSIndexEntry[Metadata],
     s3Object: T
   )
 
@@ -54,11 +54,11 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow],
     migrationH: Migration[DynamoRow, HybridRecord],
     migrationM: Migration[DynamoRow, Metadata]
-  ): Future[VHSEntry[Metadata]] =
+  ): Future[VHSIndexEntry[Metadata]] =
     getObject[DynamoRow](id).flatMap {
       case Some(
           VersionedHybridObject(
-            VHSEntry(storedHybridRecord, storedMetadata),
+            VHSIndexEntry(storedHybridRecord, storedMetadata),
             storedS3Record
           )
         ) =>
@@ -77,7 +77,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
                 metadata = transformedMetadata,
                 version = storedHybridRecord.version)
           ).map { hybridRecord =>
-            VHSEntry(
+            VHSIndexEntry(
               hybridRecord = hybridRecord,
               metadata = transformedMetadata
             )
@@ -85,7 +85,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
         } else {
           debug("existing object unchanged, not updating")
           Future.successful(
-            VHSEntry(
+            VHSIndexEntry(
               hybridRecord = storedHybridRecord,
               metadata = storedMetadata
             )
@@ -104,7 +104,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
             version = 0
           )
         ).map { hybridRecord =>
-          VHSEntry(
+          VHSIndexEntry(
             hybridRecord = hybridRecord,
             metadata = metadata
           )
@@ -174,7 +174,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
         val hybridRecord = dynamoRow.migrateTo[HybridRecord]
         val metadata = dynamoRow.migrateTo[Metadata]
 
-        val vhsEntry = VHSEntry(
+        val vhsIndexEntry = VHSIndexEntry(
           hybridRecord = hybridRecord,
           metadata = metadata
         )
@@ -183,7 +183,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
           .get(hybridRecord.location)
           .map { s3Object =>
             Some(VersionedHybridObject(
-              vhsEntry = vhsEntry,
+              vhsIndexEntry = vhsIndexEntry,
               s3Object = s3Object)
             )
           }
