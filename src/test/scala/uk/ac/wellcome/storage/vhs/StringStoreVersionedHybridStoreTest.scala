@@ -46,15 +46,14 @@ class StringStoreVersionedHybridStoreTest
 
   def withS3StringStoreFixtures[R](
     testWith: TestWith[
-      (Bucket,
-       Table,
+      (Table,
        VersionedHybridStore[String, EmptyMetadata, ObjectStore[String]]),
       R]
   ): R =
     withLocalS3Bucket[R] { bucket =>
       withLocalDynamoDbTable[R] { table =>
         withStringVHS[EmptyMetadata, R](bucket, table) { vhs =>
-          testWith((bucket, table, vhs))
+          testWith((table, vhs))
         }
       }
     }
@@ -62,103 +61,98 @@ class StringStoreVersionedHybridStoreTest
   // The StringStore demonstrates the base functionality of the VHS
   describe("with S3StringStore") {
     it("stores a record if it has never been seen before") {
-      withS3StringStoreFixtures {
-        case (bucket, table, hybridStore) =>
-          val id = Random.nextString(5)
-          val record = "One ocelot in orange"
+      withS3StringStoreFixtures { case (table, hybridStore) =>
+        val id = Random.nextString(5)
+        val record = "One ocelot in orange"
 
-          val future = hybridStore.updateRecord(id)(ifNotExisting =
-            (record, EmptyMetadata()))(ifExisting = (t, m) => (t, m))
+        val future = hybridStore.updateRecord(id)(ifNotExisting =
+          (record, EmptyMetadata()))(ifExisting = (t, m) => (t, m))
 
-          whenReady(future) { case VHSIndexEntry(hybridRecord, metadata) =>
-            metadata shouldBe EmptyMetadata()
-            hybridRecord.id shouldBe id
-            hybridRecord.version shouldBe 1
+        whenReady(future) { case VHSIndexEntry(hybridRecord, metadata) =>
+          metadata shouldBe EmptyMetadata()
+          hybridRecord.id shouldBe id
+          hybridRecord.version shouldBe 1
 
-            assertStoredCorrectly(hybridRecord, record, bucket, table)
-          }
+          assertStoredCorrectly(hybridRecord, record, table)
+        }
       }
     }
 
     it("applies the given transformation to an existing record") {
-      withS3StringStoreFixtures {
-        case (bucket, table, hybridStore) =>
-          val id = Random.nextString(5)
-          val record = "Two teal turtles in Tenerife"
-          val updatedRecord = "Throwing turquoise tangerines in Tanzania"
+      withS3StringStoreFixtures { case (table, hybridStore) =>
+        val id = Random.nextString(5)
+        val record = "Two teal turtles in Tenerife"
+        val updatedRecord = "Throwing turquoise tangerines in Tanzania"
 
-          val future =
-            hybridStore.updateRecord(id)((record, EmptyMetadata()))((t, m) =>
-              (t, m))
-          val updatedFuture = future.flatMap { _ =>
-            hybridStore.updateRecord(id)(ifNotExisting =
-              (updatedRecord, EmptyMetadata()))(ifExisting = (_, m) =>
-              (updatedRecord, EmptyMetadata()))
-          }
+        val future =
+          hybridStore.updateRecord(id)((record, EmptyMetadata()))((t, m) =>
+            (t, m))
+        val updatedFuture = future.flatMap { _ =>
+          hybridStore.updateRecord(id)(ifNotExisting =
+            (updatedRecord, EmptyMetadata()))(ifExisting = (_, m) =>
+            (updatedRecord, EmptyMetadata()))
+        }
 
-          whenReady(updatedFuture) {case VHSIndexEntry(hybridRecord, metadata) =>
-            metadata shouldBe EmptyMetadata()
-            hybridRecord.id shouldBe id
-            hybridRecord.version shouldBe 2
+        whenReady(updatedFuture) { case VHSIndexEntry(hybridRecord, metadata) =>
+          metadata shouldBe EmptyMetadata()
+          hybridRecord.id shouldBe id
+          hybridRecord.version shouldBe 2
 
-            assertStoredCorrectly(hybridRecord, updatedRecord, bucket, table)
-          }
+          assertStoredCorrectly(hybridRecord, updatedRecord, table)
+        }
       }
     }
 
     it("preserves the existing record if you try to write the same thing twice") {
-      withS3StringStoreFixtures {
-        case (bucket, table, hybridStore) =>
-          val id = Random.nextString(5)
-          val record = "Two teal turtles in Tenerife"
+      withS3StringStoreFixtures { case (table, hybridStore) =>
+        val id = Random.nextString(5)
+        val record = "Two teal turtles in Tenerife"
 
-          val future =
-            hybridStore.updateRecord(id)((record, EmptyMetadata()))((t, m) =>
-              (t, m))
-          val updatedFuture = future.flatMap { _ =>
-            hybridStore.updateRecord(id)(ifNotExisting =
-              (record, EmptyMetadata()))(ifExisting = (_, m) =>
-              (record, EmptyMetadata()))
-          }
+        val future =
+          hybridStore.updateRecord(id)((record, EmptyMetadata()))((t, m) =>
+            (t, m))
+        val updatedFuture = future.flatMap { _ =>
+          hybridStore.updateRecord(id)(ifNotExisting =
+            (record, EmptyMetadata()))(ifExisting = (_, m) =>
+            (record, EmptyMetadata()))
+        }
 
-          whenReady(updatedFuture) {case VHSIndexEntry(hybridRecord, metadata) =>
-            metadata shouldBe EmptyMetadata()
-            hybridRecord.id shouldBe id
-            hybridRecord.version shouldBe 1
+        whenReady(updatedFuture) { case VHSIndexEntry(hybridRecord, metadata) =>
+          metadata shouldBe EmptyMetadata()
+          hybridRecord.id shouldBe id
+          hybridRecord.version shouldBe 1
 
-            assertStoredCorrectly(hybridRecord, record, bucket, table)
-          }
+          assertStoredCorrectly(hybridRecord, record, table)
+        }
       }
     }
 
     it("returns a future of None for a non-existent record") {
-      withS3StringStoreFixtures {
-        case (_, _, hybridStore) =>
-          val future = hybridStore.getRecord(id = "does/notexist")
+      withS3StringStoreFixtures { case (_, hybridStore) =>
+        val future = hybridStore.getRecord(id = "does/notexist")
 
-          whenReady(future) { result =>
-            result shouldBe None
-          }
+        whenReady(future) { result =>
+          result shouldBe None
+        }
       }
     }
 
     it("returns a future of Some[String] if the record exists") {
-      withS3StringStoreFixtures {
-        case (_, _, hybridStore) =>
-          val id = Random.nextString(5)
-          val record = "Five fishing flinging flint"
+      withS3StringStoreFixtures { case (_, hybridStore) =>
+        val id = Random.nextString(5)
+        val record = "Five fishing flinging flint"
 
-          val putFuture =
-            hybridStore.updateRecord(id)(ifNotExisting =
-              (record, EmptyMetadata()))(ifExisting = (t, m) => (t, m))
+        val putFuture =
+          hybridStore.updateRecord(id)(ifNotExisting =
+            (record, EmptyMetadata()))(ifExisting = (t, m) => (t, m))
 
-          val getFuture = putFuture.flatMap { _ =>
-            hybridStore.getRecord(id)
-          }
+        val getFuture = putFuture.flatMap { _ =>
+          hybridStore.getRecord(id)
+        }
 
-          whenReady(getFuture) { result =>
-            result shouldBe Some(record)
-          }
+        whenReady(getFuture) { result =>
+          result shouldBe Some(record)
+        }
       }
     }
 
