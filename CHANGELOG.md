@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v2.7.0 - 2018-11-14
+
+This release adds some extra helpers to `LocalVersionedHybridStore` that don't
+require passing an unnecessary `bucket: Bucket` parameter.
+
 ## v2.6.0 - 2018-11-08
 
 Adds a new class `VHSIndexEntry[M](hybridRecord: HybridRecord, metadata: M)` which is
