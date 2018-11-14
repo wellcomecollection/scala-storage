@@ -3,7 +3,7 @@ package uk.ac.wellcome.storage.fixtures
 import com.gu.scanamo.{DynamoFormat, Scanamo}
 import com.gu.scanamo.syntax._
 import io.circe.Encoder
-import org.scalatest.Matchers
+import org.scalatest.{Assertion, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.json.utils.JsonAssertions
 import uk.ac.wellcome.storage.ObjectStore
@@ -50,8 +50,13 @@ trait LocalVersionedHybridStore
     testWith(store)
   }
 
+  @deprecated("Use the method without the 'bucket' parameter")
   def assertStored[T](bucket: Bucket, table: Table, id: String, record: T)(
-    implicit encoder: Encoder[T]) =
+    implicit encoder: Encoder[T]): Assertion =
+    assertStored(table = table, id = id, record = record)
+
+  def assertStored[T](table: Table, id: String, record: T)(
+    implicit encoder: Encoder[T]): Assertion =
     assertJsonStringsAreEqual(
       getJsonFor(table, id),
       toJson(record).get
@@ -69,7 +74,15 @@ trait LocalVersionedHybridStore
     getContentFromS3(hybridRecord.location)
   }
 
-  def assertStoredCorrectly[T](expectedHybridRecord: HybridRecord, expectedContents: T, bucket: Bucket, table: Table) = {
+  @deprecated("Use the method without the 'bucket' parameter")
+  def assertStoredCorrectly[T](expectedHybridRecord: HybridRecord, expectedContents: T, bucket: Bucket, table: Table): Assertion =
+    assertStoredCorrectly(
+      expectedHybridRecord = expectedHybridRecord,
+      expectedContents = expectedContents,
+      table = table
+    )
+
+  def assertStoredCorrectly[T](expectedHybridRecord: HybridRecord, expectedContents: T, table: Table): Assertion = {
     val hybridRecord = getHybridRecord(table, expectedHybridRecord.id)
     hybridRecord shouldBe expectedHybridRecord
     getContentFromS3(hybridRecord.location) shouldBe expectedContents
