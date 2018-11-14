@@ -11,8 +11,7 @@ import uk.ac.wellcome.storage.{ObjectLocation, StorageBackend}
 import scala.concurrent.{blocking, ExecutionContext, Future}
 import scala.collection.JavaConverters._
 
-class S3StorageBackend(s3Client: AmazonS3)(
-  implicit ec: ExecutionContext)
+class S3StorageBackend(s3Client: AmazonS3)(implicit ec: ExecutionContext)
     extends StorageBackend
     with Logging {
 
