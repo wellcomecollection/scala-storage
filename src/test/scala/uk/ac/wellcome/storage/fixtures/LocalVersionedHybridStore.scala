@@ -50,11 +50,6 @@ trait LocalVersionedHybridStore
     testWith(store)
   }
 
-  @deprecated("Use the method without the 'bucket' parameter", "after v2.6.0")
-  def assertStored[T](bucket: Bucket, table: Table, id: String, record: T)(
-    implicit encoder: Encoder[T]): Assertion =
-    assertStored(table = table, id = id, record = record)
-
   def assertStored[T](table: Table, id: String, record: T)(
     implicit encoder: Encoder[T]): Assertion =
     assertJsonStringsAreEqual(
@@ -73,14 +68,6 @@ trait LocalVersionedHybridStore
 
     getContentFromS3(hybridRecord.location)
   }
-
-  @deprecated("Use the method without the 'bucket' parameter", "after v2.6.0")
-  def assertStoredCorrectly[T](expectedHybridRecord: HybridRecord, expectedContents: T, bucket: Bucket, table: Table): Assertion =
-    assertStoredCorrectly(
-      expectedHybridRecord = expectedHybridRecord,
-      expectedContents = expectedContents,
-      table = table
-    )
 
   def assertStoredCorrectly[T](expectedHybridRecord: HybridRecord, expectedContents: T, table: Table): Assertion = {
     val hybridRecord = getHybridRecord(table, expectedHybridRecord.id)
