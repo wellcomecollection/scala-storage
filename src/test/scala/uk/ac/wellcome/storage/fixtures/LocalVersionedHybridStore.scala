@@ -21,15 +21,6 @@ trait LocalVersionedHybridStore
 
   val defaultGlobalS3Prefix = "testing"
 
-  def vhsLocalFlags(bucket: Bucket,
-                    table: Table,
-                    globalS3Prefix: String = defaultGlobalS3Prefix) =
-    Map(
-      "aws.vhs.s3.bucketName" -> bucket.name,
-      "aws.vhs.s3.globalPrefix" -> globalS3Prefix,
-      "aws.vhs.dynamo.tableName" -> table.name
-    ) ++ s3ClientLocalFlags ++ dynamoClientLocalFlags
-
   def withTypeVHS[T, Metadata, R](bucket: Bucket,
                                   table: Table,
                                   globalS3Prefix: String = defaultGlobalS3Prefix)(
@@ -98,7 +89,7 @@ trait LocalVersionedHybridStore
         }
     }
 
-  def createVHSConfigWith(
+  private def createVHSConfigWith(
     table: Table,
     bucket: Bucket,
     globalS3Prefix: String

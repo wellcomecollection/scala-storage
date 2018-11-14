@@ -23,19 +23,6 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
   private val accessKey = "access"
   private val secretKey = "secret"
 
-  def dynamoDbLocalEndpointFlags(table: Table): Map[String, String] =
-    dynamoClientLocalFlags ++ Map(
-      "aws.dynamo.tableName" -> table.name,
-      "aws.dynamo.tableIndex" -> table.index
-    )
-
-  def dynamoClientLocalFlags = Map(
-    "aws.dynamoDb.endpoint" -> dynamoDBEndPoint,
-    "aws.dynamoDb.accessKey" -> accessKey,
-    "aws.dynamoDb.secretKey" -> secretKey,
-    "aws.dynamoDb.region" -> regionName
-  )
-
   val dynamoDbClient: AmazonDynamoDB = DynamoClientFactory.create(
     region = regionName,
     endpoint = dynamoDBEndPoint,
