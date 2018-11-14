@@ -5,7 +5,6 @@ import com.amazonaws.services.dynamodbv2.model.{
   ConditionalCheckFailedException,
   ProvisionedThroughputExceededException
 }
-import com.google.inject.Inject
 import com.gu.scanamo.error.{ConditionNotMet, ScanamoError}
 import com.gu.scanamo.ops.ScanamoOps
 import com.gu.scanamo.query.{KeyEquals, UniqueKey}
@@ -20,7 +19,7 @@ import uk.ac.wellcome.storage.type_classes.{
 
 import scala.concurrent.{blocking, ExecutionContext, Future}
 
-class VersionedDao @Inject()(
+class VersionedDao(
   dynamoDbClient: AmazonDynamoDB,
   dynamoConfig: DynamoConfig
 )(implicit ec: ExecutionContext)

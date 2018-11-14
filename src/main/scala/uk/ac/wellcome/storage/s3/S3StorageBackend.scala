@@ -5,14 +5,13 @@ import java.io.{ByteArrayInputStream, InputStream}
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import com.amazonaws.util.IOUtils
-import com.google.inject.Inject
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.{ObjectLocation, StorageBackend}
 
 import scala.concurrent.{blocking, ExecutionContext, Future}
 import scala.collection.JavaConverters._
 
-class S3StorageBackend @Inject()(s3Client: AmazonS3)(
+class S3StorageBackend(s3Client: AmazonS3)(
   implicit ec: ExecutionContext)
     extends StorageBackend
     with Logging {

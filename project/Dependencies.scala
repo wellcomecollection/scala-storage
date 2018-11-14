@@ -16,7 +16,6 @@ object Dependencies {
   lazy val versions = new {
     val aws = "1.11.225"
     val circe = "0.9.0"
-    val guice = "4.2.0"
     val logback = "1.1.8"
     val mockito = "1.9.5"
     val scalaCheck = "1.13.4"
@@ -33,7 +32,6 @@ object Dependencies {
   val testDependencies = Seq(
     "org.scalatest" %% "scalatest" % versions.scalatest % Test,
     "org.mockito" % "mockito-core" % versions.mockito % Test,
-    "com.google.inject.extensions" % "guice-testlib" % versions.guice % Test,
   )
 
   val scalacheckDependencies = Seq(
@@ -46,10 +44,6 @@ object Dependencies {
     "org.slf4j" % "slf4j-api" % "1.7.25"
   )
 
-  val diDependencies = Seq(
-    "com.google.inject" % "guice" % versions.guice
-  )
-  
   val apacheCommons = Seq(
     "commons-io" % "commons-io" % versions.apacheCommons % "test")
 
@@ -60,7 +54,6 @@ object Dependencies {
   ) ++
     circeDependencies ++
     loggingDependencies ++
-    diDependencies ++
     scalacheckDependencies ++
     testDependencies ++
     apacheCommons ++
