@@ -89,7 +89,7 @@ trait LocalVersionedHybridStore
         }
     }
 
-  private def createVHSConfigWith(
+  def createVHSConfigWith(
     table: Table,
     bucket: Bucket,
     globalS3Prefix: String
