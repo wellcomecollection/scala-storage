@@ -1,5 +1,6 @@
 package uk.ac.wellcome.storage
 
+import java.net.URI
 import java.time.Instant
 
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
@@ -23,4 +24,11 @@ package object dynamo {
         formatR.value.read(av).toEither
       def write(t: T): AttributeValue = formatR.value.write(t)
     }
+
+  implicit val uriDynamoFormat: DynamoFormat[URI] =
+    DynamoFormat.coercedXmap[URI, String, IllegalArgumentException](
+      new URI(_)
+    )(
+      _.toString
+    )
 }
