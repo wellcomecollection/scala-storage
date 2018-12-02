@@ -2,6 +2,7 @@ package uk.ac.wellcome.storage.dynamo
 
 import java.net.URI
 import java.time.Instant
+import java.util.UUID
 
 import com.gu.scanamo.{DynamoFormat, Scanamo}
 import com.gu.scanamo.syntax._
@@ -27,6 +28,14 @@ class DynamoFormatTest extends FunSpec with LocalDynamoDbVersioned with Matchers
     val record = Webpage(id = "1", uri = new URI("https://example.org/"))
 
     assertCanStoreAndRetrieve[Webpage](record = record)
+  }
+
+  it("allows storing and retrieving an instance of UUID") {
+    case class UniqueID(id: String, uuid: UUID) extends Identifiable
+
+    val record = UniqueID(id = "1", uuid = UUID.randomUUID())
+
+    assertCanStoreAndRetrieve[UniqueID](record = record)
   }
 
   private def assertCanStoreAndRetrieve[T <: Identifiable](record: T)(
