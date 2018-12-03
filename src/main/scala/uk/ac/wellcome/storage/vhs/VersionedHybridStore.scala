@@ -1,7 +1,6 @@
 package uk.ac.wellcome.storage.vhs
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.google.inject.Inject
 import com.gu.scanamo.DynamoFormat
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.type_classes.Migration._
@@ -19,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 case class EmptyMetadata()
 
-class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]] @Inject()(
+class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
   vhsConfig: VHSConfig,
   objectStore: Store,
   dynamoDbClient: AmazonDynamoDB
