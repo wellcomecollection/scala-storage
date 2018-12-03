@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v2.8.0 - 2018-12-03
+
+This release adds support for storing instances of `java.net.URI` with the implicit
+Scanamo formats.
+
 ## v2.7.0 - 2018-11-14
 
 This release adds some extra helpers to `LocalVersionedHybridStore` that don't
