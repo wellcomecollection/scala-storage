@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## v3.0.0 - 2018-12-03
+
+This release removes the dependency on Guice and the ability to use these classes
+with dependency injection.
+
+It also removes deprecated methods.
+
 ## v2.8.0 - 2018-12-03
 
 This release adds support for storing instances of `java.net.URI` with the implicit
