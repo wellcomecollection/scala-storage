@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.1.0 - 2018-12-07
+
+Bump the version of scala-json to 1.1.1.
+
 ## v3.0.0 - 2018-12-03
 
 This release removes the dependency on Guice and the ability to use these classes
