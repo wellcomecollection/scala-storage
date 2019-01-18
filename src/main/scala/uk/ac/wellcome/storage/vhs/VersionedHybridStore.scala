@@ -156,7 +156,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
   //      e.g. 0001 and 0002 are separated by nine shards.
   //
   private def buildKeyPrefix(id: String): String =
-    s"${vhsConfig.globalS3Prefix.stripSuffix("/")}/${id.reverse.slice(0, 2)}/$id"
+    s"${vhsConfig.globalS3Prefix.stripSuffix("/")}/$id"
 
   private def getObject[DynamoRow](id: String)(
     implicit dynamoFormat: DynamoFormat[DynamoRow],
