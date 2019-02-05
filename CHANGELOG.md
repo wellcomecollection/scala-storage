@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.2.1 - 2019-02-05
+
+Start using the scala-fixtures lib rather than vendoring fixtures.
+
 ## v3.2.0 - 2019-01-30
 
 The VHS no longer includes a shard in S3 keys.  This is based on
