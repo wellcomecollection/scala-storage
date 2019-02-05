@@ -15,9 +15,9 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSpec, Matchers}
 import shapeless._
+import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDbVersioned
-import uk.ac.wellcome.storage.fixtures._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

@@ -4,6 +4,7 @@ import com.gu.scanamo.{DynamoFormat, Scanamo}
 import com.gu.scanamo.syntax._
 import io.circe.Encoder
 import org.scalatest.{Assertion, Matchers}
+import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.json.utils.JsonAssertions
 import uk.ac.wellcome.storage.ObjectStore

@@ -2,8 +2,14 @@ import sbt._
 
 object WellcomeDependencies {
   private lazy val versions = new {
+    val fixtures = "1.0.0"
     val json = "1.1.1"
   }
+
+  val fixturesLibrary: Seq[ModuleID] = Seq(
+    "uk.ac.wellcome" % "fixtures_2.12" % versions.fixtures % "test",
+    "uk.ac.wellcome" % "fixtures_2.12" % versions.fixtures % "test" classifier "tests"
+  )
 
   val jsonLibrary: Seq[ModuleID] = Seq(
     "uk.ac.wellcome" % "json_2.12" % versions.json % "test",
@@ -57,5 +63,6 @@ object Dependencies {
     scalacheckDependencies ++
     testDependencies ++
     apacheCommons ++
-    WellcomeDependencies.jsonLibrary
+    WellcomeDependencies.jsonLibrary ++
+    WellcomeDependencies.fixturesLibrary
 }
