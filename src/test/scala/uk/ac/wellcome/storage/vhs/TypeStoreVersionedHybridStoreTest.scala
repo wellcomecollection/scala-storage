@@ -5,7 +5,8 @@ import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
-import uk.ac.wellcome.storage.fixtures.{LocalVersionedHybridStore, TestWith}
+import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.fixtures.LocalVersionedHybridStore
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 
 import scala.util.Random

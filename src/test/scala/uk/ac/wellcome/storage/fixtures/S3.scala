@@ -6,6 +6,7 @@ import io.circe.{Decoder, Json}
 import io.circe.parser.parse
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
+import uk.ac.wellcome.fixtures._
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config, S3StorageBackend}

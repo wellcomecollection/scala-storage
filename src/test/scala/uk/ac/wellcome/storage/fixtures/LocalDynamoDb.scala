@@ -5,6 +5,7 @@ import com.gu.scanamo.syntax._
 import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
+import uk.ac.wellcome.fixtures._
 import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig, VersionedDao}
 
 import scala.concurrent.ExecutionContext.Implicits.global
