@@ -4,18 +4,17 @@
 This script contains all our release tooling for sbt libraries.
 
 Usage:
-    sbt_release_tooling.py autoformat
-    sbt_release_tooling.py check_release_file
+    sbt_release_tooling.py format
     sbt_release_tooling.py release
     sbt_release_tooling.py test
     sbt_release_tooling.py -h | --help
 
 Commands:
-    check_release_file      Runs in a pull request to check if the RELEASE.md
-                            file is well-formatted.  Exits with 0 if correct,
-                            exits with 1 if not.
-    release                 Publish a new release of the library.
-    test                    Run Scala tests.
+    format          Runs in a pull request to apply autoformatting and check if
+                    the RELEASE.md and Scala code is well-formatted.
+                    Exits with 0 if correct, exits with 1 if not.
+    release         Publish a new release of the library.
+    test            Run Scala tests.
 
 The canonical version of this script is kept in the platform repo
 (https://github.com/wellcometrust/platform), but copied into our other
@@ -261,8 +260,8 @@ def update_changelog_and_version():
     #
     lines = list(open(BUILD_SBT))
     for idx, l in enumerate(lines):
-        if l.startswith('version := '):
-            lines[idx] = 'version := "%s"\n' % new_version_string.strip('v')
+        if l.startswith('val projectVersion = '):
+            lines[idx] = 'val projectVersion = "%s"\n' % new_version_string.strip('v')
             break
     else:  # no break
         raise RuntimeError('Never updated version in build.sbt?')
@@ -350,6 +349,8 @@ def branch_name():
 def autoformat():
     sbt('scalafmt')
 
+    check_release_file()
+
     # If there are any changes, push to GitHub immediately and fail the
     # build.  This will abort the remaining jobs, and trigger a new build
     # with the reformatted code.
@@ -384,16 +385,14 @@ if __name__ == '__main__':
         len(sys.argv) != 2 or
         sys.argv[1] in ('-h', '--help') or
         sys.argv[1] not in (
-            'autoformat', 'check_release_file', 'release', 'test')
+            'format', 'check_release_file', 'release', 'test')
     ):
         print(__doc__.strip())
         sys.exit(1)
 
     configure_secrets()
 
-    if sys.argv[1] == 'check_release_file':
-        check_release_file()
-    elif sys.argv[1] == 'release':
+    if sys.argv[1] == 'release':
         release()
     elif sys.argv[1] == 'test':
         if os.path.exists('docker-compose.yml'):
@@ -401,7 +400,7 @@ if __name__ == '__main__':
             sbt('test')
         else:
             sbt('test')
-    elif sys.argv[1] == 'autoformat':
+    elif sys.argv[1] == 'format':
         autoformat()
     else:
         assert False, sys.argv
