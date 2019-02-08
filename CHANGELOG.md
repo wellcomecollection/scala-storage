@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.3.0 - 2019-02-08
+
+This release adds the `storage_typesafe` library for configuring the `storage` library using Typesafe.
+
 ## v3.2.1 - 2019-02-05
 
 Start using the scala-fixtures lib rather than vendoring fixtures.
