@@ -33,13 +33,11 @@ env:
 jobs:
   include:
     - stage: format
-      env: TASK=autoformat
+      env: TASK=format
     - stage: test
       env: TASK=test
-      sudo: required
       services:
         - docker
-    - env: TASK=check_release_file
     - stage: release
       env: TASK=release
 
