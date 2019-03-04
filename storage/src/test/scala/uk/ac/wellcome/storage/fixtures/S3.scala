@@ -37,7 +37,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
   protected val accessKey = "accessKey1"
   protected val secretKey = "verySecretKey1"
 
-  val s3Client: AmazonS3 = S3ClientFactory.create(
+  implicit val s3Client: AmazonS3 = S3ClientFactory.create(
     region = regionName,
     endpoint = localS3EndpointUrl,
     accessKey = accessKey,
