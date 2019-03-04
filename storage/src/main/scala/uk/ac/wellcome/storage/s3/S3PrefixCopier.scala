@@ -22,15 +22,16 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
     srcLocationPrefix: ObjectLocation,
     dstLocationPrefix: ObjectLocation
   ): Future[Unit] =
-    s3PrefixOperator.run(prefix = srcLocationPrefix) { srcLocation: ObjectLocation =>
-      val relativeKey = srcLocation.key
-        .stripPrefix(srcLocationPrefix.key)
+    s3PrefixOperator.run(prefix = srcLocationPrefix) {
+      srcLocation: ObjectLocation =>
+        val relativeKey = srcLocation.key
+          .stripPrefix(srcLocationPrefix.key)
 
-      val dstLocation = ObjectLocation(
-        namespace = dstLocationPrefix.namespace,
-        key = dstLocationPrefix.key + relativeKey
-      )
+        val dstLocation = ObjectLocation(
+          namespace = dstLocationPrefix.namespace,
+          key = dstLocationPrefix.key + relativeKey
+        )
 
-      copier.copy(srcLocation, dstLocation)
+        copier.copy(srcLocation, dstLocation)
     }
 }
