@@ -99,7 +99,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
     * Note: this only makes a single call to the ListObjects API, so it
     * gets a single page of results.
     *
-    * @param bucket The instance of [[S3.Bucket]] to list.
+    * @param bucket The instance of S3.Bucket to list.
     * @return A list of object keys.
     */
   def listKeysInBucket(bucket: Bucket): List[String] =
@@ -112,7 +112,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
 
   /** Returns a map (key -> contents) for all objects in an S3 bucket.
     *
-    * @param bucket The instance of [[S3.Bucket]] to read.
+    * @param bucket The instance of S3.Bucket to read.
     *
     */
   def getAllObjectContents(bucket: Bucket): Map[String, String] =
