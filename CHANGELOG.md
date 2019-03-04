@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v3.4.0 - 2019-03-04
+
+This release adds three new classes and a new trait: S3PrefixCopier, S3Copier, S3PrefixOperator and ObjectCopier.
+
+It also makes the AmazonS3 client in the S3 fixture implicit.
+
 ## v3.3.0 - 2019-02-08
 
 This release adds the `storage_typesafe` library for configuring the `storage` library using Typesafe.
