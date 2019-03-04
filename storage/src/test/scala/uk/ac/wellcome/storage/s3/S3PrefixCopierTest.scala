@@ -20,10 +20,15 @@ class S3PrefixCopierTest
 
   val batchSize = 10
   val copier = new S3Copier(s3Client)
-  val s3PrefixCopier = new S3PrefixCopier(
+
+  val s3PrefixOperator = new S3PrefixOperator(
     s3Client = s3Client,
-    copier = copier,
     batchSize = batchSize
+  )
+
+  val s3PrefixCopier = new S3PrefixCopier(
+    s3PrefixOperator = s3PrefixOperator,
+    copier = copier
   )
 
   it("returns a successful Future if there are no files in the prefix") {
@@ -174,7 +179,10 @@ class S3PrefixCopierTest
           throw exception
     }
 
-    val brokenPrefixCopier = new S3PrefixCopier(s3Client, copier = brokenCopier)
+    val brokenPrefixCopier = new S3PrefixCopier(
+      s3PrefixOperator = s3PrefixOperator,
+      copier = brokenCopier
+    )
 
     withLocalS3Bucket { srcBucket =>
       val srcPrefix = createObjectLocationWith(srcBucket, key = "src/")

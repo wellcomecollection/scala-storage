@@ -1,18 +1,10 @@
 package uk.ac.wellcome.storage.s3
 
-import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.iterable.S3Objects
-import com.amazonaws.services.s3.model.S3ObjectSummary
 import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
 
-import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-class S3PrefixCopier(
-  s3Client: AmazonS3,
-  copier: ObjectCopier,
-  batchSize: Int = 1000
-)(implicit ec: ExecutionContext) {
+class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
 
   /** Copy all the objects from under ObjectLocation into another ObjectLocation,
     * preserving the relative path from the source in the destination.
@@ -29,31 +21,8 @@ class S3PrefixCopier(
   def copyObjects(
     srcLocationPrefix: ObjectLocation,
     dstLocationPrefix: ObjectLocation
-  ): Future[Unit] = Future {
-    val objects: Iterator[S3ObjectSummary] = S3Objects
-      .withPrefix(
-        s3Client,
-        srcLocationPrefix.namespace,
-        srcLocationPrefix.key
-      )
-      .withBatchSize(batchSize)
-      .iterator()
-      .asScala
-
-    // Implementation note: this means we're single-threaded within a single bag.
-    // That is, we're copying objects in a bag one at a time.
-    //
-    // We could rewrite this code to process objects in parallel, but it would
-    // make it more complicated and introduces more failure modes.  For now we'll
-    // just use this simple version, and we can revisit it if it's not fast
-    // enough in practice.
-
-    objects.foreach { summary: S3ObjectSummary =>
-      val srcLocation = ObjectLocation(
-        namespace = srcLocationPrefix.namespace,
-        key = summary.getKey
-      )
-
+  ): Future[Unit] =
+    s3PrefixOperator.run(prefix = srcLocationPrefix) { srcLocation: ObjectLocation =>
       val relativeKey = srcLocation.key
         .stripPrefix(srcLocationPrefix.key)
 
@@ -64,5 +33,4 @@ class S3PrefixCopier(
 
       copier.copy(srcLocation, dstLocation)
     }
-  }
 }
