@@ -1,10 +1,11 @@
 package uk.ac.wellcome.storage.fixtures
 
 import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.model.PutObjectResult
 import grizzled.slf4j.Logging
 import io.circe.{Decoder, Json}
 import io.circe.parser.parse
-import org.scalatest.Matchers
+import org.scalatest.{Assertion, Matchers}
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.fixtures._
 import uk.ac.wellcome.json.JsonUtil._
@@ -94,6 +95,27 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
       key = location.key
     )
 
+  def createObjectLocationWith(
+    bucket: Bucket = Bucket(randomAlphanumeric),
+    key: String = randomAlphanumeric
+  ): ObjectLocation =
+    ObjectLocation(
+      namespace = bucket.name,
+      key = key
+    )
+
+  def createObjectLocation: ObjectLocation = createObjectLocationWith()
+
+  def createObject(location: ObjectLocation): PutObjectResult =
+    s3Client.putObject(
+      location.namespace,
+      location.key,
+      randomAlphanumeric
+    )
+
+  def assertEqualObjects(x: ObjectLocation, y: ObjectLocation): Assertion =
+    getContentFromS3(x) shouldBe getContentFromS3(y)
+
   /** Returns a list of keys in an S3 bucket.
     *
     * Note: this only makes a single call to the ListObjects API, so it
@@ -122,4 +144,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
 
   def createS3ConfigWith(bucket: Bucket): S3Config =
     S3Config(bucketName = bucket.name)
+
+  private def randomAlphanumeric: String =
+    Random.alphanumeric take 8 mkString
 }
