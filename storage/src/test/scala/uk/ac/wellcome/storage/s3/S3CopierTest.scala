@@ -3,9 +3,9 @@ package uk.ac.wellcome.storage.s3
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
-import uk.ac.wellcome.storage.fixtures.S3CopierFixtures
+import uk.ac.wellcome.storage.fixtures.S3
 
-class S3CopierTest extends FunSpec with Matchers with S3CopierFixtures {
+class S3CopierTest extends FunSpec with Matchers with S3 {
 
   val s3Copier = new S3Copier(s3Client)
 

@@ -6,7 +6,7 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
-import uk.ac.wellcome.storage.fixtures.S3CopierFixtures
+import uk.ac.wellcome.storage.fixtures.S3
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.JavaConverters._
@@ -16,7 +16,7 @@ class S3PrefixCopierTest
     with Matchers
     with ScalaFutures
     with IntegrationPatience
-    with S3CopierFixtures {
+    with S3 {
 
   val batchSize = 10
 
