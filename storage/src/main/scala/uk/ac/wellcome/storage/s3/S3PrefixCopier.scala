@@ -1,8 +1,9 @@
 package uk.ac.wellcome.storage.s3
 
+import com.amazonaws.services.s3.AmazonS3
 import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
 
@@ -34,4 +35,12 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
 
         copier.copy(srcLocation, dstLocation)
     }
+}
+
+object S3PrefixCopier {
+  def apply(s3Client: AmazonS3, batchSize: Int = 1000)(implicit ec: ExecutionContext): S3PrefixCopier =
+    new S3PrefixCopier(
+      s3PrefixOperator = new S3PrefixOperator(s3Client, batchSize = batchSize),
+      copier = new S3Copier(s3Client)
+    )
 }
