@@ -3,9 +3,9 @@ package uk.ac.wellcome.storage.type_classes
 import org.scalatest.{FunSpec, Matchers}
 import shapeless.syntax.singleton._
 import shapeless.{the => sThe, _}
-import uk.ac.wellcome.storage.ObjectLocation
+import uk.ac.wellcome.storage.fixtures.S3
 
-class HybridRecordEnricherTest extends FunSpec with Matchers {
+class HybridRecordEnricherTest extends FunSpec with Matchers with S3 {
 
   case class Metadata(something: String)
 
@@ -17,7 +17,7 @@ class HybridRecordEnricherTest extends FunSpec with Matchers {
 
     val id = "1111"
     val version = 3
-    val location = ObjectLocation(namespace = "bukkit", key = "skeleton.txt")
+    val location = createObjectLocation
     val hList =
       hybridRecordEnricher.enrichedHybridRecordHList(id, metadata, version)(
         location)
