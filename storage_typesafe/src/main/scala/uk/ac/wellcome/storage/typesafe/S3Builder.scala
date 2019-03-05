@@ -44,6 +44,7 @@ object S3Builder extends AWSClientConfigBuilder {
     ObjectStore[T]
   }
 
-  def buildS3PrefixCopier(config: Config)(implicit ec: ExecutionContext): S3PrefixCopier =
+  def buildS3PrefixCopier(config: Config)(
+    implicit ec: ExecutionContext): S3PrefixCopier =
     S3PrefixCopier(s3Client = buildS3Client(config))
 }

@@ -38,7 +38,8 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
 }
 
 object S3PrefixCopier {
-  def apply(s3Client: AmazonS3, batchSize: Int = 1000)(implicit ec: ExecutionContext): S3PrefixCopier =
+  def apply(s3Client: AmazonS3, batchSize: Int = 1000)(
+    implicit ec: ExecutionContext): S3PrefixCopier =
     new S3PrefixCopier(
       s3PrefixOperator = new S3PrefixOperator(s3Client, batchSize = batchSize),
       copier = new S3Copier(s3Client)
