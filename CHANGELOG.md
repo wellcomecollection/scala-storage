@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.5.0 - 2019-03-05
+
+Add some convenience methods for creating instances of `S3PrefixCopier`.
+
 ## v3.4.0 - 2019-03-04
 
 This release adds three new classes and a new trait: S3PrefixCopier, S3Copier, S3PrefixOperator and ObjectCopier.
