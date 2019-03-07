@@ -1,5 +1,7 @@
 package uk.ac.wellcome.storage.s3
 
+import java.nio.file.Paths
+
 import com.amazonaws.services.s3.AmazonS3
 import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
 
@@ -28,9 +30,14 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
         val relativeKey = srcLocation.key
           .stripPrefix(srcLocationPrefix.key)
 
+        val dstKey = Paths
+          .get(dstLocationPrefix.key, relativeKey)
+          .normalize()
+          .toString
+
         val dstLocation = ObjectLocation(
           namespace = dstLocationPrefix.namespace,
-          key = dstLocationPrefix.key + relativeKey
+          key = dstKey
         )
 
         copier.copy(srcLocation, dstLocation)
