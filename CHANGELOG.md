@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.5.1 - 2019-03-07
+
+Use Java NIO Paths to make path generation behaviour predictable
+
 ## v3.5.0 - 2019-03-05
 
 Add some convenience methods for creating instances of `S3PrefixCopier`.
