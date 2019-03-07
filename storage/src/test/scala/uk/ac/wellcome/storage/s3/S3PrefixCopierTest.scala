@@ -1,18 +1,20 @@
 package uk.ac.wellcome.storage.s3
 
+import java.nio.file.Paths
+
 import com.amazonaws.services.s3.iterable.S3Objects
 import com.amazonaws.services.s3.model._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FunSpec, Matchers}
-import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
-import uk.ac.wellcome.storage.fixtures.S3.Bucket
 import uk.ac.wellcome.storage.fixtures.S3
+import uk.ac.wellcome.storage.fixtures.S3.Bucket
+import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class S3PrefixCopierTest
-    extends FunSpec
+  extends FunSpec
     with Matchers
     with ScalaFutures
     with IntegrationPatience
@@ -38,22 +40,49 @@ class S3PrefixCopierTest
     }
   }
 
-  it("copies a single file under a prefix") {
-    withLocalS3Bucket { srcBucket =>
-      withLocalS3Bucket { dstBucket =>
-        val srcPrefix = createObjectLocationWith(srcBucket, key = "src/")
+  describe("copying a single file under a prefix") {
+    describe("to a key ending in /") {
+      it("copies that file") {
 
-        val src = srcPrefix.copy(key = srcPrefix.key + "foo.txt")
-        createObject(src)
+        withLocalS3Bucket { dstBucket =>
+          withLocalS3Bucket { srcBucket =>
 
-        val dstPrefix = createObjectLocationWith(dstBucket, key = "dst/")
-        val dst = dstPrefix.copy(key = dstPrefix.key + "foo.txt")
+            val srcPrefix = createObjectLocationWith(srcBucket, key = "src")
+            val src = srcPrefix.copy(key = Paths.get(srcPrefix.key,"foo.txt").toString)
 
-        val future = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
+            createObject(src)
 
-        whenReady(future) { _ =>
-          listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
-          assertEqualObjects(src, dst)
+            val dstPrefix = createObjectLocationWith(dstBucket, key = "dst/")
+            val dst = dstPrefix.copy(key = Paths.get(dstPrefix.key,"foo.txt").toString)
+
+            whenReady(s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)) { _ =>
+              listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
+              assertEqualObjects(src, dst)
+            }
+          }
+        }
+      }
+    }
+
+    describe("to a key NOT ending in /") {
+      it("copies that file") {
+
+        withLocalS3Bucket { dstBucket =>
+          withLocalS3Bucket { srcBucket =>
+
+            val srcPrefix = createObjectLocationWith(srcBucket, key = "src")
+            val src = srcPrefix.copy(key = Paths.get(srcPrefix.key,"foo.txt").toString)
+
+            createObject(src)
+
+            val dstPrefix = createObjectLocationWith(dstBucket, key = "dst")
+            val dst = dstPrefix.copy(key = Paths.get(dstPrefix.key,"foo.txt").toString)
+
+            whenReady(s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)) { _ =>
+              listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
+              assertEqualObjects(src, dst)
+            }
+          }
         }
       }
     }
@@ -82,7 +111,9 @@ class S3PrefixCopierTest
         val future = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
 
         whenReady(future) { _ =>
-          listKeysInBucket(dstBucket) shouldBe dstLocations.map { _.key }
+          listKeysInBucket(dstBucket) shouldBe dstLocations.map {
+            _.key
+          }
 
           srcLocations.zip(dstLocations).map {
             case (src, dst) =>
@@ -151,7 +182,9 @@ class S3PrefixCopierTest
 
         whenReady(future) { _ =>
           val actualKeys = listKeysInBucket(dstBucket)
-          val expectedKeys = dstLocations.map { _.key }
+          val expectedKeys = dstLocations.map {
+            _.key
+          }
           actualKeys.size shouldBe expectedKeys.size
           actualKeys should contain theSameElementsAs expectedKeys
 
@@ -200,7 +233,9 @@ class S3PrefixCopierTest
 
   // A modified version of listKeysInBucket that can retrieve everything,
   // even if it takes multiple ListObject calls.
-  override def listKeysInBucket(bucket: Bucket): List[String] =
+  override def listKeysInBucket(bucket: Bucket): List[String]
+
+  =
     S3Objects
       .inBucket(s3Client, bucket.name)
       .withBatchSize(1000)
