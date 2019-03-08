@@ -55,9 +55,11 @@ class S3PrefixCopierTest
             val dstPrefix = createObjectLocationWith(dstBucket, key = "dst/")
             val dst = dstPrefix.copy(key = Paths.get(dstPrefix.key,"foo.txt").toString)
 
-            whenReady(s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)) { _ =>
+            whenReady(s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)) { result =>
               listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
               assertEqualObjects(src, dst)
+
+              result.fileCount shouldBe 1
             }
           }
         }
@@ -78,9 +80,11 @@ class S3PrefixCopierTest
             val dstPrefix = createObjectLocationWith(dstBucket, key = "dst")
             val dst = dstPrefix.copy(key = Paths.get(dstPrefix.key,"foo.txt").toString)
 
-            whenReady(s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)) { _ =>
+            whenReady(s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)) { result =>
               listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
               assertEqualObjects(src, dst)
+
+              result.fileCount shouldBe 1
             }
           }
         }
@@ -110,7 +114,7 @@ class S3PrefixCopierTest
 
         val future = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
 
-        whenReady(future) { _ =>
+        whenReady(future) { result =>
           listKeysInBucket(dstBucket) shouldBe dstLocations.map {
             _.key
           }
@@ -119,6 +123,8 @@ class S3PrefixCopierTest
             case (src, dst) =>
               assertEqualObjects(src, dst)
           }
+
+          result.fileCount shouldBe 5
         }
       }
     }
@@ -178,9 +184,7 @@ class S3PrefixCopierTest
           )
         }
 
-        val future = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
-
-        whenReady(future) { _ =>
+        whenReady(s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)) { result =>
           val actualKeys = listKeysInBucket(dstBucket)
           val expectedKeys = dstLocations.map {
             _.key
@@ -192,6 +196,8 @@ class S3PrefixCopierTest
             case (src, dst) =>
               assertEqualObjects(src, dst)
           }
+
+          result.fileCount shouldBe 10
         }
       }
     }
@@ -234,7 +240,6 @@ class S3PrefixCopierTest
   // A modified version of listKeysInBucket that can retrieve everything,
   // even if it takes multiple ListObject calls.
   override def listKeysInBucket(bucket: Bucket): List[String]
-
   =
     S3Objects
       .inBucket(s3Client, bucket.name)

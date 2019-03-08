@@ -24,7 +24,7 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
   def copyObjects(
     srcLocationPrefix: ObjectLocation,
     dstLocationPrefix: ObjectLocation
-  ): Future[Unit] =
+  ): Future[S3PrefixCopierResult] =
     s3PrefixOperator.run(prefix = srcLocationPrefix) {
       srcLocation: ObjectLocation =>
         val relativeKey = srcLocation.key
