@@ -16,8 +16,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class S3PrefixOperator(
   s3Client: AmazonS3,
   batchSize: Int = 1000
-)(implicit ec: ExecutionContext) extends Logging {
-  def run(prefix: ObjectLocation)(f: ObjectLocation => Unit): Future[S3PrefixCopierResult] =
+)(implicit ec: ExecutionContext)
+    extends Logging {
+  def run(prefix: ObjectLocation)(
+    f: ObjectLocation => Unit): Future[S3PrefixCopierResult] =
     Future {
 
       // Implementation note: this means we're single-threaded.  We're working
@@ -48,8 +50,7 @@ class S3PrefixOperator(
       val fileCount = locations.foldLeft(0)((count, location) => {
         f(location)
         count + 1
-        }
-      )
+      })
       S3PrefixCopierResult(fileCount)
     }
 }
