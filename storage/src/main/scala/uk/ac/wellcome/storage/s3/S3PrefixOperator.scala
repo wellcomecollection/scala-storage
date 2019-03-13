@@ -3,6 +3,7 @@ package uk.ac.wellcome.storage.s3
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.iterable.S3Objects
 import com.amazonaws.services.s3.model.S3ObjectSummary
+import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.ObjectLocation
 
 import scala.collection.JavaConverters._
@@ -15,8 +16,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class S3PrefixOperator(
   s3Client: AmazonS3,
   batchSize: Int = 1000
-)(implicit ec: ExecutionContext) {
-  def run(prefix: ObjectLocation)(f: ObjectLocation => Unit): Future[Unit] =
+)(implicit ec: ExecutionContext)
+    extends Logging {
+  def run(prefix: ObjectLocation)(
+    f: ObjectLocation => Unit): Future[S3PrefixCopierResult] =
     Future {
 
       // Implementation note: this means we're single-threaded.  We're working
@@ -44,8 +47,10 @@ class S3PrefixOperator(
         )
       }
 
-      locations.foreach { loc =>
-        f(loc)
-      }
+      val fileCount = locations.foldLeft(0)((count, location) => {
+        f(location)
+        count + 1
+      })
+      S3PrefixCopierResult(fileCount)
     }
 }
