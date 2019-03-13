@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.5.2 - 2019-03-13
+
+have S3PrefixOperator return a S3PrefixCopierResult with the number of files copied.
+
 ## v3.5.1 - 2019-03-07
 
 Use Java NIO Paths to make path generation behaviour predictable
