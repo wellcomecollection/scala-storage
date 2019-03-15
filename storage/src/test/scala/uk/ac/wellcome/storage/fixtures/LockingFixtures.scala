@@ -79,11 +79,13 @@ trait LockingFixtures extends LocalDynamoDb {
     table
   }
 
+  val lockNamePrefix = "locking.test"
+
   def withLockingService[R](dynamoRowLockDao: DynamoRowLockDao,
                             metricsSender: MetricsSender)(
                              testWith: TestWith[DynamoLockingService, R]): R = {
     val lockingService = new DynamoLockingService(
-      lockNamePrefix = "locking.test",
+      lockNamePrefix = lockNamePrefix,
       dynamoRowLockDao = dynamoRowLockDao,
       metricsSender = metricsSender
     )

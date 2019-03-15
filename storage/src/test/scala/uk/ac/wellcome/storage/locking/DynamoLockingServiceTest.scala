@@ -207,14 +207,14 @@ class DynamoLockingServiceTest
     i: Int,
     mockMetricsSender: MetricsSender): Future[Any] = {
     verify(mockMetricsSender, Mockito.times(i))
-      .incrementCount("WorkMatcher_FailedLock")
+      .incrementCount(s"${lockNamePrefix}_FailedLock")
   }
 
   private def assertIncrementsFailedUnlockCount(
     i: Int,
     mockMetricsSender: MetricsSender): Future[Any] = {
     verify(mockMetricsSender, Mockito.times(i))
-      .incrementCount("WorkMatcher_FailedUnlock")
+      .incrementCount(s"${lockNamePrefix}_FailedUnlock")
   }
 
   def assertNoRowLocks(lockTable: LocalDynamoDb.Table): Assertion =
