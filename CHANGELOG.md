@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.6.0 - 2019-03-15
+
+This adds some utilities for locking operations with DynamoDB, extracted from the matcher in the catalogue pipeline.
+
 ## v3.5.2 - 2019-03-13
 
 have S3PrefixOperator return a S3PrefixCopierResult with the number of files copied.
