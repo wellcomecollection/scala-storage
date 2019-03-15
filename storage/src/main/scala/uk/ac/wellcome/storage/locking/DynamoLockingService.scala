@@ -58,7 +58,6 @@ class DynamoLockingService(
       }
   }
 
-  private def failedLockErrorMessage[T](failure: String,
-                                        exception: Exception) =
+  private def failedLockErrorMessage[T](failure: String, exception: Exception) =
     s"Failed to $failure ${exception.getClass.getSimpleName} ${exception.getMessage}"
 }
