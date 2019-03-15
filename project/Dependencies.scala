@@ -2,9 +2,10 @@ import sbt._
 
 object WellcomeDependencies {
   private lazy val versions = new {
-    val fixtures = "1.0.0"
-    val json     = "1.1.1"
-    val typesafe = "1.0.0"
+    val fixtures   = "1.0.0"
+    val json       = "1.1.1"
+    val monitoring = "2.0.0"
+    val typesafe   = "1.0.0"
   }
 
   val fixturesLibrary: Seq[ModuleID] = Seq(
@@ -15,6 +16,11 @@ object WellcomeDependencies {
   val jsonLibrary: Seq[ModuleID] = Seq(
     "uk.ac.wellcome" % "json_2.12" % versions.json % "test",
     "uk.ac.wellcome" % "json_2.12" % versions.json % "test" classifier "tests"
+  )
+
+  val monitoringLibrary = Seq[ModuleID](
+    "uk.ac.wellcome" % "monitoring_2.12" % versions.monitoring,
+    "uk.ac.wellcome" % "monitoring_2.12" % versions.monitoring % "test" classifier "tests",
   )
 
   val typesafeLibrary = Seq[ModuleID](
@@ -59,7 +65,7 @@ object Dependencies {
   val apacheCommons = Seq(
     "commons-io" % "commons-io" % versions.apacheCommons % "test")
 
-  val libraryDependencies = Seq(
+  val libraryDependencies: Seq[ModuleID] = Seq(
     "com.amazonaws" % "aws-java-sdk-dynamodb" % versions.aws,
     "com.amazonaws" % "aws-java-sdk-s3" % versions.aws,
     "com.gu" %% "scanamo" % versions.scanamo,
@@ -70,7 +76,7 @@ object Dependencies {
     testDependencies ++
     apacheCommons ++
     WellcomeDependencies.jsonLibrary ++
-    WellcomeDependencies.fixturesLibrary
-
-  val typesafeDependencies = WellcomeDependencies.typesafeLibrary
+    WellcomeDependencies.fixturesLibrary ++
+    WellcomeDependencies.monitoringLibrary ++
+    WellcomeDependencies.typesafeLibrary
 }

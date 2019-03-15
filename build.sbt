@@ -50,7 +50,6 @@ lazy val lib_typesafe =
     .in(new File(s"${projectName}_typesafe"))
     .settings(settings)
     .dependsOn(lib % "compile->compile;test->test")
-    .settings(libraryDependencies ++= Dependencies.typesafeDependencies)
 
 lazy val root = (project in file("."))
   .aggregate(lib, lib_typesafe)
