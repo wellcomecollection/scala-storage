@@ -7,8 +7,9 @@ import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
 import com.gu.scanamo.DynamoFormat
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.monitoring.MetricsSender
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.locking.{DynamoRowLockDao, DynamoRowLockDaoConfig}
+import uk.ac.wellcome.storage.locking.{DynamoLockingService, DynamoRowLockDao, DynamoRowLockDaoConfig}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -76,5 +77,16 @@ trait LockingFixtures extends LocalDynamoDb {
       waitUntilActive(dynamoDbClient, table.name)
     }
     table
+  }
+
+  def withLockingService[R](dynamoRowLockDao: DynamoRowLockDao,
+                            metricsSender: MetricsSender)(
+                             testWith: TestWith[DynamoLockingService, R]): R = {
+    val lockingService = new DynamoLockingService(
+      lockNamePrefix = "locking.test",
+      dynamoRowLockDao = dynamoRowLockDao,
+      metricsSender = metricsSender
+    )
+    testWith(lockingService)
   }
 }

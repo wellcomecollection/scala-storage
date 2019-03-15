@@ -65,7 +65,7 @@ object Dependencies {
   val apacheCommons = Seq(
     "commons-io" % "commons-io" % versions.apacheCommons % "test")
 
-  val libraryDependencies = Seq(
+  val libraryDependencies: Seq[ModuleID] = Seq(
     "com.amazonaws" % "aws-java-sdk-dynamodb" % versions.aws,
     "com.amazonaws" % "aws-java-sdk-s3" % versions.aws,
     "com.gu" %% "scanamo" % versions.scanamo,
@@ -77,7 +77,6 @@ object Dependencies {
     apacheCommons ++
     WellcomeDependencies.jsonLibrary ++
     WellcomeDependencies.fixturesLibrary ++
-    WellcomeDependencies.monitoringLibrary
-
-  val typesafeDependencies = WellcomeDependencies.typesafeLibrary
+    WellcomeDependencies.monitoringLibrary ++
+    WellcomeDependencies.typesafeLibrary
 }
