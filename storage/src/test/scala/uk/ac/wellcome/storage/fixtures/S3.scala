@@ -53,8 +53,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
         eventually {
           s3Client.listBuckets().asScala.size should be >= 0
         }
-        val bucketName: String =
-          (Random.alphanumeric take 10 mkString).toLowerCase
+        val bucketName: String = createBucketName()
         s3Client.createBucket(bucketName)
         eventually { s3Client.doesBucketExistV2(bucketName) }
 
@@ -95,8 +94,16 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
       key = location.key
     )
 
+  def createBucketName(): String =
+  // Bucket names
+  //  - start with a lowercase letter or number,
+  //  - do not contain uppercase characters or underscores,
+  //  - between 3 and 63 characters in length.
+  // [https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html#bucketnamingrules]
+    (Random.alphanumeric take 10 mkString).toLowerCase
+
   def createObjectLocationWith(
-    bucket: Bucket = Bucket(randomAlphanumeric),
+    bucket: Bucket = Bucket(createBucketName()),
     key: String = randomAlphanumeric
   ): ObjectLocation =
     ObjectLocation(
