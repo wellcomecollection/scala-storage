@@ -96,7 +96,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
     )
 
   def createObjectLocationWith(
-    bucket: Bucket = Bucket(randomAlphanumeric),
+    bucket: Bucket = Bucket(randomAlphanumeric.toLowerCase),
     key: String = randomAlphanumeric
   ): ObjectLocation =
     ObjectLocation(
