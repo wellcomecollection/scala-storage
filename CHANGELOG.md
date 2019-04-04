@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.6.1 - 2019-04-04
+
+valid buckets created in test fixtures (lowercase characters in bucket name)
+
 ## v3.6.0 - 2019-03-15
 
 This adds some utilities for locking operations with DynamoDB, extracted from the matcher in the catalogue pipeline.
