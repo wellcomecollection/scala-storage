@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.6.2 - 2019-04-05
+
+Bump the version of scala-monitoring.
+
 ## v3.6.1 - 2019-04-04
 
 valid buckets created in test fixtures (lowercase characters in bucket name)
