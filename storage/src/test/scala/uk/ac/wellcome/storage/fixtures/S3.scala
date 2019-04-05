@@ -45,9 +45,10 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
     secretKey = secretKey
   )
 
-  implicit val storageBackend = new S3StorageBackend(s3Client)
+  implicit val storageBackend: S3StorageBackend =
+    new S3StorageBackend(s3Client)
 
-  def withLocalS3Bucket[R] =
+  def withLocalS3Bucket[R]: Fixture[Bucket, R] =
     fixture[Bucket, R](
       create = {
         eventually {
@@ -94,16 +95,19 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
       key = location.key
     )
 
-  def createBucketName(): String =
-  // Bucket names
-  //  - start with a lowercase letter or number,
-  //  - do not contain uppercase characters or underscores,
-  //  - between 3 and 63 characters in length.
-  // [https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html#bucketnamingrules]
+  def createBucketName: String =
+    // Bucket names
+    //  - start with a lowercase letter or number,
+    //  - do not contain uppercase characters or underscores,
+    //  - between 3 and 63 characters in length.
+    // [https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html#bucketnamingrules]
     (Random.alphanumeric take 10 mkString).toLowerCase
 
+  def createBucket: Bucket =
+    Bucket(createBucketName)
+
   def createObjectLocationWith(
-    bucket: Bucket = Bucket(createBucketName()),
+    bucket: Bucket = createBucket,
     key: String = randomAlphanumeric
   ): ObjectLocation =
     ObjectLocation(
