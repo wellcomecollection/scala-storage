@@ -54,7 +54,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
         eventually {
           s3Client.listBuckets().asScala.size should be >= 0
         }
-        val bucketName: String = createBucketName()
+        val bucketName: String = createBucketName
         s3Client.createBucket(bucketName)
         eventually { s3Client.doesBucketExistV2(bucketName) }
 
