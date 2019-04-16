@@ -18,19 +18,16 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
   def copy(src: ObjectLocation, dst: ObjectLocation): Unit = {
     debug(s"Copying ${s3Uri(src)} -> ${s3Uri(dst)}")
 
-    val trySrcInputStream = getInputStream(src)
-    val tryDstInputStream = getInputStream(dst)
-
     // If the destination object exists and is the same as the
     // source object, we can skip doing the copy.
-    (trySrcInputStream, tryDstInputStream) match {
+    (getInputStream(src), getInputStream(dst)) match {
       case (Success(srcStream), Success(dstStream)) =>
         compare(srcStream, dstStream)
       case (Success(_), _) => transferFile(src, dst)
       case (Failure(err), _) => throw err
     }
 
-    def compare(srcStream: InputStream, dstStream: InputStream) {
+    def compare(srcStream: InputStream, dstStream: InputStream): Unit = {
       if (IOUtils.contentEquals(srcStream, dstStream)) {
         debug(s"No-op copy: ${s3Uri(src)} == ${s3Uri(dst)}")
       } else {
