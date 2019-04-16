@@ -63,7 +63,9 @@ object Dependencies {
   )
 
   val apacheCommons = Seq(
-    "commons-io" % "commons-io" % versions.apacheCommons % "test")
+    "commons-io" % "commons-io" % versions.apacheCommons,
+    "commons-io" % "commons-io" % versions.apacheCommons % "test"
+  )
 
   val libraryDependencies: Seq[ModuleID] = Seq(
     "com.amazonaws" % "aws-java-sdk-dynamodb" % versions.aws,
