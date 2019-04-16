@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v3.7.0 - 2019-04-16
+
+Modify `S3Copier` so that if the destination object exists and is the same as the source object, we skip the CopyObject operation.
+
+If the destination object exists and is different, `S3Copier` throws an error.
+
 ## v3.6.2 - 2019-04-05
 
 Bump the version of scala-monitoring.
