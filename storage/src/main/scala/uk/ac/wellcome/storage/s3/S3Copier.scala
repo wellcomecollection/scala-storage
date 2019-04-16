@@ -23,7 +23,7 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
     (getInputStream(src), getInputStream(dst)) match {
       case (Success(srcStream), Success(dstStream)) =>
         compare(srcStream, dstStream)
-      case (Success(_), _) => transferFile(src, dst)
+      case (Success(_), _)   => transferFile(src, dst)
       case (Failure(err), _) => throw err
     }
 
@@ -37,7 +37,7 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
       }
     }
   }
-  
+
   private def transferFile(src: ObjectLocation, dst: ObjectLocation): Unit = {
     val copyTransfer = transferManager.copy(
       src.namespace,
