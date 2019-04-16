@@ -9,7 +9,7 @@ class S3CopierTest extends FunSpec with Matchers with S3 {
 
   val s3Copier = new S3Copier(s3Client)
 
-  it("copies a file inside a bucket") {
+  it("copies an object inside a bucket") {
     withLocalS3Bucket { bucket =>
       val src = createObjectLocationWith(bucket, key = "src.txt")
       val dst = createObjectLocationWith(bucket, key = "dst.txt")
@@ -61,6 +61,34 @@ class S3CopierTest extends FunSpec with Matchers with S3 {
       val dst = createObjectLocationWith(Bucket("no_such_bucket"))
 
       intercept[AmazonS3Exception] {
+        s3Copier.copy(src, dst)
+      }
+    }
+  }
+
+  it("copies an object if the destination object already exists and is the same") {
+    withLocalS3Bucket { bucket =>
+      val src = createObjectLocationWith(bucket, key = "src.txt")
+      val dst = createObjectLocationWith(bucket, key = "dst.txt")
+
+      createObject(src, content = "hello")
+      createObject(dst, content = "hello")
+
+      s3Copier.copy(src = src, dst = dst)
+
+      assertEqualObjects(src, dst)
+    }
+  }
+
+  it("returns a failed Future if the destination object exists and is different") {
+    withLocalS3Bucket { bucket =>
+      val src = createObjectLocationWith(bucket, key = "src.txt")
+      val dst = createObjectLocationWith(bucket, key = "dst.txt")
+
+      createObject(src, content = "hello")
+      createObject(dst, content = "different")
+
+      intercept[RuntimeException] {
         s3Copier.copy(src, dst)
       }
     }
