@@ -4,6 +4,13 @@ before_script:
   - openssl aes-256-cbc -K $encrypted_b652cb863d2a_key -iv $encrypted_b652cb863d2a_iv -in secrets.zip.enc -out secrets.zip -d
   - git remote add ssh-origin "git@github.com:wellcometrust/scala-storage.git"
 
+cache:
+  directories:
+    - $HOME/.sbt
+    - $HOME/.ivy2/cache
+    - project/target
+    - storage/target
+    - storage_typesafe/target
 
 
 # Everything below this line is boilerplate that should be reusable,
@@ -13,13 +20,6 @@ sudo: false
 
 scala:
 - 2.12.6
-
-cache:
-  directories:
-    - $HOME/.sbt
-    - $HOME/.ivy2/cache
-    - project/target
-    - target
 
 branches:
   only:
