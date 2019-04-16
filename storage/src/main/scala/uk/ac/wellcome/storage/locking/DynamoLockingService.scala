@@ -17,13 +17,12 @@ class DynamoLockingService(
   private val failedLockMetricName: String = s"${lockNamePrefix}_FailedLock"
   private val failedUnlockMetricName: String = s"${lockNamePrefix}_FailedUnlock"
 
-  def withLocks[T](ids: Set[String])(callback: => Future[T]): Future[T] = {
+  def withLocks[T](ids: Set[String])(callback: => Future[T]): Future[T] =
     if (ids.isEmpty) {
       callback
     } else {
       executeWithLocks(ids, callback, randomUUID.toString, ids.map(Identifier))
     }
-  }
 
   private def executeWithLocks[T](ids: Set[String],
                                   f: => Future[T],
