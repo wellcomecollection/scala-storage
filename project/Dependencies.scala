@@ -20,12 +20,12 @@ object WellcomeDependencies {
 
   val monitoringLibrary = Seq[ModuleID](
     "uk.ac.wellcome" % "monitoring_2.12" % versions.monitoring,
-    "uk.ac.wellcome" % "monitoring_2.12" % versions.monitoring % "test" classifier "tests",
+    "uk.ac.wellcome" % "monitoring_2.12" % versions.monitoring % "test" classifier "tests"
   )
 
   val typesafeLibrary = Seq[ModuleID](
     "uk.ac.wellcome" % "typesafe-app_2.12" % versions.typesafe,
-    "uk.ac.wellcome" % "typesafe-app_2.12" % versions.typesafe % "test" classifier "tests",
+    "uk.ac.wellcome" % "typesafe-app_2.12" % versions.typesafe % "test" classifier "tests"
   )
 }
 

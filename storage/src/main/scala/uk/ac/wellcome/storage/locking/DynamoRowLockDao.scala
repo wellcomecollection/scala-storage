@@ -62,11 +62,11 @@ class DynamoRowLockDao(
     }
 
   def unlockRows(contextId: String): Future[Unit] = {
-    val eventallyDeleted = for {
+    val eventuallyDeleted = for {
       rowLockIds <- queryContextForLockIds(contextId)
       _ <- deleteRowLocks(rowLockIds.toList)
     } yield ()
-    eventallyDeleted.recover {
+    eventuallyDeleted.recover {
       case exception: Exception =>
         val errorMsg =
           s"Problem unlocking rows in context [$contextId], ${exception.getClass.getSimpleName} ${exception.getMessage}"

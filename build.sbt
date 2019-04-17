@@ -19,6 +19,7 @@ val settings: Seq[Def.Setting[_]] = Seq(
     "-Xlint",
     "-Xverify",
     "-Xfatal-warnings",
+    "-Ypartial-unification",
     "-feature",
     "-language:postfixOps"
   ),

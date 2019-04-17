@@ -8,6 +8,7 @@ import uk.ac.wellcome.monitoring.MetricsSender
 import scala.collection.Set
 import scala.concurrent.{ExecutionContext, Future}
 
+
 class DynamoLockingService(
   lockNamePrefix: String,
   dynamoRowLockDao: DynamoRowLockDao,

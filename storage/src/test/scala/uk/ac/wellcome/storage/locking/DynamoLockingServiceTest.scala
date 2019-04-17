@@ -7,8 +7,8 @@ import com.gu.scanamo.error.DynamoReadError
 import org.mockito.Matchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.{verify, verifyZeroInteractions, when}
-import org.scalatest.{Assertion, FunSpec}
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{Assertion, FunSpec}
 import uk.ac.wellcome.monitoring.MetricsSender
 import uk.ac.wellcome.monitoring.fixtures.MetricsSenderFixture
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
