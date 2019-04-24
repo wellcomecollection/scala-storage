@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.7.2 - 2019-04-24
+
+Reduce the number of streams we open and discard in `S3Copier`.
+
 ## v3.7.1 - 2019-04-24
 
 Close the input streams we use to compare objects in `S3Copier`.
