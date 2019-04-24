@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.7.1 - 2019-04-24
+
+Close the input streams we use to compare objects in `S3Copier`.
+
 ## v3.7.0 - 2019-04-16
 
 Modify `S3Copier` so that if the destination object exists and is the same as the source object, we skip the CopyObject operation.
