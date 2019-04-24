@@ -18,14 +18,27 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
   def copy(src: ObjectLocation, dst: ObjectLocation): Unit = {
     debug(s"Copying ${s3Uri(src)} -> ${s3Uri(dst)}")
 
+    val srcInput = getInputStream(src)
+    val dstInput = getInputStream(dst)
+
     // If the destination object exists and is the same as the
     // source object, we can skip doing the copy.
-    (getInputStream(src), getInputStream(dst)) match {
+    (srcInput, dstInput) match {
       case (Success(srcStream), Success(dstStream)) =>
         compare(srcStream, dstStream)
       case (Success(_), _)   => transferFile(src, dst)
       case (Failure(err), _) => throw err
     }
+
+    // Remember to close the streams afterwards, or we might get errors like
+    //
+    //    Unable to execute HTTP request: Timeout waiting for connection from pool
+    //
+    // See: https://github.com/wellcometrust/platform/issues/3600
+    //      https://github.com/aws/aws-sdk-java/issues/269
+    //
+    srcInput.map { _.close() }
+    dstInput.map { _.close() }
 
     def compare(srcStream: InputStream, dstStream: InputStream): Unit = {
       if (IOUtils.contentEquals(srcStream, dstStream)) {
