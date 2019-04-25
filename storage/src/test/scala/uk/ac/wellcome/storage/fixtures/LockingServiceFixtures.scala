@@ -15,7 +15,7 @@ trait LockingServiceFixtures
     with Matchers {
 
   type InMemoryLockDao = LockDao[String, String, Unit]
-  type ResultF = Try[Either[FailedLockingOp, String]]
+  type ResultF = Try[Either[FailedLockingServiceOp, String]]
   type InMemoryTryLockingService = LockingService[
     String, String, String, Throwable, List, Try, InMemoryLockDao
     ]
@@ -35,7 +35,7 @@ trait LockingServiceFixtures
       .success.value
       .right.value
 
-  def successfulLeftOf(result: ResultF): FailedLockingOp =
+  def successfulLeftOf(result: ResultF): FailedLockingServiceOp =
     result
       .success.value
       .left.value

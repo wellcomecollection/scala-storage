@@ -23,7 +23,7 @@ trait LockingService[Ident, ContextId, Out, OutFailure, IdentF[_], OutF[_], Lock
     fuIdentF: Functor[IdentF],
     foIdentF: Foldable[IdentF],
     monadError: MonadError[OutF, Throwable]
-  ): OutF[Either[FailedLockingOp, Out]] = {
+  ): OutF[Either[FailedLockingServiceOp, Out]] = {
 
     (for {
       ctxId <- EitherT.fromEither[OutF](getLocks(ids))
@@ -36,13 +36,13 @@ trait LockingService[Ident, ContextId, Out, OutFailure, IdentF[_], OutF[_], Lock
     val partialF = f.map(o => {
       debug(s"Processing $ctxId (got $o)")
       unlock(ctxId)
-      Either.right[FailedLockingOp, Out](o)
+      Either.right[FailedLockingServiceOp, Out](o)
     })
 
     monadError.handleError(partialF) {
       case e => {
         unlock(ctxId)
-        Either.left[FailedLockingOp, Out](
+        Either.left[FailedLockingServiceOp, Out](
           FailedProcess[ContextId](ctxId, e)
         )
       }
@@ -89,3 +89,12 @@ trait LockingService[Ident, ContextId, Out, OutFailure, IdentF[_], OutF[_], Lock
       .leftMap(lockDao.handleUnlockError)
   }
 }
+
+sealed trait FailedLockingServiceOp
+
+case class FailedLock[ContextId, Ident](ctxId: ContextId, lockFailures: List[LockFailure[Ident]])
+  extends FailedLockingServiceOp
+
+case class FailedUnlock[ContextId, Ident](ctxId: ContextId, ids: List[Ident], e: Throwable) extends FailedLockingServiceOp
+
+case class FailedProcess[ContextId](ctxId: ContextId, e: Throwable) extends FailedLockingServiceOp
