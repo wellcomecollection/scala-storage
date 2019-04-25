@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.8.0 - 2019-04-25
+
+Add a Typesafe builder for the VersionedDao.
+
 ## v3.7.2 - 2019-04-24
 
 Reduce the number of streams we open and discard in `S3Copier`.
