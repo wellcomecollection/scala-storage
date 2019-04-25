@@ -14,18 +14,16 @@ trait LockingServiceFixtures
     with TryValues
     with Matchers {
 
-  type InMemoryLockDao = LockDao[String, String, Unit]
+  type LockDaoStub = LockDao[String, String, Unit]
   type ResultF = Try[Either[FailedLockingServiceOp, String]]
-  type InMemoryTryLockingService = LockingService[
-    String, String, String, Throwable, List, Try, InMemoryLockDao
-    ]
+  type LockingServiceStub = LockingService[
+    String, String, String, Try, LockDaoStub]
 
-  def withLockingService[R](
-                             testWith: TestWith[InMemoryTryLockingService, R]): R =
+  def withLockingService[R](maybeLockDao: Option[LockDaoStub] = None)(testWith: TestWith[LockingServiceStub, R]): R =
     testWith(new LockingService[
-      String, String, String, Throwable, List, Try, InMemoryLockDao
+      String, String, String, Try, LockDaoStub
       ] {
-      override implicit val lockDao = createInMemoryLockDao
+      override implicit val lockDao = maybeLockDao.getOrElse(createInMemoryLockDao)
       override protected def createContextId: String =
         UUID.randomUUID().toString
     })
@@ -40,14 +38,17 @@ trait LockingServiceFixtures
       .success.value
       .left.value
 
-  def assertLockSuccess(result: ResultF): Assertion =
+  def assertLockSuccess(result: ResultF): Assertion = {
+    debug(s"Got $result")
     successfulRightOf(result) shouldBe expectedResult
+  }
 
-  def assertFailedLock(result: ResultF, lockIds: List[String]): Assertion = {
+  def assertFailedLock(result: ResultF, lockIds: Set[String]): Assertion = {
+    debug(s"Got $result, with $lockIds")
     val failedLock = successfulLeftOf(result)
       .asInstanceOf[FailedLock[String, String]]
 
-    failedLock.lockFailures shouldBe a[List[_]]
+    failedLock.lockFailures shouldBe a[Set[_]]
     failedLock.lockFailures
       .map { _.id } should contain theSameElementsAs lockIds
   }
@@ -59,10 +60,10 @@ trait LockingServiceFixtures
     failedLock.e shouldBe e
   }
 
-  val randomString = UUID.randomUUID().toString
+  private val randomString = UUID.randomUUID().toString
 
-  val expectedResult = randomString
-  val expectedError = new Error(randomString)
+  val expectedResult: String = randomString
+  val expectedError: Error = new Error(randomString)
 
   def f = Try { expectedResult }
   def fError = Try { throw expectedError }

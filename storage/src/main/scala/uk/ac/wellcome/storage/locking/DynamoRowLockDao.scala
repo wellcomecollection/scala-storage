@@ -24,8 +24,10 @@ class DynamoRowLockDao(
       _.getEpochSecond
     )
 
-  private val table = Table[RowLock](rowLockDaoConfig.dynamoConfig.table)
-  private val index = rowLockDaoConfig.dynamoConfig.index
+  private val table = Table[RowLock](
+    rowLockDaoConfig.dynamoConfig.table)
+  private val index =
+    rowLockDaoConfig.dynamoConfig.index
 
   private def getExpiry: (Instant, Instant) = {
     val created = Instant.now()

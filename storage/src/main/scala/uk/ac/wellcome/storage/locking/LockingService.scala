@@ -2,97 +2,90 @@ package uk.ac.wellcome.storage.locking
 
 import cats._
 import cats.data._
-
 import grizzled.slf4j.Logging
 
 import scala.language.higherKinds
 
-trait LockingService[Ident, ContextId, Out, OutFailure, IdentF[_], OutF[_], LockDaoImpl <: LockDao[Ident, ContextId, _]] extends Logging {
+trait LockingService[Ident, ContextId, Out, OutMonad[_], LockDaoImpl <: LockDao[Ident, ContextId, _]] extends Logging {
 
   import cats.implicits._
 
   implicit val lockDao: LockDaoImpl
 
   type DaoLock = Either[LockFailure[Ident], Unit]
+  type LockFailureSet = Set[LockFailure[Ident]]
 
-  type Locks   = Either[FailedLock[ContextId, Ident], ContextId]
+  type Lock = Either[FailedLockingServiceOp, ContextId]
+  type Process = Either[FailedLockingServiceOp, Out]
 
-  def withLocks(ids: IdentF[Ident])(
-    f: => OutF[Out]
-  )(implicit
-    fuIdentF: Functor[IdentF],
-    foIdentF: Foldable[IdentF],
-    monadError: MonadError[OutF, Throwable]
-  ): OutF[Either[FailedLockingServiceOp, Out]] = {
+  type OutMonadError = MonadError[OutMonad, Throwable]
 
-    (for {
-      ctxId <- EitherT.fromEither[OutF](getLocks(ids))
+  def withLocks(ids: Set[Ident])(
+    f: => OutMonad[Out]
+  )(implicit m: OutMonadError): OutMonad[Process] = {
+
+    val getLocksWithContextId = getLocks(createContextId)_
+
+    val eitherT = for {
+      ctxId <- EitherT.fromEither[OutMonad](
+        getLocksWithContextId(ids))
+
       out <- EitherT(safeF(ctxId)(f))
-    } yield out).value
+    } yield out
+
+    eitherT.value
   }
 
-  private def safeF(ctxId: ContextId)(f: => OutF[Out])(implicit monadError: MonadError[OutF, Throwable]) = {
-
+  private def safeF(ctxId: ContextId)(
+    f: => OutMonad[Out]
+  )(implicit monadError: OutMonadError): OutMonad[Process] = {
     val partialF = f.map(o => {
       debug(s"Processing $ctxId (got $o)")
       unlock(ctxId)
       Either.right[FailedLockingServiceOp, Out](o)
     })
 
-    monadError.handleError(partialF) {
-      case e => {
-        unlock(ctxId)
-        Either.left[FailedLockingServiceOp, Out](
-          FailedProcess[ContextId](ctxId, e)
-        )
-      }
+    monadError.handleError(partialF) { e =>
+      unlock(ctxId)
+      Either.left[FailedLockingServiceOp, Out](
+        FailedProcess[ContextId](ctxId, e)
+      )
     }
   }
 
-  private def getFailedLocks(locks: IdentF[DaoLock])(
-    implicit F: Foldable[IdentF]
-  ): List[LockFailure[Ident]] = {
-
-    val empty = List.empty[LockFailure[Ident]]
-
-    locks.foldLeft(empty) { (acc, o) =>
+  private def getFailedLocks(locks: Set[DaoLock]): LockFailureSet =
+    locks.foldLeft(Set.empty[LockFailure[Ident]]) { (acc, o) =>
       o match {
         case Right(_) => acc
-        case Left(failedLock) => failedLock :: acc
+        case Left(failedLock) => acc + failedLock
       }
     }
-  }
 
-  private def getLocks(ids: IdentF[Ident])(
-    implicit Fu: Functor[IdentF], Fo: Foldable[IdentF]
-  ): Locks = {
+  private def getLocks(ctxId: ContextId)(ids: Set[Ident]): Lock = {
+    val locks = ids.map(lock(_, ctxId))
+    val failedLocks = getFailedLocks(locks)
 
-    val contextId = createContextId
-    val locks: IdentF[DaoLock] = ids.map(lock(_, contextId))
-
-    getFailedLocks(locks) match {
-      case Nil => Right(contextId)
-      case failedLocks => Left(FailedLock(contextId, failedLocks))
+    if (failedLocks.isEmpty) {
+      Right(ctxId)
+    } else {
+      unlock(ctxId)
+      Left(FailedLock(ctxId, failedLocks))
     }
   }
 
   protected def createContextId: ContextId
 
-  protected def lock(id: Ident, ctxId: ContextId): DaoLock = {
+  protected def lock(id: Ident, ctxId: ContextId): DaoLock =
     lockDao.lock(id, ctxId).map(_ => ())
-  }
 
-  protected def unlock(ctxId: ContextId): Unit = {
-    info(s"Unlocking $ctxId")
-    lockDao
-      .unlock(ctxId)
-      .leftMap(lockDao.handleUnlockError)
-  }
+  protected def unlock(ctxId: ContextId): Unit =
+    lockDao.unlock(ctxId).leftMap(lockDao.handleUnlockError)
+
 }
 
 sealed trait FailedLockingServiceOp
 
-case class FailedLock[ContextId, Ident](ctxId: ContextId, lockFailures: List[LockFailure[Ident]])
+case class FailedLock[ContextId, Ident](ctxId: ContextId, lockFailures: Set[LockFailure[Ident]])
   extends FailedLockingServiceOp
 
 case class FailedUnlock[ContextId, Ident](ctxId: ContextId, ids: List[Ident], e: Throwable) extends FailedLockingServiceOp
