@@ -23,6 +23,10 @@ trait LockingServiceFixtures
     testWith(new LockingService[
       String, String, String, Try, LockDaoStub
       ] {
+      type UnlockFail = UnlockFailure[String, String]
+
+      var unlockFailure = List.empty[UnlockFail]
+
       override implicit val lockDao = maybeLockDao.getOrElse(createInMemoryLockDao)
       override protected def createContextId: String =
         UUID.randomUUID().toString

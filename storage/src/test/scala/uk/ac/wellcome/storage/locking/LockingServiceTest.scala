@@ -88,11 +88,4 @@ class LockingServiceTest
       })
     }
   }
-
-  // TODO:
-  // - When only some locks are acquired (locks should be released).
-  // - When unlock fails, ensure LockDao is called
-
-  // - When exception thrown during lock
-  // - When exception thrown during unlock
 }
