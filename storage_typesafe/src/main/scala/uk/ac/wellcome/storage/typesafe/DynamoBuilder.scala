@@ -3,9 +3,15 @@ package uk.ac.wellcome.storage.typesafe
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.typesafe.config.Config
 import uk.ac.wellcome.config.models.AWSClientConfig
-import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig}
+import uk.ac.wellcome.storage.dynamo.{
+  DynamoClientFactory,
+  DynamoConfig,
+  VersionedDao
+}
 import uk.ac.wellcome.typesafe.config.builders.AWSClientConfigBuilder
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
+
+import scala.concurrent.ExecutionContext
 
 object DynamoBuilder extends AWSClientConfigBuilder {
   def buildDynamoConfig(config: Config,
@@ -33,5 +39,12 @@ object DynamoBuilder extends AWSClientConfigBuilder {
   def buildDynamoClient(config: Config): AmazonDynamoDB =
     buildDynamoClient(
       awsClientConfig = buildAWSClientConfig(config, namespace = "dynamo")
+    )
+
+  def buildVersionedDao(config: Config, namespace: String = "")(
+    implicit ec: ExecutionContext): VersionedDao =
+    new VersionedDao(
+      dynamoDbClient = buildDynamoClient(config),
+      dynamoConfig = buildDynamoConfig(config, namespace = namespace)
     )
 }
