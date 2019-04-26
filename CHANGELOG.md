@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v3.9.0 - 2019-04-26
+
+Add a `join()` method to `ObjectLocation` that lets you append to the key.
+
 ## v3.8.0 - 2019-04-25
 
 Add a Typesafe builder for the VersionedDao.
