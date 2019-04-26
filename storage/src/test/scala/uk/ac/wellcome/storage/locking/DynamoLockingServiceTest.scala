@@ -51,7 +51,7 @@ class DynamoLockingServiceTest
   it("doesn't call lock if lockIds is empty") {
     withMockMetricsSender { mockMetricsSender =>
       withLocalDynamoDbTable { lockTable =>
-        val mockDynamoRowLockDao = mock[DynamoRowLockDao]
+        val mockDynamoRowLockDao = mock[DynamoLockDao]
         withLockingService(mockDynamoRowLockDao, mockMetricsSender) {
           lockingService =>
             var callbackCalled = false
@@ -130,7 +130,7 @@ class DynamoLockingServiceTest
   it("throws a FailedUnlockException and releases locks when unlocking fails") {
     withMockMetricsSender { mockMetricsSender =>
       withLocalDynamoDbTable { lockTable =>
-        val mockDynamoRowLockDao = mock[DynamoRowLockDao]
+        val mockDynamoRowLockDao = mock[DynamoLockDao]
         withLockingService(mockDynamoRowLockDao, mockMetricsSender) {
           lockingService =>
             when(mockDynamoRowLockDao.unlockRows(any())).thenReturn(Future

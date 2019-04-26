@@ -9,7 +9,7 @@ import com.gu.scanamo.DynamoFormat
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.monitoring.MetricsSender
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.locking.{DynamoLockingService, DynamoRowLockDao, DynamoRowLockDaoConfig}
+import uk.ac.wellcome.storage.locking.{DynamoLockingService, DynamoLockDao, DynamoRowLockDaoConfig}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -22,13 +22,13 @@ trait LockingFixtures extends LocalDynamoDb {
     )
 
   def withDynamoRowLockDao[R](dynamoDbClient: AmazonDynamoDB, lockTable: Table)(
-    testWith: TestWith[DynamoRowLockDao, R]): R = {
+    testWith: TestWith[DynamoLockDao, R]): R = {
     val rowLockDaoConfig = DynamoRowLockDaoConfig(
       dynamoConfig = createDynamoConfigWith(lockTable),
       duration = Duration.ofSeconds(180)
     )
 
-    val dynamoRowLockDao = new DynamoRowLockDao(
+    val dynamoRowLockDao = new DynamoLockDao(
       dynamoDbClient = dynamoDbClient,
       rowLockDaoConfig = rowLockDaoConfig
     )
@@ -37,7 +37,7 @@ trait LockingFixtures extends LocalDynamoDb {
   }
 
   def withDynamoRowLockDao[R](lockTable: Table)(
-    testWith: TestWith[DynamoRowLockDao, R]): R =
+    testWith: TestWith[DynamoLockDao, R]): R =
     withDynamoRowLockDao(dynamoDbClient, lockTable = lockTable) { rowLockDao =>
       testWith(rowLockDao)
     }
@@ -81,7 +81,7 @@ trait LockingFixtures extends LocalDynamoDb {
 
   val lockNamePrefix = "locking.test"
 
-  def withLockingService[R](dynamoRowLockDao: DynamoRowLockDao,
+  def withLockingService[R](dynamoRowLockDao: DynamoLockDao,
                             metricsSender: MetricsSender)(
                              testWith: TestWith[DynamoLockingService, R]): R = {
     val lockingService = new DynamoLockingService(

@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Random
 
-class DynamoRowLockDaoTest
+class DynamoLockDaoTest
     extends FunSpec
     with Matchers
     with MockitoSugar

@@ -10,9 +10,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 class DynamoLockingService(
-  lockNamePrefix: String,
-  dynamoRowLockDao: DynamoRowLockDao,
-  metricsSender: MetricsSender)(implicit ec: ExecutionContext)
+                            lockNamePrefix: String,
+                            dynamoRowLockDao: DynamoLockDao,
+                            metricsSender: MetricsSender)(implicit ec: ExecutionContext)
     extends Logging {
 
   private val failedLockMetricName: String = s"${lockNamePrefix}_FailedLock"
