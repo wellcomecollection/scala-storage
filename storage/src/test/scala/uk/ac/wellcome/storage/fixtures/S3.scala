@@ -101,7 +101,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
     //  - do not contain uppercase characters or underscores,
     //  - between 3 and 63 characters in length.
     // [https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html#bucketnamingrules]
-    (Random.alphanumeric take 10 mkString).toLowerCase
+    randomAlphanumeric.toLowerCase
 
   def createBucket: Bucket =
     Bucket(createBucketName)
