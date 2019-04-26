@@ -32,8 +32,9 @@ trait ScanamoHelpers[T] {
   protected val table: Table[T]
   protected val index: String
 
-  protected val deleteId = Scanamo.delete(client)(table.name)
-  protected val queryIndex = Scanamo.queryIndex[RowLock](client)(table.name, index)
+  protected val delete = Scanamo.delete(client)(table.name)
+  protected val queryIndex =
+    Scanamo.queryIndex[RowLock](client)(table.name, index)
 
   protected def safeExec[Bad, Good](ops: ScanamoEither[Bad, Good]): SafeEither[Good] =
     for {
@@ -104,19 +105,15 @@ class DynamoLockDao(
     )
   }
 
-  private val deleteId = Scanamo.delete(client)(table.name)
-  private val queryIndex = Scanamo.queryIndex[RowLock](client)(table.name, index)
-
   private def getLocksFor(ctxId: String) = for {
     result <- queryRowLocks(ctxId).toEither
     rowLocks <- result
   } yield rowLocks
 
-  private def delete(rowLock: RowLock) =
-    toEither(deleteId('id -> rowLock.id))
 
   private def deleteRowLocks(rowLocks: List[RowLock]) = {
-    val deleteT = EitherT(rowLocks.map(delete))
+    val deleteT = EitherT(rowLocks.map(
+      rowLock => toEither(delete('id -> rowLock.id))))
 
     val deleteErrors = deleteT.swap.collectRight
     val deletions = deleteT.collectRight
