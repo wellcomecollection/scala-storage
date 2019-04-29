@@ -6,30 +6,29 @@ import grizzled.slf4j.Logging
 
 import scala.language.higherKinds
 
-trait LockingService[Ident, ContextId, Out, OutMonad[_], LockDaoImpl <: LockDao[Ident, ContextId, _]] extends Logging {
+trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_,_]] extends Logging {
 
   import cats.implicits._
 
   implicit val lockDao: LockDaoImpl
 
-  type DaoLockFailure = LockFailure[Ident]
-  type DaoUnlockFailure = UnlockFailure[ContextId, Ident]
+  type DaoLockFailure = LockFailure[lockDao.Ident]
+  type DaoUnlockFailure = UnlockFailure[lockDao.ContextId]
   type DaoLockEither = Either[DaoLockFailure, Unit]
 
-  type Lock = Either[FailedLockingServiceOp, ContextId]
+  type Lock = Either[FailedLockingServiceOp, lockDao.ContextId]
   type Process = Either[FailedLockingServiceOp, Out]
 
   type OutMonadError = MonadError[OutMonad, Throwable]
 
-  def withLocks(ids: Set[Ident])(
+  def withLocks(ids: Set[lockDao.Ident])(
     f: => OutMonad[Out]
   )(implicit m: OutMonadError): OutMonad[Process] = {
-
-    val getLocksWithContextId = getLocks(createContextId)_
+    val contextId: lockDao.ContextId = createContextId()
 
     val eitherT = for {
       ctxId <- EitherT.fromEither[OutMonad](
-        getLocksWithContextId(ids))
+        getLocks(contextId)(ids))
 
       out <- EitherT(safeF(ctxId)(f))
     } yield out
@@ -37,7 +36,7 @@ trait LockingService[Ident, ContextId, Out, OutMonad[_], LockDaoImpl <: LockDao[
     eitherT.value
   }
 
-  private def safeF(ctxId: ContextId)(
+  private def safeF(ctxId: lockDao.ContextId)(
     f: => OutMonad[Out]
   )(implicit monadError: OutMonadError): OutMonad[Process] = {
     val partialF = f.map(o => {
@@ -49,21 +48,21 @@ trait LockingService[Ident, ContextId, Out, OutMonad[_], LockDaoImpl <: LockDao[
     monadError.handleError(partialF) { e =>
       unlock(ctxId)
       Either.left[FailedLockingServiceOp, Out](
-        FailedProcess[ContextId](ctxId, e)
+        FailedProcess[lockDao.ContextId](ctxId, e)
       )
     }
   }
 
   private def getFailedLocks(locks: Set[DaoLockEither]
                             ): Set[DaoLockFailure] =
-    locks.foldLeft(Set.empty[LockFailure[Ident]]) { (acc, o) =>
+    locks.foldLeft(Set.empty[LockFailure[lockDao.Ident]]) { (acc, o) =>
       o match {
         case Right(_) => acc
         case Left(failedLock) => acc + failedLock
       }
     }
 
-  private def getLocks(ctxId: ContextId)(ids: Set[Ident]): Lock = {
+  private def getLocks(ctxId: lockDao.ContextId)(ids: Set[lockDao.Ident]): Lock = {
     val locks = ids.map(lock(_, ctxId))
     val failedLocks = getFailedLocks(locks)
 
@@ -75,16 +74,33 @@ trait LockingService[Ident, ContextId, Out, OutMonad[_], LockDaoImpl <: LockDao[
     }
   }
 
-  protected def createContextId: ContextId
+  protected def createContextId(): lockDao.ContextId
 
-  protected def lock(id: Ident, ctxId: ContextId): DaoLockEither =
-    lockDao.lock(id, ctxId).map(_ => ())
+  protected def lock(id: lockDao.Ident, ctxId: lockDao.ContextId): DaoLockEither = {
+    val lock = Option(lockDao.lock(id, ctxId))
+      .getOrElse(
+        Left(LockFailure(id, new RuntimeException(
+          s"lockDao.lock($id, $ctxId) failed!"
+        )))
+      )
 
-  protected def unlock(ctxId: ContextId): Unit =
-    lockDao.unlock(ctxId)
-      .leftMap { error =>
+    lock.map(_ => ())
+  }
+
+  protected def unlock(ctxId: lockDao.ContextId): Unit = {
+    // Deal with unlocking _nothing_
+    val unlock = Option(lockDao.unlock(ctxId))
+
+    if(unlock.isEmpty) {
+      warn(s"lockDao.unlock($ctxId) failed!")
+    }
+
+    unlock.map {
+      _.leftMap { error =>
         warn(s"Unable to unlock context $ctxId fully: $error")
       }
+    }
+  }
 
 }
 

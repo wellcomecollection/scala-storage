@@ -14,18 +14,15 @@ trait LockingServiceFixtures
     with TryValues
     with Matchers {
 
-  type LockDaoStub = LockDao[String, String, Unit]
+  type LockDaoStub = LockDao[String, String]
   type ResultF = Try[Either[FailedLockingServiceOp, String]]
-  type LockingServiceStub = LockingService[
-    String, String, String, Try, LockDaoStub]
+  type LockingServiceStub =
+    LockingService[String, Try, LockDaoStub]
 
   def withLockingService[R](maybeLockDao: Option[LockDaoStub] = None)(testWith: TestWith[LockingServiceStub, R]): R =
-    testWith(new LockingService[
-      String, String, String, Try, LockDaoStub
-      ] {
-      type UnlockFail = UnlockFailure[String, String]
-
-      var unlockFailure = List.empty[UnlockFail]
+    testWith(
+      new LockingService[String, Try, LockDaoStub] {
+      type UnlockFail = UnlockFailure[String]
 
       override implicit val lockDao = maybeLockDao.getOrElse(createInMemoryLockDao)
       override protected def createContextId: String =

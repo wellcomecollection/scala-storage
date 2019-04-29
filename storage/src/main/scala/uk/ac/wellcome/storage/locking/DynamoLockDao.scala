@@ -1,92 +1,49 @@
 package uk.ac.wellcome.storage.locking
 
-import java.time.Instant
-import java.time.temporal.TemporalAmount
-
 import cats.data.EitherT
 import cats.implicits._
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.gu.scanamo.ops.ScanamoOps
+import com.gu.scanamo.DynamoFormat._
 import com.gu.scanamo.query.Condition
 import com.gu.scanamo.syntax._
-import com.gu.scanamo.{DynamoFormat, Scanamo, Table}
+import com.gu.scanamo.{DynamoFormat, Table}
 import grizzled.slf4j.Logging
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
-object DynamoLockingFormats {
-  implicit val instantLongFormat: AnyRef with DynamoFormat[Instant] =
-    DynamoFormat.coercedXmap[Instant, Long, IllegalArgumentException](
-      Instant.ofEpochSecond
-    )(
-      _.getEpochSecond
-    )
-}
-
-trait ScanamoHelpers[T] {
-  type ScanamoEither[Bad, Good] = ScanamoOps[Either[Bad, Good]]
-  type SafeEither[Good] = Either[Throwable, Good]
-
-  protected val client: AmazonDynamoDB
-  protected val table: Table[T]
-  protected val index: String
-
-  protected val delete = Scanamo.delete(client)(table.name)
-  protected val queryIndex =
-    Scanamo.queryIndex[RowLock](client)(table.name, index)
-
-  protected def safeExec[Bad, Good](ops: ScanamoEither[Bad, Good]): SafeEither[Good] =
-    for {
-      either <- toEither(Scanamo.exec(client)(ops))
-      result <- either
-    } yield result
-
-  protected def toEither[Out](f: => Out) =
-    Try(f).toEither
-}
-
 class DynamoLockDao(
                         dynamoClient: AmazonDynamoDB,
                         config: DynamoRowLockDaoConfig
-                   )(implicit ec: ExecutionContext)
+                   )(implicit val ec: ExecutionContext, val df: DynamoFormat[RowLock])
   extends LockDao[String, String]
     with Logging
     with ScanamoHelpers[RowLock] {
-
-  import DynamoLockingFormats._
 
   override val client = dynamoClient
   override val table = Table[RowLock](config.dynamoConfig.table)
   override val index = config.dynamoConfig.index
 
-  private def putLock(lock: RowLock) = {
-    val hasExpired = (lock: RowLock) =>
-      Condition('expires < lock.created.getEpochSecond)
-
-    val notExists = not(attributeExists(symbol = 'id))
-
-    table.given(hasExpired(lock) or notExists).put(lock)
-  }
-
   override def lock(id: String, ctxId: String): Lock = {
-    val rowLock = RowLock(id, ctxId, config.duration)
+    val rowLock = RowLock.create(id, ctxId, config.duration)
 
-    trace(s"Locking $rowLock")
+    debug(s"Locking $rowLock")
 
-    safeExec(putLock(rowLock)).fold(
+    safePutItem(putLock(rowLock)).fold(
       e => {
         debug(s"Failed to lock $rowLock $e")
         Left(LockFailure(id, e))
       },
       result => {
-        trace(s"Got $result for $rowLock")
+        debug(s"Got $result for $rowLock")
         Right(rowLock)
       }
     )
   }
 
   override def unlock(ctxId: String): Unlock = {
+    debug(s"Unlocking $ctxId")
+
     val unlockOp = for {
       queryOp <- queryRowLocks(ctxId).toEither
       rowLocks <- queryOp
@@ -105,11 +62,14 @@ class DynamoLockDao(
     )
   }
 
-  private def getLocksFor(ctxId: String) = for {
-    result <- queryRowLocks(ctxId).toEither
-    rowLocks <- result
-  } yield rowLocks
+  private def putLock(lock: RowLock) = {
+    val hasExpired = (lock: RowLock) =>
+      Condition('expires < lock.created.getEpochSecond)
 
+    val notExists = not(attributeExists(symbol = 'id))
+
+    table.given(hasExpired(lock) or notExists).put(lock)
+  }
 
   private def deleteRowLocks(rowLocks: List[RowLock]) = {
     val deleteT = EitherT(rowLocks.map(
@@ -136,18 +96,5 @@ class DynamoLockDao(
     } else {
       Left(new Error(s"Querying $ctxId failed with $readErrors"))
     }
-  }
-}
-
-case class RowLock(id: String,
-                   contextId: String,
-                   created: Instant,
-                   expires: Instant)
-
-object RowLock {
-  def apply(id: String, ctxId: String, duration: TemporalAmount): RowLock = {
-    val created = Instant.now()
-
-    RowLock(id, ctxId, created, created.plus(duration))
   }
 }

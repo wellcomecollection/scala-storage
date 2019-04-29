@@ -1,8 +1,10 @@
 package uk.ac.wellcome.storage.locking
 
-import java.time.Instant
+trait LockDao[LockDaoIdent, LockDaoContextId] {
 
-trait LockDao[Ident, ContextId] {
+  type Ident = LockDaoIdent
+  type ContextId = LockDaoContextId
+
   type Lock = Either[LockFailure[Ident], RowLock]
   type Unlock = Either[UnlockFailure[ContextId], Unit]
 

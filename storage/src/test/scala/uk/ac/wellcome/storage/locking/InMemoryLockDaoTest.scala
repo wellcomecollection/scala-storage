@@ -12,20 +12,20 @@ class InMemoryLockDaoTest
   it("behaves correctly") {
     val dao = createInMemoryLockDao
 
-    dao.lock("id","ctx") shouldBe Right(())
-    dao.lock("id2","ctx2") shouldBe Right(())
+    dao.lock("id","ctx") shouldBe a[Right[_,_]]
+    dao.lock("id2","ctx2") shouldBe a[Right[_,_]]
 
     dao.lock("id","different").left.value.e.getMessage shouldEqual
-      s"Unable to lock id in different, already locked with context ctx"
+      s"Failed lock id in different, locked: ctx"
 
-    dao.lock("id","ctx") shouldBe Right(())
+    dao.lock("id","ctx") shouldBe a[Right[_,_]]
 
-    dao.unlock("ctx") shouldBe Right(())
-    dao.unlock("ctx") shouldBe Right(())
+    dao.unlock("ctx") shouldBe a[Right[_,_]]
+    dao.unlock("ctx") shouldBe a[Right[_,_]]
 
-    dao.lock("id","different") shouldBe Right(())
+    dao.lock("id","different") shouldBe a[Right[_,_]]
     dao.lock("id2","different").left.value.e.getMessage shouldEqual
-      s"Unable to lock id2 in different, already locked with context ctx2"
+      s"Failed lock id2 in different, locked: ctx2"
 
   }
 }

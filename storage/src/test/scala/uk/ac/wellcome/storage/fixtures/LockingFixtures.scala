@@ -7,9 +7,8 @@ import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
 import com.gu.scanamo.DynamoFormat
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.monitoring.MetricsSender
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.locking.{DynamoLockingService, DynamoLockDao, DynamoRowLockDaoConfig}
+import uk.ac.wellcome.storage.locking.{DynamoLockDao, DynamoLockingService, DynamoRowLockDaoConfig}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -21,24 +20,24 @@ trait LockingFixtures extends LocalDynamoDb {
       _.getEpochSecond
     )
 
-  def withDynamoRowLockDao[R](dynamoDbClient: AmazonDynamoDB, lockTable: Table)(
+  def withLockDao[R](dynamoDbClient: AmazonDynamoDB, lockTable: Table)(
     testWith: TestWith[DynamoLockDao, R]): R = {
     val rowLockDaoConfig = DynamoRowLockDaoConfig(
       dynamoConfig = createDynamoConfigWith(lockTable),
       duration = Duration.ofSeconds(180)
     )
 
-    val dynamoRowLockDao = new DynamoLockDao(
-      dynamoDbClient = dynamoDbClient,
-      rowLockDaoConfig = rowLockDaoConfig
+    val dynamoLockDao = new DynamoLockDao(
+      dynamoDbClient,
+      rowLockDaoConfig
     )
 
-    testWith(dynamoRowLockDao)
+    testWith(dynamoLockDao)
   }
 
-  def withDynamoRowLockDao[R](lockTable: Table)(
+  def withLockDao[R](lockTable: Table)(
     testWith: TestWith[DynamoLockDao, R]): R =
-    withDynamoRowLockDao(dynamoDbClient, lockTable = lockTable) { rowLockDao =>
+    withLockDao(dynamoDbClient, lockTable = lockTable) { rowLockDao =>
       testWith(rowLockDao)
     }
 
@@ -81,14 +80,12 @@ trait LockingFixtures extends LocalDynamoDb {
 
   val lockNamePrefix = "locking.test"
 
-  def withLockingService[R](dynamoRowLockDao: DynamoLockDao,
-                            metricsSender: MetricsSender)(
+  def withLockingService[R](dynamoRowLockDao: DynamoLockDao)(
                              testWith: TestWith[DynamoLockingService, R]): R = {
-    val lockingService = new DynamoLockingService(
-      lockNamePrefix = lockNamePrefix,
-      dynamoRowLockDao = dynamoRowLockDao,
-      metricsSender = metricsSender
-    )
+
+
+    val lockingService =
+      new DynamoLockingService()(dynamoRowLockDao)
     testWith(lockingService)
   }
 }
