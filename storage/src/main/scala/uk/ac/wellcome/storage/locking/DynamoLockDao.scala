@@ -8,6 +8,7 @@ import com.gu.scanamo.query.Condition
 import com.gu.scanamo.syntax._
 import com.gu.scanamo.{DynamoFormat, Table}
 import grizzled.slf4j.Logging
+import uk.ac.wellcome.storage.{LockDao, LockFailure, UnlockFailure}
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try
@@ -27,7 +28,7 @@ class DynamoLockDao(
 
   // Lock
 
-  override def lock(id: String, ctxId: String): Lock = {
+  override def lock(id: String, ctxId: String): LockResult = {
     val rowLock = ExpiringLock.create(id, ctxId, config.duration)
 
     debug(s"Locking $rowLock")
@@ -62,7 +63,7 @@ class DynamoLockDao(
 
   // Unlock
 
-  override def unlock(ctxId: String): Unlock = {
+  override def unlock(ctxId: String): UnlockResult = {
     debug(s"Unlocking $ctxId")
 
     queryAndDelete(ctxId).fold(

@@ -4,6 +4,7 @@ import java.util.UUID
 
 import org.scalatest.{Assertion, EitherValues, Matchers, TryValues}
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.{LockDao, UnlockFailure}
 import uk.ac.wellcome.storage.locking._
 
 import scala.util.Try

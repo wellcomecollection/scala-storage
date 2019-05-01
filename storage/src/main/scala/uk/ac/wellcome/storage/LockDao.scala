@@ -1,15 +1,14 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage
 
 trait LockDao[LockDaoIdent, LockDaoContextId] {
-
   type Ident = LockDaoIdent
   type ContextId = LockDaoContextId
 
-  type Lock = Either[LockFailure[Ident], ExpiringLock]
-  type Unlock = Either[UnlockFailure[ContextId], Unit]
+  type LockResult = Either[LockFailure[Ident], Lock[Ident, ContextId]]
+  type UnlockResult = Either[UnlockFailure[ContextId], Unit]
 
-  def lock(id: Ident, ctxId: ContextId): Lock
-  def unlock(ctxId: ContextId): Unlock
+  def lock(id: Ident, ctxId: ContextId): LockResult
+  def unlock(ctxId: ContextId): UnlockResult
 }
 
 sealed trait FailedLockDaoOp

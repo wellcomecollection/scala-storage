@@ -1,12 +1,13 @@
 package uk.ac.wellcome.storage.fixtures
 
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.locking.{LockDao, LockFailure, ExpiringLock}
-
+import uk.ac.wellcome.storage.locking.ExpiringLock
 import java.time.Duration
 
+import uk.ac.wellcome.storage.{LockDao, LockFailure}
+
 trait LockDaoFixtures extends Logging {
-  def createInMemoryLockDao = new LockDao[String, String] {
+  def createInMemoryLockDao: LockDao[String, String] = new LockDao[String, String] {
 
     var locks: Map[String, ExpiringLock] = Map.empty
 
