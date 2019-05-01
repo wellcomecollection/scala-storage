@@ -2,6 +2,7 @@ package uk.ac.wellcome.storage.fixtures
 
 import java.util.UUID
 
+import grizzled.slf4j.Logging
 import org.scalatest.{Assertion, EitherValues, Matchers, TryValues}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
@@ -9,10 +10,10 @@ import uk.ac.wellcome.storage._
 import scala.util.Try
 
 trait LockingServiceFixtures
-  extends LockDaoFixtures
-    with EitherValues
+  extends EitherValues
     with TryValues
-    with Matchers {
+    with Matchers
+    with Logging {
 
   type LockDaoStub = LockDao[String, UUID]
   type ResultF = Try[Either[FailedLockingServiceOp, String]]
@@ -32,7 +33,7 @@ trait LockingServiceFixtures
   }
 
   def withLockingService[R](testWith: TestWith[LockingServiceStub, R]): R =
-    withLockingService(createInMemoryLockDao) { lockingService =>
+    withLockingService(new InMemoryLockDao()) { lockingService =>
       testWith(lockingService)
     }
 

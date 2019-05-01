@@ -4,18 +4,17 @@ import java.util.UUID
 
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.LockDao
-import uk.ac.wellcome.storage.fixtures.LockDaoFixtures
+import uk.ac.wellcome.storage.fixtures.InMemoryLockDao
 
 import scala.util.Random
 
 class InMemoryLockDaoTest
   extends FunSpec
     with Matchers
-    with EitherValues
-    with LockDaoFixtures {
+    with EitherValues {
 
   it("behaves correctly") {
-    val dao: LockDao[String, UUID] = createInMemoryLockDao
+    val dao: LockDao[String, UUID] = new InMemoryLockDao()
 
     val id1 = createId
     val id2 = createId

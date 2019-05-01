@@ -5,7 +5,7 @@ import java.util.UUID
 import cats.implicits._
 import org.scalatest._
 import uk.ac.wellcome.storage.{LockDao, UnlockFailure}
-import uk.ac.wellcome.storage.fixtures.LockingServiceFixtures
+import uk.ac.wellcome.storage.fixtures.{InMemoryLockDao, LockingServiceFixtures, PermanentLock}
 
 class LockingServiceTest
   extends FunSpec
@@ -113,6 +113,18 @@ class LockingServiceTest
       assertLockSuccess(
         service.withLocks(lockIds)(f)
       )
+    }
+  }
+
+  it("releases locks if the callback fails") {
+    val lockDao = new InMemoryLockDao()
+
+    withLockingService(lockDao) { service =>
+      val result = service.withLocks(lockIds) {
+        throw new Throwable("BOOM!")
+      }
+
+      lockDao.getCurrentLocks shouldBe Set.empty
     }
   }
 }
