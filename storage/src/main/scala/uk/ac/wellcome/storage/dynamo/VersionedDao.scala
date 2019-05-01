@@ -26,8 +26,7 @@ class VersionedDao(
     extends Logging {
 
   def updateRecord[T](record: T)(
-    implicit
-    evidence: DynamoFormat[T],
+    implicit evidence: DynamoFormat[T],
     versionUpdater: VersionUpdater[T],
     idGetter: IdGetter[T],
     versionGetter: VersionGetter[T],
