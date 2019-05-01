@@ -33,6 +33,17 @@ class LockingServiceTest
     }
   }
 
+  it("allows locking a single identifier") {
+    val lockDao = new InMemoryLockDao()
+
+    withLockingService(lockDao) { service =>
+      assertLockSuccess(service.withLock("a") {
+        lockDao.getCurrentLocks shouldBe Set("a")
+        f
+      })
+    }
+  }
+
   it("fails if you try to re-lock the same identifiers twice") {
     val lockDao = new InMemoryLockDao()
 
