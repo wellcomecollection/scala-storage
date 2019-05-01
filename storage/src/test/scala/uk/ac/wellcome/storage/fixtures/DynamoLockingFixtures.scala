@@ -25,13 +25,6 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
       lockTable.name
     )('id -> id).get.right.value
 
-  def putDynamo(lockTable: Table)(rowLock: ExpiringLock): ExpiringLock =
-    Scanamo.put[ExpiringLock](
-      dynamoDbClient
-    )(
-      lockTable.name
-    )(rowLock).get.right.value
-
   def createRandomContextId: UUID = UUID.randomUUID()
   def createRandomId: String = Random.nextString(32)
 
