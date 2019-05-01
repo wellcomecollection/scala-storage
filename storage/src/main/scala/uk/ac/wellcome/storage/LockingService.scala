@@ -24,7 +24,8 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
     val contextId: lockDao.ContextId = createContextId()
 
     val eitherT = for {
-      contextId <- EitherT.fromEither[OutMonad](getLocks(ids = ids, contextId = contextId))
+      contextId <- EitherT.fromEither[OutMonad](
+        getLocks(ids = ids, contextId = contextId))
 
       out <- EitherT(safeF(contextId)(f))
     } yield out
@@ -55,7 +56,8 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
     * unlock the entire context and report a failure.
     *
     */
-  private def getLocks(ids: Set[lockDao.Ident], contextId: lockDao.ContextId): LockingServiceResult = {
+  private def getLocks(ids: Set[lockDao.Ident],
+                       contextId: lockDao.ContextId): LockingServiceResult = {
     val locks = ids.map { lockDao.lock(_, contextId) }
     val failedLocks = getFailedLocks(locks)
 
@@ -67,7 +69,8 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
     }
   }
 
-  private def getFailedLocks(locks: Set[lockDao.LockResult]): Set[LockFailure[lockDao.Ident]] =
+  private def getFailedLocks(
+    locks: Set[lockDao.LockResult]): Set[LockFailure[lockDao.Ident]] =
     locks.foldLeft(Set.empty[LockFailure[lockDao.Ident]]) { (acc, o) =>
       o match {
         case Right(_)         => acc

@@ -5,10 +5,7 @@ import java.util.UUID
 import cats.data.EitherT
 import cats.implicits._
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.model.{
-  DeleteItemResult,
-  PutItemResult
-}
+import com.amazonaws.services.dynamodbv2.model.{DeleteItemResult, PutItemResult}
 import com.gu.scanamo.DynamoFormat._
 import com.gu.scanamo.query.Condition
 import com.gu.scanamo.syntax._
@@ -29,7 +26,8 @@ class DynamoLockDao(
     with Logging
     with ScanamoHelpers[ExpiringLock] {
 
-  override val table: Table[ExpiringLock] = Table[ExpiringLock](config.dynamoConfig.table)
+  override val table: Table[ExpiringLock] =
+    Table[ExpiringLock](config.dynamoConfig.table)
   override val index: String = config.dynamoConfig.index
 
   // Lock
@@ -95,7 +93,8 @@ class DynamoLockDao(
       _ <- deleteLocks(rowLocks)
     } yield ()
 
-  private def deleteLocks(rowLocks: List[ExpiringLock]): Either[Error, List[DeleteItemResult]] = {
+  private def deleteLocks(
+    rowLocks: List[ExpiringLock]): Either[Error, List[DeleteItemResult]] = {
     val deleteT = EitherT(
       rowLocks.map(rowLock => toEither(delete('id -> rowLock.id))))
 
