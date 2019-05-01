@@ -9,7 +9,7 @@ import com.gu.scanamo.error.DynamoReadError
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{EitherValues, FunSpec}
 import uk.ac.wellcome.monitoring.fixtures.MetricsSenderFixture
-import uk.ac.wellcome.storage.UnlockFailure
+import uk.ac.wellcome.storage.{FailedLock, FailedProcess, UnlockFailure}
 import uk.ac.wellcome.storage.dynamo._
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.{DynamoLockingFixtures, LocalDynamoDb}

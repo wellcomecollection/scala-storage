@@ -4,8 +4,7 @@ import java.util.UUID
 
 import org.scalatest.{Assertion, EitherValues, Matchers, TryValues}
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.{LockDao, UnlockFailure}
-import uk.ac.wellcome.storage.locking._
+import uk.ac.wellcome.storage._
 
 import scala.util.Try
 
@@ -20,15 +19,17 @@ trait LockingServiceFixtures
   type LockingServiceStub =
     LockingService[String, Try, LockDaoStub]
 
-  def withLockingService[R](maybeLockDao: Option[LockDaoStub] = None)(testWith: TestWith[LockingServiceStub, R]): R =
-    testWith(
-      new LockingService[String, Try, LockDaoStub] {
+  def withLockingService[R](testWith: TestWith[LockingServiceStub, R]): R = {
+    val lockingService = new LockingService[String, Try, LockDaoStub] {
       type UnlockFail = UnlockFailure[String]
 
-      override implicit val lockDao = maybeLockDao.getOrElse(createInMemoryLockDao)
-      override protected def createContextId: UUID =
+      override implicit val lockDao: LockDao[String, UUID] = createInMemoryLockDao
+      override protected def createContextId(): UUID =
         UUID.randomUUID()
-    })
+    }
+
+    testWith(lockingService)
+  }
 
   def successfulRightOf(result: ResultF): String =
     result

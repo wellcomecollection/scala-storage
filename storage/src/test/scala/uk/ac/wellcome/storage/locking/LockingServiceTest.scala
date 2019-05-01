@@ -18,13 +18,13 @@ class LockingServiceTest
   val differentLockIds = Set("d", "e", "f")
 
   it("acquires a lock successfully, and returns the result") {
-    withLockingService() { service =>
+    withLockingService { service =>
       assertLockSuccess(service.withLocks(lockIds)(f))
     }
   }
 
   it("fails if you try to re-lock the same identifiers twice") {
-    withLockingService() { service =>
+    withLockingService { service =>
       assertLockSuccess(service.withLocks(lockIds) {
         assertFailedLock(service.withLocks(lockIds)(f), lockIds)
 
@@ -34,7 +34,7 @@ class LockingServiceTest
   }
 
   it("fails if you try to re-lock an already locked identifier") {
-    withLockingService() { service =>
+    withLockingService { service =>
       assertLockSuccess(service.withLocks(lockIds) {
         assertFailedLock(
           service.withLocks(overlappingLockIds)(f),
@@ -46,7 +46,7 @@ class LockingServiceTest
   }
 
   it("allows multiple, nested locks on different identifiers") {
-    withLockingService() { service =>
+    withLockingService { service =>
       assertLockSuccess(service.withLocks(lockIds) {
         assertLockSuccess(service.withLocks(differentLockIds)(f))
 
@@ -56,14 +56,14 @@ class LockingServiceTest
   }
 
   it("unlocks a context set when done, and allows you to re-lock them") {
-    withLockingService() { service =>
+    withLockingService { service =>
       assertLockSuccess(service.withLocks(lockIds)(f))
       assertLockSuccess(service.withLocks(lockIds)(f))
     }
   }
 
   it("unlocks a context set when a result throws a Throwable") {
-    withLockingService() { service =>
+    withLockingService { service =>
       assertFailedProcess(
         service.withLocks(lockIds)(fError), expectedError)
       assertLockSuccess(
@@ -72,7 +72,7 @@ class LockingServiceTest
   }
 
   it("unlocks a context set when a partial lock is acquired") {
-    withLockingService() { service =>
+    withLockingService { service =>
       assertLockSuccess(service.withLocks(lockIds) {
 
         assertFailedLock(

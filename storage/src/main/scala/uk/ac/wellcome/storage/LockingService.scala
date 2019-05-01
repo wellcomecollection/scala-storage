@@ -1,9 +1,8 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage
 
 import cats._
 import cats.data._
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.{LockDao, LockFailure, UnlockFailure}
 
 import scala.language.higherKinds
 
