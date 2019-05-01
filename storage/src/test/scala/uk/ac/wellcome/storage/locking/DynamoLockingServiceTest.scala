@@ -90,7 +90,7 @@ class DynamoLockingServiceTest
 
             val eventuallyLockFails =
               lockingService.withLocks(Set(idA, lockedId))(Future {
-                fail("Lock did not fail")
+                fail("BOOM!")
               })
 
             whenReady(eventuallyLockFails) { failure =>
@@ -124,7 +124,7 @@ class DynamoLockingServiceTest
             val nestedLock =
               lockingService.withLocks(Set(idA))(Future {
                 lockingService.withLocks(Set(idB))(Future {
-                  throw new RuntimeException("BOOM!")
+                  fail("BOOM!")
                 })
               })
 
@@ -182,7 +182,7 @@ class DynamoLockingServiceTest
             val eventuallyLockFails =
               lockingService.withLocks(Set(id))(Future {
                 assertOnlyHaveRowLockRecordIds(Set(id), lockTable)
-                throw new ExpectedException
+                fail("BOOM!")
               })
 
             whenReady(eventuallyLockFails) { failure =>
