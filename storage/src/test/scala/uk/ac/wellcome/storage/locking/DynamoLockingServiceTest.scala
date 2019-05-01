@@ -11,9 +11,9 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Assertion, EitherValues, FunSpec}
 import uk.ac.wellcome.monitoring.fixtures.MetricsSenderFixture
 import uk.ac.wellcome.storage.UnlockFailure
+import uk.ac.wellcome.storage.dynamo._
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.fixtures.{LocalDynamoDb, LockingFixtures}
-
+import uk.ac.wellcome.storage.fixtures.{LocalDynamoDb, DynamoLockingFixtures}
 import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -22,7 +22,7 @@ import scala.util.Random
 
 class DynamoLockingServiceTest
   extends FunSpec
-    with LockingFixtures
+    with DynamoLockingFixtures
     with ScalaFutures
     with EitherValues
     with MetricsSenderFixture {

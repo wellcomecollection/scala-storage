@@ -1,59 +1,38 @@
 package uk.ac.wellcome.storage.fixtures
 
-import java.time.{Duration, Instant}
+import java.time.Duration
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
-import com.gu.scanamo.{DynamoFormat, Scanamo}
+import com.gu.scanamo.Scanamo
 import com.gu.scanamo.syntax._
 import org.scalatest.{EitherValues, OptionValues}
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.dynamo._
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.locking.{DynamoLockDao, DynamoLockDaoConfig, DynamoLockingService, ExpiringLock}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
-trait LockingFixtures extends LocalDynamoDb with EitherValues with OptionValues {
-  implicit val instantLongFormat: AnyRef with DynamoFormat[Instant] =
-    DynamoFormat.coercedXmap[Instant, Long, IllegalArgumentException](
-      Instant.ofEpochSecond
-    )(
-      _.getEpochSecond
-    )
-
-
-  def getDynamo(lockTable: Table)(id: String) =
+trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionValues {
+  def getDynamo(lockTable: Table)(id: String): ExpiringLock =
     Scanamo.get[ExpiringLock](
       dynamoDbClient
     )(
       lockTable.name
     )('id -> id).get.right.value
 
-  def putDynamo(lockTable: Table)(rowLock: ExpiringLock) =
+  def putDynamo(lockTable: Table)(rowLock: ExpiringLock): ExpiringLock =
     Scanamo.put[ExpiringLock](
       dynamoDbClient
     )(
       lockTable.name
     )(rowLock).get.right.value
 
-  def expireLock(table: Table)(id: String) = {
-    val rowLock =
-      getDynamo(table)(id)
-
-    val expired = rowLock.expires.minus(
-      Duration.ofSeconds(1)
-    )
-
-    val expiredRowLock =
-      rowLock.copy(expires = expired)
-
-    putDynamo(table)(expiredRowLock)
-  }
-
-  def createRandomContextId = Random.nextString(32)
-  def createRandomId = Random.nextString(32)
+  def createRandomContextId: String = Random.nextString(32)
+  def createRandomId: String = Random.nextString(32)
 
   def withLockDao[R](
     dynamoDbClient: AmazonDynamoDB,
@@ -130,12 +109,8 @@ trait LockingFixtures extends LocalDynamoDb with EitherValues with OptionValues 
     table
   }
 
-  val lockNamePrefix = "locking.test"
-
   def withLockingService[R](dynamoRowLockDao: DynamoLockDao)(
                              testWith: TestWith[DynamoLockingService, R]): R = {
-
-
     val lockingService =
       new DynamoLockingService()(dynamoRowLockDao)
     testWith(lockingService)

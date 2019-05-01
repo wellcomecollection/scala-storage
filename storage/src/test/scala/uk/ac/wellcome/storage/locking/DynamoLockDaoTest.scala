@@ -11,7 +11,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.{LockFailure, UnlockFailure}
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.fixtures.LockingFixtures
+import uk.ac.wellcome.storage.fixtures.DynamoLockingFixtures
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -23,7 +23,7 @@ class DynamoLockDaoTest
     with Matchers
     with MockitoSugar
     with ScalaFutures
-    with LockingFixtures
+    with DynamoLockingFixtures
     with EitherValues
     with IntegrationPatience {
 
