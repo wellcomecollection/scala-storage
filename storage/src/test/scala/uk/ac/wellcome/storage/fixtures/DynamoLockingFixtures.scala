@@ -119,4 +119,12 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
     val lockingService = new DynamoLockingService()(dynamoLockDao)
     testWith(lockingService)
   }
+
+  def withDynamoLockingService[R](table: Table)(
+    testWith: TestWith[DynamoLockingService, R]): R =
+    withLockDao(table) { lockDao =>
+      withDynamoLockingService(lockDao) { lockingService =>
+        testWith(lockingService)
+      }
+    }
 }

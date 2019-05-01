@@ -29,5 +29,5 @@ sealed trait FailedLockDaoOp
 
 case class LockFailure[Ident](id: Ident, e: Throwable) extends FailedLockDaoOp
 
-case class UnlockFailure[ContextId](ctxId: ContextId, e: Throwable)
+case class UnlockFailure[ContextId](contextId: ContextId, e: Throwable)
     extends FailedLockDaoOp

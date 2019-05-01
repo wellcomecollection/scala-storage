@@ -19,17 +19,22 @@ trait LockingServiceFixtures
   type LockingServiceStub =
     LockingService[String, Try, LockDaoStub]
 
-  def withLockingService[R](testWith: TestWith[LockingServiceStub, R]): R = {
+  def withLockingService[R](lockDaoImpl: LockDaoStub)(testWith: TestWith[LockingServiceStub, R]): R = {
     val lockingService = new LockingService[String, Try, LockDaoStub] {
       type UnlockFail = UnlockFailure[String]
 
-      override implicit val lockDao: LockDao[String, UUID] = createInMemoryLockDao
+      override implicit val lockDao: LockDaoStub = lockDaoImpl
       override protected def createContextId(): UUID =
         UUID.randomUUID()
     }
 
     testWith(lockingService)
   }
+
+  def withLockingService[R](testWith: TestWith[LockingServiceStub, R]): R =
+    withLockingService(createInMemoryLockDao) { lockingService =>
+      testWith(lockingService)
+    }
 
   def successfulRightOf(result: ResultF): String =
     result

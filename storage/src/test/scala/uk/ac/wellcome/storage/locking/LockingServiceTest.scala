@@ -1,7 +1,10 @@
 package uk.ac.wellcome.storage.locking
 
+import java.util.UUID
+
 import cats.implicits._
 import org.scalatest._
+import uk.ac.wellcome.storage.{LockDao, UnlockFailure}
 import uk.ac.wellcome.storage.fixtures.LockingServiceFixtures
 
 class LockingServiceTest
@@ -86,6 +89,30 @@ class LockingServiceTest
 
         f
       })
+    }
+  }
+
+  it("calls the callback if asked to lock an empty set") {
+    withLockingService { service =>
+      assertLockSuccess(
+        service.withLocks(Set.empty)(f)
+      )
+    }
+  }
+
+  it("returns a success even if unlocking fails") {
+    val brokenUnlockDao = new LockDao[String, UUID] {
+      override def lock(id: String, contextId: UUID): LockResult =
+        Right(PermanentLock(id = id, contextId = contextId))
+
+      override def unlock(contextId: ContextId): UnlockResult =
+        Left(UnlockFailure(contextId, new Throwable("BOOM!")))
+    }
+
+    withLockingService(brokenUnlockDao) { service =>
+      assertLockSuccess(
+        service.withLocks(lockIds)(f)
+      )
     }
   }
 }
