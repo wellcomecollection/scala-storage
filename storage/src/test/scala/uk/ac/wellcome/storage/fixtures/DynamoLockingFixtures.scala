@@ -1,6 +1,7 @@
 package uk.ac.wellcome.storage.fixtures
 
 import java.time.Duration
+import java.util.UUID
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model._
@@ -31,7 +32,7 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
       lockTable.name
     )(rowLock).get.right.value
 
-  def createRandomContextId: String = Random.nextString(32)
+  def createRandomContextId: UUID = UUID.randomUUID()
   def createRandomId: String = Random.nextString(32)
 
   def withLockDao[R](
@@ -54,21 +55,29 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
 
   def withLockDao[R](lockTable: Table)(
     testWith: TestWith[DynamoLockDao, R]): R =
-    withLockDao(dynamoDbClient, lockTable = lockTable) { rowLockDao =>
-      testWith(rowLockDao)
+    withLockDao(dynamoDbClient, lockTable = lockTable) { lockDao =>
+      testWith(lockDao)
+    }
+
+  def withLockDao[R](dynamoDbClient: AmazonDynamoDB)(
+    testWith: TestWith[DynamoLockDao, R]): R =
+    withLocalDynamoDbTable { lockTable =>
+      withLockDao(dynamoDbClient, lockTable) { lockDao =>
+        testWith(lockDao)
+      }
     }
 
   def withLockDao[R](lockTable: Table, seconds: Int)(
     testWith: TestWith[DynamoLockDao, R]): R =
-    withLockDao(dynamoDbClient, lockTable = lockTable, seconds = seconds) { rowLockDao =>
-      testWith(rowLockDao)
+    withLockDao(dynamoDbClient, lockTable = lockTable, seconds = seconds) { lockDao =>
+      testWith(lockDao)
     }
 
   def withLockDao[R](
     testWith: TestWith[DynamoLockDao, R]): R =
     withLocalDynamoDbTable { lockTable =>
-      withLockDao(dynamoDbClient, lockTable = lockTable) { rowLockDao =>
-        testWith(rowLockDao)
+      withLockDao(dynamoDbClient, lockTable = lockTable) { lockDao =>
+        testWith(lockDao)
       }
     }
 

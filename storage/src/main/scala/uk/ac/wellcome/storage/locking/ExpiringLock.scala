@@ -2,18 +2,19 @@ package uk.ac.wellcome.storage.locking
 
 import java.time.Instant
 import java.time.temporal.TemporalAmount
+import java.util.UUID
 
 import uk.ac.wellcome.storage.Lock
 
 case class ExpiringLock(
   id: String,
-  contextId: String,
+  contextId: UUID,
   created: Instant,
-  expires: Instant) extends Lock[String, String]
+  expires: Instant) extends Lock[String, UUID]
 
 object ExpiringLock {
   def create(id: String,
-             contextId: String,
+             contextId: UUID,
              duration: TemporalAmount): ExpiringLock = {
     val created = Instant.now()
 

@@ -29,8 +29,8 @@ class DynamoLockDaoTest
 
   case class ThingToStore(id: String, value: String)
 
-  private val staticId = "staticId"
-  private val staticContextId = "staticContextId"
+  private val staticId = createRandomId
+  private val staticContextId = createRandomContextId
 
   def createTable(table: Table): Table =
     createLockTable(table)
@@ -139,11 +139,9 @@ class DynamoLockDaoTest
 
       when(putItem).thenThrow(error)
 
-      withLocalDynamoDbTable { lockTable =>
-        withLockDao(mockClient, lockTable) { lockDao =>
-          lockDao.lock(id, staticContextId)
-            .left.value shouldBe LockFailure(id, error)
-        }
+      withLockDao(mockClient) { lockDao =>
+        lockDao.lock(id, staticContextId)
+          .left.value shouldBe LockFailure(id, error)
       }
     }
   }
@@ -152,25 +150,19 @@ class DynamoLockDaoTest
     it("fails to read the context locks") {
       val mockClient = mock[AmazonDynamoDB]
 
-      val contextId = Random.nextString(9)
-
       val query = mockClient.query(any[QueryRequest])
       val error = new InternalServerErrorException("FAILED")
 
       when(query).thenThrow(error)
 
-      withLocalDynamoDbTable { lockTable =>
-        withLockDao(mockClient, lockTable) { lockDao =>
-          lockDao.unlock(contextId)
-            .left.value shouldBe UnlockFailure(contextId, error)
-        }
+      withLockDao(mockClient) { lockDao =>
+        lockDao.unlock(staticContextId)
+          .left.value shouldBe UnlockFailure(staticContextId, error)
       }
     }
 
     it("fails to delete the lock") {
       val mockClient = mock[AmazonDynamoDB]
-
-      val contextId = Random.nextString(9)
 
       val error = new InternalServerErrorException("FAILED")
 
@@ -179,11 +171,9 @@ class DynamoLockDaoTest
       when(mockClient.deleteItem(any[DeleteItemRequest]))
         .thenThrow(error)
 
-      withLocalDynamoDbTable { lockTable =>
-        withLockDao(mockClient, lockTable) { lockDao =>
-          lockDao.unlock(contextId)
-            .left.value shouldBe UnlockFailure(contextId, error)
-        }
+      withLockDao(mockClient) { lockDao =>
+        lockDao.unlock(staticContextId)
+          .left.value shouldBe UnlockFailure(staticContextId, error)
       }
     }
   }

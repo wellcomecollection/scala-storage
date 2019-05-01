@@ -15,7 +15,7 @@ trait LockingServiceFixtures
     with TryValues
     with Matchers {
 
-  type LockDaoStub = LockDao[String, String]
+  type LockDaoStub = LockDao[String, UUID]
   type ResultF = Try[Either[FailedLockingServiceOp, String]]
   type LockingServiceStub =
     LockingService[String, Try, LockDaoStub]
@@ -26,8 +26,8 @@ trait LockingServiceFixtures
       type UnlockFail = UnlockFailure[String]
 
       override implicit val lockDao = maybeLockDao.getOrElse(createInMemoryLockDao)
-      override protected def createContextId: String =
-        UUID.randomUUID().toString
+      override protected def createContextId: UUID =
+        UUID.randomUUID()
     })
 
   def successfulRightOf(result: ResultF): String =

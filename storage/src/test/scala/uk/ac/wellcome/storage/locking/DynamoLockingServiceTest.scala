@@ -1,6 +1,7 @@
 package uk.ac.wellcome.storage.locking
 
 import java.time.Instant
+import java.util.UUID
 
 import cats.implicits._
 import com.gu.scanamo.Scanamo
@@ -13,7 +14,8 @@ import uk.ac.wellcome.monitoring.fixtures.MetricsSenderFixture
 import uk.ac.wellcome.storage.UnlockFailure
 import uk.ac.wellcome.storage.dynamo._
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.fixtures.{LocalDynamoDb, DynamoLockingFixtures}
+import uk.ac.wellcome.storage.fixtures.{DynamoLockingFixtures, LocalDynamoDb}
+
 import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -83,11 +85,7 @@ class DynamoLockingServiceTest
             val idA = "id"
             val lockedId = "lockedId"
 
-            givenLocks(
-              Set(lockedId),
-              "existingContext",
-              lockTable
-            )
+            givenLocks(ids = Set(lockedId), lockTable = lockTable)
 
             val eventuallyLockFails =
               lockingService.withLocks(Set(idA, lockedId))(Future {
@@ -118,9 +116,7 @@ class DynamoLockingServiceTest
             val idA = "idA"
             val idB = "idB"
 
-            givenLocks(
-              Set(idB), "existingContext", lockTable
-            )
+            givenLocks(ids = Set(idB), lockTable = lockTable)
 
             val nestedLock =
               lockingService.withLocks(Set(idA))(Future {
@@ -142,14 +138,12 @@ class DynamoLockingServiceTest
 
   it("fails and releases locks when unlocking fails") {
     withLocalDynamoDbTable { lockTable =>
-
       val mockDynamoRowLockDao = mock[DynamoLockDao]
 
-      val contextId = Random.nextString(9)
       val error = new RuntimeException("BOOM!")
 
       val unlock = mockDynamoRowLockDao.unlock(any())
-      val failedUnlock = Left(UnlockFailure(contextId, error))
+      val failedUnlock = Left(UnlockFailure(createRandomContextId, error))
 
       when(unlock).thenReturn(failedUnlock)
 
@@ -197,7 +191,7 @@ class DynamoLockingServiceTest
   }
 
   private def givenLocks(ids: Set[String],
-                         contextId: String,
+                         contextId: UUID = createRandomContextId,
                          lockTable: LocalDynamoDb.Table): Unit =
     ids.foreach {
       id =>

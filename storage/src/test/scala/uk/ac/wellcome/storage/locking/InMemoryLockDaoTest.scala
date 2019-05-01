@@ -15,7 +15,7 @@ class InMemoryLockDaoTest
     with LockDaoFixtures {
 
   it("behaves correctly") {
-    val dao: LockDao[String, UUID] = createBetterInMemoryLockDao
+    val dao: LockDao[String, UUID] = createInMemoryLockDao
 
     val id1 = createId
     val id2 = createId

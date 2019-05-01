@@ -1,5 +1,7 @@
 package uk.ac.wellcome.storage.locking
 
+import java.util.UUID
+
 import cats.data.EitherT
 import cats.implicits._
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
@@ -23,7 +25,7 @@ class DynamoLockDao(
 )(implicit
   val ec: ExecutionContext,
   val df: DynamoFormat[ExpiringLock])
-    extends LockDao[String, String]
+    extends LockDao[String, UUID]
     with Logging
     with ScanamoHelpers[ExpiringLock] {
 
@@ -32,7 +34,7 @@ class DynamoLockDao(
 
   // Lock
 
-  override def lock(id: String, contextId: String): LockResult = {
+  override def lock(id: Ident, contextId: ContextId): LockResult = {
     val rowLock = ExpiringLock.create(
       id = id,
       contextId = contextId,
@@ -71,7 +73,7 @@ class DynamoLockDao(
 
   // Unlock
 
-  override def unlock(contextId: String): UnlockResult = {
+  override def unlock(contextId: ContextId): UnlockResult = {
     debug(s"Unlocking $contextId: START")
 
     queryAndDelete(contextId).fold(
@@ -86,9 +88,9 @@ class DynamoLockDao(
     )
   }
 
-  private def queryAndDelete(ctxId: ContextId): Either[Throwable, Unit] =
+  private def queryAndDelete(contextId: ContextId): Either[Throwable, Unit] =
     for {
-      queryOp <- queryLocks(ctxId).toEither
+      queryOp <- queryLocks(contextId).toEither
       rowLocks <- queryOp
       _ <- deleteLocks(rowLocks)
     } yield ()
@@ -107,8 +109,8 @@ class DynamoLockDao(
     }
   }
 
-  private def queryLocks(ctxId: String) = Try {
-    val queryT = EitherT(queryIndex('contextId -> ctxId))
+  private def queryLocks(contextId: ContextId) = Try {
+    val queryT = EitherT(queryIndex('contextId -> contextId))
 
     val readErrors = queryT.swap.collectRight
     val rowLocks = queryT.collectRight
@@ -116,7 +118,7 @@ class DynamoLockDao(
     if (readErrors.isEmpty) {
       Right(rowLocks)
     } else {
-      Left(new Error(s"Querying $ctxId failed with $readErrors"))
+      Left(new Error(s"Querying $contextId failed with $readErrors"))
     }
   }
 }
