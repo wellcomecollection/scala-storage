@@ -105,7 +105,7 @@ class DynamoLockDaoTest
         lockDao.lock(staticId, contextId)
           .left.value shouldBe a[LockFailure[_]]
 
-        // Sleep for 2 seconds to allow the existing lock to expire
+        // Allow the existing lock to expire
         Thread.sleep(2000)
 
         // Confirm we can lock expired lock

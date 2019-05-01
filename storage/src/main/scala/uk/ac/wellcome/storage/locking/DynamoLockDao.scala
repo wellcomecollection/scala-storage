@@ -57,7 +57,7 @@ class DynamoLockDao(
     val lockFound = attributeExists(symbol = 'id)
     val lockNotFound = not(lockFound)
 
-    val isExpired = Condition('expires < lock.created.getEpochSecond)
+    val isExpired = Condition('expires < lock.created.toString)
 
     val lockHasExpired = Condition(lockFound and isExpired)
 

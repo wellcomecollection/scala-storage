@@ -45,8 +45,8 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
     )
 
     val dynamoLockDao = new DynamoLockDao(
-      dynamoDbClient,
-      rowLockDaoConfig
+      client = dynamoDbClient,
+      config = rowLockDaoConfig
     )
 
     testWith(dynamoLockDao)
