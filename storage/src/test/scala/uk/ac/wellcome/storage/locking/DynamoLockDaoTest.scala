@@ -50,7 +50,6 @@ class DynamoLockDaoTest
 
   it("adds new locks to an existing context") {
     withLockDao { lockDao =>
-
       val id1 = createRandomId
       val id2 = createRandomId
 
@@ -60,13 +59,11 @@ class DynamoLockDaoTest
       lockDao.lock(id2, staticContextId)
         .right.value.id shouldBe id2
     }
-
   }
 
   it("refreshes the expiry on an existing lock") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { lockDao =>
-
         lockDao.lock(staticId, staticContextId)
           .right.value.id shouldBe staticId
 
@@ -89,19 +86,17 @@ class DynamoLockDaoTest
 
   it("blocks locking the same ID in different contexts") {
     withLockDao { lockDao =>
-
       lockDao.lock(staticId, staticContextId)
         .right.value.id shouldBe staticId
 
       lockDao.lock(staticId, createRandomContextId)
         .left.value shouldBe a[LockFailure[_]]
     }
-
   }
 
   it("creates a new lock in a different context when the existing lock expires") {
     withLocalDynamoDbTable { lockTable =>
-      withLockDao(lockTable) { lockDao =>
+      withLockDao(lockTable, seconds = 1) { lockDao =>
         val contextId = createRandomContextId
 
         lockDao.lock(staticId, staticContextId)
@@ -110,28 +105,26 @@ class DynamoLockDaoTest
         lockDao.lock(staticId, contextId)
           .left.value shouldBe a[LockFailure[_]]
 
-        expireLock(lockTable)(staticId)
+        // Sleep for 2 seconds to allow the existing lock to expire
+        Thread.sleep(2000)
 
         // Confirm we can lock expired lock
-        lockDao.lock(staticId, staticContextId)
+        lockDao.lock(staticId, contextId)
           .right.value.id shouldBe staticId
       }
     }
   }
 
-  it("unlocks a locked context and can re-lock") {
+  it("unlocks a locked context and can re-lock in a different context") {
     withLockDao { lockDao =>
-      val id = Random.nextString(32)
-
-      lockDao.lock(id, staticContextId)
-        .right.value.id shouldBe id
+      lockDao.lock(staticId, staticContextId)
+        .right.value.id shouldBe staticId
 
       lockDao.unlock(staticContextId)
         .right.value shouldBe a[BoxedUnit]
 
-      lockDao.lock(id, staticContextId)
-        .right.value.id shouldBe id
-
+      lockDao.lock(staticId, createRandomContextId)
+        .right.value.id shouldBe staticId
     }
   }
 
@@ -148,10 +141,8 @@ class DynamoLockDaoTest
 
       withLocalDynamoDbTable { lockTable =>
         withLockDao(mockClient, lockTable) { lockDao =>
-
           lockDao.lock(id, staticContextId)
             .left.value shouldBe LockFailure(id, error)
-
         }
       }
     }
@@ -170,10 +161,8 @@ class DynamoLockDaoTest
 
       withLocalDynamoDbTable { lockTable =>
         withLockDao(mockClient, lockTable) { lockDao =>
-
           lockDao.unlock(contextId)
             .left.value shouldBe UnlockFailure(contextId, error)
-
         }
       }
     }
@@ -192,10 +181,8 @@ class DynamoLockDaoTest
 
       withLocalDynamoDbTable { lockTable =>
         withLockDao(mockClient, lockTable) { lockDao =>
-
           lockDao.unlock(contextId)
             .left.value shouldBe UnlockFailure(contextId, error)
-
         }
       }
     }
@@ -225,8 +212,8 @@ class DynamoLockDaoTest
         countDownLatch.await(5, TimeUnit.SECONDS)
 
         whenReady(eventualLocks) { lockAttempts =>
-          lockAttempts.count(_.isRight) shouldBe 1
-          lockAttempts.count(_.isLeft) shouldBe expectedFail
+          lockAttempts.count { _.isRight } shouldBe 1
+          lockAttempts.count { _.isLeft } shouldBe expectedFail
         }
       }
     }
