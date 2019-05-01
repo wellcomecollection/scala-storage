@@ -1,11 +1,9 @@
 package uk.ac.wellcome.storage.locking
 
-import java.time.{Duration, Instant}
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model._
-import com.gu.scanamo._
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
@@ -34,11 +32,10 @@ class DynamoLockDaoTest
     interval = scaled(Span(150, Millis))
   )
 
-  import com.gu.scanamo.syntax._
-
   case class ThingToStore(id: String, value: String)
 
-  private val contextId = Random.nextString(9)
+  private val staticId = "staticId"
+  private val staticContextId = "staticContextId"
 
   def createTable(table: Table): Table =
     createLockTable(table)
@@ -46,129 +43,121 @@ class DynamoLockDaoTest
   it("locks a thing") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { lockDao =>
-        val id = Random.nextString(32)
 
-        lockDao.lock(id, contextId)
-          .right.value.id shouldBe id
+        lockDao.lock(staticId, staticContextId)
+          .right.value.id shouldBe staticId
 
-        val actualStored =
-          Scanamo.get[RowLock](
-            dynamoDbClient
-          )(
-            lockTable.name
-          )('id -> id)
-
-        actualStored.get match {
-          case Right(storedRowLock) =>
-            storedRowLock.id shouldBe id
-          case Left(failed) =>
-            fail(s"failed to get rowLocks $failed")
-        }
+        getDynamo(lockTable)(staticId)
+          .id shouldBe staticId
       }
     }
   }
 
-  it("cannot lock a locked thing") {
+  it("can expand a locked context set") {
+    withLockDao { lockDao =>
+
+      val id1 = createRandomId
+      val id2 = createRandomId
+
+      lockDao.lock(id1, staticContextId)
+        .right.value.id shouldBe id1
+
+      lockDao.lock(id2, staticContextId)
+        .right.value.id shouldBe id2
+    }
+
+  }
+
+  it("can refresh an existing lock") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { lockDao =>
-        val id = Random.nextString(32)
 
-        Scanamo.put[RowLock](dynamoDbClient)(
-          lockTable.name
-        )(
-          RowLock(
-            id, contextId,
-            Instant.now,
-            Instant.now.plusSeconds(100)
-          )
-        )
+        lockDao.lock(staticId, staticContextId)
+          .right.value.id shouldBe staticId
 
+        val expiry =
+          getDynamo(lockTable)(staticId).expires
 
-        lockDao.lock(id, contextId)
-          .left.value shouldBe a[LockFailure[_]]
+        // Wait at least 1 second
+        Thread.sleep(1000)
+
+        lockDao.lock(staticId, staticContextId)
+          .right.value.id shouldBe staticId
+
+        val updatedExpiry =
+          getDynamo(lockTable)(staticId).expires
+
+        expiry.isBefore(updatedExpiry) shouldBe true
       }
     }
   }
 
-  it("can lock a locked thing that has expired") {
+  it("cannot lock a locked context") {
+    withLockDao { lockDao =>
+
+      lockDao.lock(staticId, staticContextId)
+        .right.value.id shouldBe staticId
+
+      lockDao.lock(staticId, createRandomContextId)
+        .left.value shouldBe a[LockFailure[_]]
+    }
+
+  }
+
+  it("can lock a locked context that has expired") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { lockDao =>
-        val id = Random.nextString(32)
+        val contextId = createRandomContextId
 
-        lockDao.lock(id, contextId)
-          .right.value.id shouldBe id
+        lockDao.lock(staticId, staticContextId)
+          .right.value.id shouldBe staticId
 
-        lockDao.lock(id, contextId)
+        lockDao.lock(staticId, contextId)
           .left.value shouldBe a[LockFailure[_]]
 
-        // Expire stored lock
-        val actualStored =
-          Scanamo.get[RowLock](
-            dynamoDbClient
-          )(
-            lockTable.name
-          )('id -> id)
-
-        val rowLock = actualStored.get.right.get
-
-        val expiryTimeInThePast =
-          Instant.now()
-            .minus(
-              Duration.ofSeconds(1)
-            )
-
-        val updatedRowLock =
-          rowLock.copy(
-            expires = expiryTimeInThePast
-          )
-
-        Scanamo.put[RowLock](
-          dynamoDbClient
-        )(
-          lockTable.name
-        )(updatedRowLock)
+        expireLock(lockTable)(staticId)
 
         // Confirm we can lock expired lock
-        lockDao.lock(id, contextId)
-          .right.value.id shouldBe id
+        lockDao.lock(staticId, staticContextId)
+          .right.value.id shouldBe staticId
       }
     }
   }
 
-  it("unlocks a locked thing and can lock it again") {
-    withLocalDynamoDbTable { lockTable =>
-      withLockDao(lockTable) { lockDao =>
-        val id = Random.nextString(32)
+  it("unlocks a locked context and can re-lock") {
+    withLockDao { lockDao =>
+      val id = Random.nextString(32)
 
-        lockDao.lock(id, contextId)
-          .right.value.id shouldBe id
+      lockDao.lock(id, staticContextId)
+        .right.value.id shouldBe id
 
-        lockDao.unlock(contextId)
-          .right.value shouldBe a[BoxedUnit]
+      lockDao.unlock(staticContextId)
+        .right.value shouldBe a[BoxedUnit]
 
-        lockDao.lock(id, contextId)
-          .right.value.id shouldBe id
+      lockDao.lock(id, staticContextId)
+        .right.value.id shouldBe id
 
-      }
     }
   }
 
-  it("fails if there is a problem writing the lock") {
-    val mockClient = mock[AmazonDynamoDB]
+  describe("Locking problem:") {
+    it("fails if there is a problem writing the lock") {
+      val mockClient = mock[AmazonDynamoDB]
 
-    val id = Random.nextString(9)
+      val id = Random.nextString(9)
 
-    val putItem = mockClient.putItem(any[PutItemRequest])
-    val error = new InternalServerErrorException("FAILED")
+      val putItem = mockClient.putItem(any[PutItemRequest])
+      val error = new InternalServerErrorException("FAILED")
 
-    when(putItem).thenThrow(error)
+      when(putItem).thenThrow(error)
 
-    withLocalDynamoDbTable { lockTable =>
-      withLockDao(mockClient, lockTable) { lockDao =>
+      withLocalDynamoDbTable { lockTable =>
+        withLockDao(mockClient, lockTable) { lockDao =>
 
-        lockDao.lock(id, contextId)
-          .left.value shouldBe LockFailure(id, error)
+          lockDao.lock(id, staticContextId)
+            .left.value shouldBe LockFailure(id, error)
 
+        }
       }
     }
   }
@@ -212,50 +201,37 @@ class DynamoLockDaoTest
           lockDao.unlock(contextId)
             .left.value shouldBe UnlockFailure(contextId, error)
 
-
         }
       }
     }
   }
 
   it("allows one success if multiple processes lock a thing") {
-    withLocalDynamoDbTable { lockTable =>
-      withLockDao(lockTable) { lockDao =>
-        val id = Random.nextString(32)
+    withLockDao { lockDao =>
+      val lockUnlockCycles = 5
+      val parallelism = 5
 
-        val lockUnlockCycles = 5
-        val parallelism = 5
+      // All locks/unlocks except one will fail in each cycle
+      val expectedFail = parallelism - 1
 
-        // All locks/unlocks except one will fail in each cycle
-        val expectedFail = parallelism - 1
+      (1 to lockUnlockCycles).foreach { _ =>
+        val id = createRandomId
+        val countDownLatch = new CountDownLatch(parallelism)
 
-        (1 to lockUnlockCycles).foreach { _ =>
-
-          val countDownLatch = new CountDownLatch(parallelism)
-
-          val eventualLocks = Future.sequence {
-            (1 to parallelism).map { _ =>
-              Future {
-                countDownLatch.countDown()
-                lockDao.lock(id, contextId)
-              }
+        val eventualLocks = Future.sequence {
+          (1 to parallelism).map { _ =>
+            Future {
+              countDownLatch.countDown()
+              lockDao.lock(id, createRandomContextId)
             }
           }
+        }
 
-          countDownLatch.await(5, TimeUnit.SECONDS)
+        countDownLatch.await(5, TimeUnit.SECONDS)
 
-          whenReady(eventualLocks) { lockAttempts =>
-
-            lockAttempts.collect {
-              case Right(a) => a
-            }.size shouldBe 1
-
-            lockAttempts.collect {
-              case Left(a) => a
-            }.size shouldBe expectedFail
-          }
-
-          lockDao.unlock(contextId) shouldBe a[Right[_,_]]
+        whenReady(eventualLocks) { lockAttempts =>
+          lockAttempts.count(_.isRight) shouldBe 1
+          lockAttempts.count(_.isLeft) shouldBe expectedFail
         }
       }
     }

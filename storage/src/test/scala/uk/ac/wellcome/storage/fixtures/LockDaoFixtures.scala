@@ -1,21 +1,21 @@
 package uk.ac.wellcome.storage.fixtures
 
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.locking.{LockDao, LockFailure, RowLock}
+import uk.ac.wellcome.storage.locking.{LockDao, LockFailure, ExpiringLock}
 
 import java.time.Duration
 
 trait LockDaoFixtures extends Logging {
   def createInMemoryLockDao = new LockDao[String, String] {
 
-    var locks: Map[String, RowLock] = Map.empty
+    var locks: Map[String, ExpiringLock] = Map.empty
 
     private def createRowLock(id: String, ctxId: String) =
-      RowLock.create(id, ctxId, Duration.ofDays(1))
+      ExpiringLock.create(id, ctxId, Duration.ofDays(1))
 
     override def unlock(ctxId: String): Right[Nothing, Unit] = {
       info(s"Unlocking for $ctxId")
-      locks = locks.filter { case (id, RowLock(_, ctx, _,_)) =>
+      locks = locks.filter { case (id, ExpiringLock(_, ctx, _,_)) =>
         info(s"Unlocking $id")
 
         ctx != ctxId
@@ -24,12 +24,12 @@ trait LockDaoFixtures extends Logging {
       Right(())
     }
 
-    override def lock(id: String, ctxId: String): Either[LockFailure[String], RowLock] = {
+    override def lock(id: String, ctxId: String): Either[LockFailure[String], ExpiringLock] = {
       info(s"Locking $id, with $ctxId")
 
       locks.get(id) match {
-        case Some(r@RowLock(_, ctx, _,_)) if ctxId == ctx => Right(r)
-        case Some(RowLock(_, ctx, _,_)) if ctxId != ctx => Left(
+        case Some(r@ExpiringLock(_, ctx, _,_)) if ctxId == ctx => Right(r)
+        case Some(ExpiringLock(_, ctx, _,_)) if ctxId != ctx => Left(
           LockFailure[String](id,
             new Throwable(
             s"Failed lock $id in $ctxId, locked: $ctx"

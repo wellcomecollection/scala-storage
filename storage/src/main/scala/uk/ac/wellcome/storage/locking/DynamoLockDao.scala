@@ -13,65 +13,80 @@ import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 class DynamoLockDao(
-                        dynamoClient: AmazonDynamoDB,
-                        config: DynamoRowLockDaoConfig
-                   )(implicit val ec: ExecutionContext, val df: DynamoFormat[RowLock])
-  extends LockDao[String, String]
+                     val client: AmazonDynamoDB,
+                     config: DynamoLockDaoConfig
+                   )(implicit
+                     val ec: ExecutionContext,
+                     val df: DynamoFormat[ExpiringLock]
+) extends LockDao[String, String]
     with Logging
-    with ScanamoHelpers[RowLock] {
+    with ScanamoHelpers[ExpiringLock] {
 
-  override val client = dynamoClient
-  override val table = Table[RowLock](config.dynamoConfig.table)
+  override val table = Table[ExpiringLock](config.dynamoConfig.table)
   override val index = config.dynamoConfig.index
 
+  // Lock
+
   override def lock(id: String, ctxId: String): Lock = {
-    val rowLock = RowLock.create(id, ctxId, config.duration)
+    val rowLock = ExpiringLock.create(id, ctxId, config.duration)
 
     debug(s"Locking $rowLock")
 
-    safePutItem(putLock(rowLock)).fold(
+    safePutItem(lockOp(rowLock)).fold(
       e => {
         debug(s"Failed to lock $rowLock $e")
         Left(LockFailure(id, e))
       },
       result => {
-        debug(s"Got $result for $rowLock")
+        debug(s"Successful lock $result for $rowLock")
         Right(rowLock)
       }
     )
   }
 
+  private def lockOp(lock: ExpiringLock) = {
+    val lockFound = attributeExists(symbol = 'id)
+    val lockNotFound = not(lockFound)
+
+    val isExpired = Condition(
+      'expires < lock.created.getEpochSecond)
+
+    val lockHasExpired = Condition(
+      lockFound and isExpired)
+
+    val lockAlreadyExists = Condition(
+      'contextId -> lock.contextId)
+
+    val canLock =
+      lockHasExpired or lockNotFound or lockAlreadyExists
+
+    table.given(canLock).put(lock)
+  }
+
+  // Unlock
+
   override def unlock(ctxId: String): Unlock = {
     debug(s"Unlocking $ctxId")
 
-    val unlockOp = for {
-      queryOp <- queryRowLocks(ctxId).toEither
-      rowLocks <- queryOp
-      deletions <- deleteRowLocks(rowLocks)
-    } yield deletions
-
-    unlockOp.fold(
+    queryAndDelete(ctxId).fold(
       e => {
         warn(s"Failed to unlock $ctxId $e")
         Left(UnlockFailure(ctxId, e))
       },
-      _ => {
+      result => {
         trace(s"Unlocked $ctxId")
-        Right(())
+        Right(result)
       }
     )
   }
 
-  private def putLock(lock: RowLock) = {
-    val hasExpired = (lock: RowLock) =>
-      Condition('expires < lock.created.getEpochSecond)
+  private def queryAndDelete(ctxId: ContextId) = for {
+    queryOp <- queryLocks(ctxId).toEither
+    rowLocks <- queryOp
+    _ <- deleteLocks(rowLocks)
+  } yield ()
 
-    val notExists = not(attributeExists(symbol = 'id))
-
-    table.given(hasExpired(lock) or notExists).put(lock)
-  }
-
-  private def deleteRowLocks(rowLocks: List[RowLock]) = {
+  private def deleteLocks(rowLocks: List[ExpiringLock]) = {
     val deleteT = EitherT(rowLocks.map(
       rowLock => toEither(delete('id -> rowLock.id))))
 
@@ -85,7 +100,7 @@ class DynamoLockDao(
     }
   }
 
-  private def queryRowLocks(ctxId: String) = Try {
+  private def queryLocks(ctxId: String) = Try {
     val queryT = EitherT(queryIndex('contextId -> ctxId))
 
     val readErrors = queryT.swap.collectRight

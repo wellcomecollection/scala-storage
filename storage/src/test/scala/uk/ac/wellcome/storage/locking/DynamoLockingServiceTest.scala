@@ -200,8 +200,8 @@ class DynamoLockingServiceTest
                          lockTable: LocalDynamoDb.Table): Unit =
     ids.foreach {
       id =>
-        Scanamo.put[RowLock](dynamoDbClient)(lockTable.name)(
-          RowLock(
+        Scanamo.put[ExpiringLock](dynamoDbClient)(lockTable.name)(
+          ExpiringLock(
             id = id,
             contextId = contextId,
             created = Instant.now,
@@ -214,13 +214,13 @@ class DynamoLockingServiceTest
                                               expectedIds: Set[String],
                                               lockTable: LocalDynamoDb.Table): Any = {
 
-    val locks: immutable.Seq[Either[DynamoReadError, RowLock]] =
-      Scanamo.scan[RowLock](dynamoDbClient)(lockTable.name)
+    val locks: immutable.Seq[Either[DynamoReadError, ExpiringLock]] =
+      Scanamo.scan[ExpiringLock](dynamoDbClient)(lockTable.name)
 
     val actualIds = locks.map(lock => lock.right.get.id).toSet
     actualIds shouldBe expectedIds
   }
 
   def assertNoRowLocks(lockTable: LocalDynamoDb.Table): Assertion =
-    Scanamo.scan[RowLock](dynamoDbClient)(lockTable.name) shouldBe empty
+    Scanamo.scan[ExpiringLock](dynamoDbClient)(lockTable.name) shouldBe empty
 }

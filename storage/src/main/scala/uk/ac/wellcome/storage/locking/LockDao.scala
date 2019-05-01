@@ -5,7 +5,7 @@ trait LockDao[LockDaoIdent, LockDaoContextId] {
   type Ident = LockDaoIdent
   type ContextId = LockDaoContextId
 
-  type Lock = Either[LockFailure[Ident], RowLock]
+  type Lock = Either[LockFailure[Ident], ExpiringLock]
   type Unlock = Either[UnlockFailure[ContextId], Unit]
 
   def lock(id: Ident, ctxId: ContextId): Lock

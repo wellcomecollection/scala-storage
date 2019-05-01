@@ -34,4 +34,6 @@ trait ScanamoHelpers[T] {
 
   protected def toEither[Out](f: => Out): Either[Throwable, Out] =
     Try(f).toEither
+
+
 }

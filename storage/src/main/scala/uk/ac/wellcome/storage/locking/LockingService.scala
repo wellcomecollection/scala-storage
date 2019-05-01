@@ -80,7 +80,7 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_,_]] extends Logg
     val lock = Option(lockDao.lock(id, ctxId))
       .getOrElse(
         Left(LockFailure(id, new RuntimeException(
-          s"lockDao.lock($id, $ctxId) failed!"
+          s"Found nothing to lock for $id in $ctxId!"
         )))
       )
 
@@ -92,7 +92,7 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_,_]] extends Logg
     val unlock = Option(lockDao.unlock(ctxId))
 
     if(unlock.isEmpty) {
-      warn(s"lockDao.unlock($ctxId) failed!")
+      warn(s"Found nothing to unlock for $ctxId!")
     }
 
     unlock.map {
