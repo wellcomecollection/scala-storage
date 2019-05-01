@@ -18,7 +18,8 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
 
   type OutMonadError = MonadError[OutMonad, Throwable]
 
-  def withLock(id: lockDao.Ident)(f: => OutMonad[Out])(implicit m: OutMonadError): OutMonad[Process] =
+  def withLock(id: lockDao.Ident)(f: => OutMonad[Out])(
+    implicit m: OutMonadError): OutMonad[Process] =
     withLocks(Set(id)) { f }
 
   def withLocks(ids: Set[lockDao.Ident])(
