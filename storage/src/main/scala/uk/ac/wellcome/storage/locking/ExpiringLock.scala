@@ -9,7 +9,9 @@ case class ExpiringLock(id: String,
                         expires: Instant)
 
 object ExpiringLock {
-  def create(id: String, ctxId: String, duration: TemporalAmount): ExpiringLock = {
+  def create(id: String,
+             ctxId: String,
+             duration: TemporalAmount): ExpiringLock = {
     val created = Instant.now()
 
     ExpiringLock(id, ctxId, created, created.plus(duration))

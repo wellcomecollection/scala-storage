@@ -6,7 +6,8 @@ import grizzled.slf4j.Logging
 
 import scala.language.higherKinds
 
-trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_,_]] extends Logging {
+trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
+    extends Logging {
 
   import cats.implicits._
 
@@ -27,8 +28,7 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_,_]] extends Logg
     val contextId: lockDao.ContextId = createContextId()
 
     val eitherT = for {
-      ctxId <- EitherT.fromEither[OutMonad](
-        getLocks(contextId)(ids))
+      ctxId <- EitherT.fromEither[OutMonad](getLocks(contextId)(ids))
 
       out <- EitherT(safeF(ctxId)(f))
     } yield out
@@ -53,16 +53,16 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_,_]] extends Logg
     }
   }
 
-  private def getFailedLocks(locks: Set[DaoLockEither]
-                            ): Set[DaoLockFailure] =
+  private def getFailedLocks(locks: Set[DaoLockEither]): Set[DaoLockFailure] =
     locks.foldLeft(Set.empty[LockFailure[lockDao.Ident]]) { (acc, o) =>
       o match {
-        case Right(_) => acc
+        case Right(_)         => acc
         case Left(failedLock) => acc + failedLock
       }
     }
 
-  private def getLocks(ctxId: lockDao.ContextId)(ids: Set[lockDao.Ident]): Lock = {
+  private def getLocks(ctxId: lockDao.ContextId)(
+    ids: Set[lockDao.Ident]): Lock = {
     val locks = ids.map(lock(_, ctxId))
     val failedLocks = getFailedLocks(locks)
 
@@ -76,12 +76,16 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_,_]] extends Logg
 
   protected def createContextId(): lockDao.ContextId
 
-  protected def lock(id: lockDao.Ident, ctxId: lockDao.ContextId): DaoLockEither = {
+  protected def lock(id: lockDao.Ident,
+                     ctxId: lockDao.ContextId): DaoLockEither = {
     val lock = Option(lockDao.lock(id, ctxId))
       .getOrElse(
-        Left(LockFailure(id, new RuntimeException(
-          s"Found nothing to lock for $id in $ctxId!"
-        )))
+        Left(
+          LockFailure(
+            id,
+            new RuntimeException(
+              s"Found nothing to lock for $id in $ctxId!"
+            )))
       )
 
     lock.map(_ => ())
@@ -91,7 +95,7 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_,_]] extends Logg
     // Deal with unlocking _nothing_
     val unlock = Option(lockDao.unlock(ctxId))
 
-    if(unlock.isEmpty) {
+    if (unlock.isEmpty) {
       warn(s"Found nothing to unlock for $ctxId!")
     }
 
@@ -106,9 +110,14 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_,_]] extends Logg
 
 sealed trait FailedLockingServiceOp
 
-case class FailedLock[ContextId, Ident](ctxId: ContextId, lockFailures: Set[LockFailure[Ident]])
-  extends FailedLockingServiceOp
+case class FailedLock[ContextId, Ident](ctxId: ContextId,
+                                        lockFailures: Set[LockFailure[Ident]])
+    extends FailedLockingServiceOp
 
-case class FailedUnlock[ContextId, Ident](ctxId: ContextId, ids: List[Ident], e: Throwable) extends FailedLockingServiceOp
+case class FailedUnlock[ContextId, Ident](ctxId: ContextId,
+                                          ids: List[Ident],
+                                          e: Throwable)
+    extends FailedLockingServiceOp
 
-case class FailedProcess[ContextId](ctxId: ContextId, e: Throwable) extends FailedLockingServiceOp
+case class FailedProcess[ContextId](ctxId: ContextId, e: Throwable)
+    extends FailedLockingServiceOp

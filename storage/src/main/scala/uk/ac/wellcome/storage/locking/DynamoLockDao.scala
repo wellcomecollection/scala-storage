@@ -13,12 +13,12 @@ import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 class DynamoLockDao(
-                     val client: AmazonDynamoDB,
-                     config: DynamoLockDaoConfig
-                   )(implicit
-                     val ec: ExecutionContext,
-                     val df: DynamoFormat[ExpiringLock]
-) extends LockDao[String, String]
+  val client: AmazonDynamoDB,
+  config: DynamoLockDaoConfig
+)(implicit
+  val ec: ExecutionContext,
+  val df: DynamoFormat[ExpiringLock])
+    extends LockDao[String, String]
     with Logging
     with ScanamoHelpers[ExpiringLock] {
 
@@ -48,14 +48,11 @@ class DynamoLockDao(
     val lockFound = attributeExists(symbol = 'id)
     val lockNotFound = not(lockFound)
 
-    val isExpired = Condition(
-      'expires < lock.created.getEpochSecond)
+    val isExpired = Condition('expires < lock.created.getEpochSecond)
 
-    val lockHasExpired = Condition(
-      lockFound and isExpired)
+    val lockHasExpired = Condition(lockFound and isExpired)
 
-    val lockAlreadyExists = Condition(
-      'contextId -> lock.contextId)
+    val lockAlreadyExists = Condition('contextId -> lock.contextId)
 
     val canLock =
       lockHasExpired or lockNotFound or lockAlreadyExists
@@ -80,20 +77,21 @@ class DynamoLockDao(
     )
   }
 
-  private def queryAndDelete(ctxId: ContextId) = for {
-    queryOp <- queryLocks(ctxId).toEither
-    rowLocks <- queryOp
-    _ <- deleteLocks(rowLocks)
-  } yield ()
+  private def queryAndDelete(ctxId: ContextId) =
+    for {
+      queryOp <- queryLocks(ctxId).toEither
+      rowLocks <- queryOp
+      _ <- deleteLocks(rowLocks)
+    } yield ()
 
   private def deleteLocks(rowLocks: List[ExpiringLock]) = {
-    val deleteT = EitherT(rowLocks.map(
-      rowLock => toEither(delete('id -> rowLock.id))))
+    val deleteT = EitherT(
+      rowLocks.map(rowLock => toEither(delete('id -> rowLock.id))))
 
     val deleteErrors = deleteT.swap.collectRight
     val deletions = deleteT.collectRight
 
-    if(deleteErrors.isEmpty) {
+    if (deleteErrors.isEmpty) {
       Right(deletions)
     } else {
       Left(new Error(s"Deleting $rowLocks failed with $deleteErrors"))
@@ -106,7 +104,7 @@ class DynamoLockDao(
     val readErrors = queryT.swap.collectRight
     val rowLocks = queryT.collectRight
 
-    if(readErrors.isEmpty) {
+    if (readErrors.isEmpty) {
       Right(rowLocks)
     } else {
       Left(new Error(s"Querying $ctxId failed with $readErrors"))

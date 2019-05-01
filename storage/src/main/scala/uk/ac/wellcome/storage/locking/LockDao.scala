@@ -14,8 +14,7 @@ trait LockDao[LockDaoIdent, LockDaoContextId] {
 
 sealed trait FailedLockDaoOp
 
-case class LockFailure[Ident](id: Ident, e: Throwable)
-  extends FailedLockDaoOp
+case class LockFailure[Ident](id: Ident, e: Throwable) extends FailedLockDaoOp
 
 case class UnlockFailure[ContextId](ctxId: ContextId, e: Throwable)
-  extends FailedLockDaoOp
+    extends FailedLockDaoOp

@@ -1,17 +1,23 @@
 package uk.ac.wellcome.storage.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.model.{ConditionalCheckFailedException, ProvisionedThroughputExceededException}
+import com.amazonaws.services.dynamodbv2.model.{
+  ConditionalCheckFailedException,
+  ProvisionedThroughputExceededException
+}
 import com.gu.scanamo.error.{ConditionNotMet, ScanamoError}
 import com.gu.scanamo.ops.ScanamoOps
 import com.gu.scanamo.query.{KeyEquals, UniqueKey}
 import com.gu.scanamo.syntax.{attributeExists, not, _}
 import com.gu.scanamo.{DynamoFormat, Scanamo, Table}
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter, VersionUpdater}
+import uk.ac.wellcome.storage.type_classes.{
+  IdGetter,
+  VersionGetter,
+  VersionUpdater
+}
 
-import scala.concurrent.{ExecutionContext, Future, blocking}
-
+import scala.concurrent.{blocking, ExecutionContext, Future}
 
 class VersionedDao(
   dynamoDbClient: AmazonDynamoDB,
