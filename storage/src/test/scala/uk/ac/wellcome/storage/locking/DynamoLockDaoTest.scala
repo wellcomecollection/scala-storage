@@ -35,7 +35,7 @@ class DynamoLockDaoTest
   def createTable(table: Table): Table =
     createLockTable(table)
 
-  it("locks a thing") {
+  it("records a lock in DynamoDB") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { lockDao =>
 
@@ -48,7 +48,7 @@ class DynamoLockDaoTest
     }
   }
 
-  it("can expand a locked context set") {
+  it("adds new locks to an existing context") {
     withLockDao { lockDao =>
 
       val id1 = createRandomId
@@ -63,7 +63,7 @@ class DynamoLockDaoTest
 
   }
 
-  it("can refresh an existing lock") {
+  it("refreshes the expiry on an existing lock") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { lockDao =>
 
@@ -87,7 +87,7 @@ class DynamoLockDaoTest
     }
   }
 
-  it("cannot lock a locked context") {
+  it("blocks locking the same ID in different contexts") {
     withLockDao { lockDao =>
 
       lockDao.lock(staticId, staticContextId)
@@ -99,7 +99,7 @@ class DynamoLockDaoTest
 
   }
 
-  it("can lock a locked context that has expired") {
+  it("creates a new lock in a different context when the existing lock expires") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { lockDao =>
         val contextId = createRandomContextId
@@ -201,7 +201,7 @@ class DynamoLockDaoTest
     }
   }
 
-  it("allows one success if multiple processes lock a thing") {
+  it("allows one success if multiple processes try to lock the same ID") {
     withLockDao { lockDao =>
       val lockUnlockCycles = 5
       val parallelism = 5
