@@ -6,9 +6,8 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model._
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
-import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.{LockFailure, UnlockFailure}
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
@@ -26,12 +25,7 @@ class DynamoLockDaoTest
     with ScalaFutures
     with LockingFixtures
     with EitherValues
-    with PatienceConfiguration {
-
-  override implicit val patienceConfig: PatienceConfig = PatienceConfig(
-    timeout = scaled(Span(40, Seconds)),
-    interval = scaled(Span(150, Millis))
-  )
+    with IntegrationPatience {
 
   case class ThingToStore(id: String, value: String)
 

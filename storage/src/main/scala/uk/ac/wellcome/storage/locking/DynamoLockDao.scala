@@ -3,6 +3,10 @@ package uk.ac.wellcome.storage.locking
 import cats.data.EitherT
 import cats.implicits._
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
+import com.amazonaws.services.dynamodbv2.model.{
+  DeleteItemResult,
+  PutItemResult
+}
 import com.gu.scanamo.DynamoFormat._
 import com.gu.scanamo.query.Condition
 import com.gu.scanamo.syntax._
@@ -23,29 +27,33 @@ class DynamoLockDao(
     with Logging
     with ScanamoHelpers[ExpiringLock] {
 
-  override val table = Table[ExpiringLock](config.dynamoConfig.table)
-  override val index = config.dynamoConfig.index
+  override val table: Table[ExpiringLock] = Table[ExpiringLock](config.dynamoConfig.table)
+  override val index: String = config.dynamoConfig.index
 
   // Lock
 
-  override def lock(id: String, ctxId: String): LockResult = {
-    val rowLock = ExpiringLock.create(id, ctxId, config.duration)
+  override def lock(id: String, contextId: String): LockResult = {
+    val rowLock = ExpiringLock.create(
+      id = id,
+      contextId = contextId,
+      duration = config.duration
+    )
 
-    debug(s"Locking $rowLock")
+    debug(s"Locking $rowLock: START")
 
-    safePutItem(lockOp(rowLock)).fold(
+    lockOp(rowLock).fold(
       e => {
-        debug(s"Failed to lock $rowLock $e")
+        debug(s"Locking $rowLock: FAILED ($e)")
         Left(LockFailure(id, e))
       },
       result => {
-        debug(s"Successful lock $result for $rowLock")
+        debug(s"Locking $rowLock: SUCCESS ($result)")
         Right(rowLock)
       }
     )
   }
 
-  private def lockOp(lock: ExpiringLock) = {
+  private def lockOp(lock: ExpiringLock): Either[Throwable, PutItemResult] = {
     val lockFound = attributeExists(symbol = 'id)
     val lockNotFound = not(lockFound)
 
@@ -58,34 +66,34 @@ class DynamoLockDao(
     val canLock =
       lockHasExpired or lockNotFound or lockAlreadyExists
 
-    table.given(canLock).put(lock)
+    safePutItem(table.given(canLock).put(lock))
   }
 
   // Unlock
 
-  override def unlock(ctxId: String): UnlockResult = {
-    debug(s"Unlocking $ctxId")
+  override def unlock(contextId: String): UnlockResult = {
+    debug(s"Unlocking $contextId: START")
 
-    queryAndDelete(ctxId).fold(
+    queryAndDelete(contextId).fold(
       e => {
-        warn(s"Failed to unlock $ctxId $e")
-        Left(UnlockFailure(ctxId, e))
+        warn(s"Unlocking $contextId: FAILED ($e)")
+        Left(UnlockFailure(contextId, e))
       },
       result => {
-        trace(s"Unlocked $ctxId")
+        trace(s"Unlocking $contextId: SUCCESS ($result)")
         Right(result)
       }
     )
   }
 
-  private def queryAndDelete(ctxId: ContextId) =
+  private def queryAndDelete(ctxId: ContextId): Either[Throwable, Unit] =
     for {
       queryOp <- queryLocks(ctxId).toEither
       rowLocks <- queryOp
       _ <- deleteLocks(rowLocks)
     } yield ()
 
-  private def deleteLocks(rowLocks: List[ExpiringLock]) = {
+  private def deleteLocks(rowLocks: List[ExpiringLock]): Either[Error, List[DeleteItemResult]] = {
     val deleteT = EitherT(
       rowLocks.map(rowLock => toEither(delete('id -> rowLock.id))))
 
