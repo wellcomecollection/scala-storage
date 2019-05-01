@@ -4,8 +4,10 @@ import java.util.UUID
 
 import cats.implicits._
 import org.scalatest._
-import uk.ac.wellcome.storage.{LockDao, UnlockFailure}
+import uk.ac.wellcome.storage.{FailedProcess, LockDao, UnlockFailure}
 import uk.ac.wellcome.storage.fixtures.{InMemoryLockDao, LockingServiceFixtures, PermanentLock}
+
+import scala.util.Try
 
 class LockingServiceTest
   extends FunSpec
@@ -21,15 +23,25 @@ class LockingServiceTest
   val differentLockIds = Set("d", "e", "f")
 
   it("acquires a lock successfully, and returns the result") {
-    withLockingService { service =>
-      assertLockSuccess(service.withLocks(lockIds)(f))
+    val lockDao = new InMemoryLockDao()
+
+    withLockingService(lockDao) { service =>
+      assertLockSuccess(service.withLocks(lockIds) {
+        lockDao.getCurrentLocks shouldBe lockIds
+        f
+      })
     }
   }
 
   it("fails if you try to re-lock the same identifiers twice") {
-    withLockingService { service =>
+    val lockDao = new InMemoryLockDao()
+
+    withLockingService(lockDao) { service =>
       assertLockSuccess(service.withLocks(lockIds) {
         assertFailedLock(service.withLocks(lockIds)(f), lockIds)
+
+        // Check the original locks were preserved
+        lockDao.getCurrentLocks shouldBe lockIds
 
         f
       })
@@ -37,11 +49,16 @@ class LockingServiceTest
   }
 
   it("fails if you try to re-lock an already locked identifier") {
-    withLockingService { service =>
+    val lockDao = new InMemoryLockDao()
+
+    withLockingService(lockDao) { service =>
       assertLockSuccess(service.withLocks(lockIds) {
         assertFailedLock(
           service.withLocks(overlappingLockIds)(f),
           commonLockIds)
+
+        // Check the original locks were preserved
+        lockDao.getCurrentLocks shouldBe lockIds
 
         f
       })
@@ -121,9 +138,12 @@ class LockingServiceTest
 
     withLockingService(lockDao) { service =>
       val result = service.withLocks(lockIds) {
-        throw new Throwable("BOOM!")
+        Try {
+          throw new Throwable("BOOM!")
+        }
       }
 
+      result.get.left.value shouldBe a[FailedProcess[_]]
       lockDao.getCurrentLocks shouldBe Set.empty
     }
   }

@@ -9,7 +9,7 @@ import com.gu.scanamo.error.DynamoReadError
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{EitherValues, FunSpec}
 import uk.ac.wellcome.monitoring.fixtures.MetricsSenderFixture
-import uk.ac.wellcome.storage.{FailedLock, FailedProcess, UnlockFailure}
+import uk.ac.wellcome.storage.FailedLock
 import uk.ac.wellcome.storage.dynamo._
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.{DynamoLockingFixtures, LocalDynamoDb}
@@ -98,59 +98,6 @@ class DynamoLockingServiceTest
               assertOnlyHaveRowLockRecordIds(Set(idB), lockTable)
             }
         }
-      }
-    }
-  }
-
-  it("returns a success even if unlocking fails") {
-    class BrokenUnlockDynamoLockDao(table: Table) extends DynamoLockDao(
-      client = dynamoDbClient,
-      config = DynamoLockDaoConfig(
-        dynamoConfig = createDynamoConfigWith(table)
-      )
-    ) {
-      override def unlock(contextId: ContextId): UnlockResult =
-        Left(UnlockFailure(contextId = contextId, e = new Throwable("BOOM!")))
-    }
-
-    withLocalDynamoDbTable { lockTable =>
-      val brokenUnlockDao = new BrokenUnlockDynamoLockDao(lockTable)
-
-      withDynamoLockingService(brokenUnlockDao) { lockingService =>
-        val eventuallyLockFails =
-          lockingService.withLocks(Set(id)) {
-            Future.successful(Unit)
-          }
-
-        whenReady(eventuallyLockFails) { failure =>
-          failure shouldBe a[Right[_, _]]
-        }
-
-        // Expect original locks to exist
-        getDynamo(lockTable)(id).id shouldBe id
-      }
-    }
-  }
-
-  it("releases locks when the callback fails") {
-    withLocalDynamoDbTable { lockTable =>
-      withLockDao(lockTable) { dynamoRowLockDao =>
-        withDynamoLockingService(dynamoRowLockDao) {
-          lockingService =>
-            case class ExpectedException() extends Exception()
-
-            val eventuallyLockFails =
-              lockingService.withLocks(Set(id))(Future {
-                assertOnlyHaveRowLockRecordIds(Set(id), lockTable)
-                fail("BOOM!")
-              })
-
-            whenReady(eventuallyLockFails) { failure =>
-              failure.left.value shouldBe a[FailedProcess[_]]
-              assertNoLocks(lockTable)
-            }
-        }
-
       }
     }
   }

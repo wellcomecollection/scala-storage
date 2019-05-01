@@ -24,9 +24,9 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
     val contextId: lockDao.ContextId = createContextId()
 
     val eitherT = for {
-      ctxId <- EitherT.fromEither[OutMonad](getLocks(ids = ids, contextId = contextId))
+      contextId <- EitherT.fromEither[OutMonad](getLocks(ids = ids, contextId = contextId))
 
-      out <- EitherT(safeF(ctxId)(f))
+      out <- EitherT(safeF(contextId)(f))
     } yield out
 
     eitherT.value
