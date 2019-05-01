@@ -14,11 +14,7 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
 
   implicit val lockDao: LockDaoImpl
 
-  type DaoLockFailure = LockFailure[lockDao.Ident]
-  type DaoUnlockFailure = UnlockFailure[lockDao.ContextId]
-  type DaoLockEither = Either[DaoLockFailure, Unit]
-
-  type Lock = Either[FailedLockingServiceOp, lockDao.ContextId]
+  type LockingServiceResult = Either[FailedLockingServiceOp, lockDao.ContextId]
   type Process = Either[FailedLockingServiceOp, Out]
 
   type OutMonadError = MonadError[OutMonad, Throwable]
@@ -29,13 +25,15 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
     val contextId: lockDao.ContextId = createContextId()
 
     val eitherT = for {
-      ctxId <- EitherT.fromEither[OutMonad](getLocks(contextId)(ids))
+      ctxId <- EitherT.fromEither[OutMonad](getLocks(ids = ids, contextId = contextId))
 
       out <- EitherT(safeF(ctxId)(f))
     } yield out
 
     eitherT.value
   }
+
+  protected def createContextId(): lockDao.ContextId
 
   private def safeF(ctxId: lockDao.ContextId)(
     f: => OutMonad[Out]
@@ -54,7 +52,7 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
     }
   }
 
-  private def getFailedLocks(locks: Set[lockDao.LockResult]): Set[DaoLockFailure] =
+  private def getFailedLocks(locks: Set[lockDao.LockResult]): Set[LockFailure[lockDao.Ident]] =
     locks.foldLeft(Set.empty[LockFailure[lockDao.Ident]]) { (acc, o) =>
       o match {
         case Right(_)         => acc
@@ -62,20 +60,21 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
       }
     }
 
-  private def getLocks(ctxId: lockDao.ContextId)(
-    ids: Set[lockDao.Ident]): Lock = {
-    val locks = ids.map { lockDao.lock(_, ctxId) }
+  /** Lock the entire set of identifiers we were given.  If any of them fail,
+    * unlock the entire context and report a failure.
+    *
+    */
+  private def getLocks(ids: Set[lockDao.Ident], contextId: lockDao.ContextId): LockingServiceResult = {
+    val locks = ids.map { lockDao.lock(_, contextId) }
     val failedLocks = getFailedLocks(locks)
 
     if (failedLocks.isEmpty) {
-      Right(ctxId)
+      Right(contextId)
     } else {
-      unlock(ctxId)
-      Left(FailedLock(ctxId, failedLocks))
+      unlock(contextId)
+      Left(FailedLock(contextId, failedLocks))
     }
   }
-
-  protected def createContextId(): lockDao.ContextId
 
   protected def unlock(ctxId: lockDao.ContextId): Unit = {
     // Deal with unlocking _nothing_
