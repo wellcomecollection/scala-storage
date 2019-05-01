@@ -9,7 +9,7 @@ import com.gu.scanamo.error.DynamoReadError
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{Assertion, EitherValues, FunSpec}
+import org.scalatest.{EitherValues, FunSpec}
 import uk.ac.wellcome.monitoring.fixtures.MetricsSenderFixture
 import uk.ac.wellcome.storage.UnlockFailure
 import uk.ac.wellcome.storage.dynamo._
@@ -47,7 +47,7 @@ class DynamoLockingServiceTest
               })
 
             whenReady(lockedDuringCallback) { _ =>
-              assertNoRowLocks(lockTable)
+              assertNoLocks(lockTable)
             }
         }
       }
@@ -71,7 +71,7 @@ class DynamoLockingServiceTest
           whenReady(lockedDuringCallback) { _ =>
             callbackCalled shouldBe true
 
-            assertNoRowLocks(lockTable)
+            assertNoLocks(lockTable)
           }
       }
     }
@@ -160,7 +160,7 @@ class DynamoLockingServiceTest
             failure shouldBe a[Left[_, _]]
 
             // Expect original locks to exist
-            assertNoRowLocks(lockTable)
+            assertNoLocks(lockTable)
           }
       }
     }
@@ -182,7 +182,7 @@ class DynamoLockingServiceTest
 
             whenReady(eventuallyLockFails) { failure =>
               failure.left.value shouldBe a[FailedProcess[_]]
-              assertNoRowLocks(lockTable)
+              assertNoLocks(lockTable)
             }
         }
 
@@ -215,7 +215,4 @@ class DynamoLockingServiceTest
     val actualIds = locks.map(lock => lock.right.get.id).toSet
     actualIds shouldBe expectedIds
   }
-
-  def assertNoRowLocks(lockTable: LocalDynamoDb.Table): Assertion =
-    Scanamo.scan[ExpiringLock](dynamoDbClient)(lockTable.name) shouldBe empty
 }

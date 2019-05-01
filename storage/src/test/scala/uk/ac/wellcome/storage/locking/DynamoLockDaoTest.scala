@@ -16,7 +16,6 @@ import uk.ac.wellcome.storage.fixtures.DynamoLockingFixtures
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.runtime.BoxedUnit
-import scala.util.Random
 
 class DynamoLockDaoTest
   extends FunSpec
@@ -27,13 +26,40 @@ class DynamoLockDaoTest
     with EitherValues
     with IntegrationPatience {
 
-  case class ThingToStore(id: String, value: String)
-
   private val staticId = createRandomId
   private val staticContextId = createRandomContextId
 
   def createTable(table: Table): Table =
     createLockTable(table)
+
+  // Based on a similar test in InMemoryLockDaoTest, which is a high-level
+  // check of the LockDao expectations.
+  it("behaves correctly") {
+    withLocalDynamoDbTable { lockTable =>
+      withLockDao(lockTable) { lockDao =>
+        val id1 = createRandomId
+        val id2 = createRandomId
+
+        val contextId1 = createRandomContextId
+        val contextId2 = createRandomContextId
+
+        lockDao.lock(id1, contextId1) shouldBe a[Right[_, _]]
+        lockDao.lock(id2, contextId2) shouldBe a[Right[_, _]]
+
+        lockDao.lock(id1, contextId2).left.value.e.getMessage should startWith(
+          "The conditional request failed")
+
+        lockDao.lock(id1, contextId1) shouldBe a[Right[_, _]]
+
+        lockDao.unlock(contextId1) shouldBe a[Right[_, _]]
+        lockDao.unlock(contextId1) shouldBe a[Right[_, _]]
+
+        lockDao.lock(id1, contextId2) shouldBe a[Right[_, _]]
+        lockDao.lock(id2, contextId1).left.value.e.getMessage should startWith(
+          "The conditional request failed")
+      }
+    }
+  }
 
   it("records a lock in DynamoDB") {
     withLocalDynamoDbTable { lockTable =>
@@ -128,11 +154,19 @@ class DynamoLockDaoTest
     }
   }
 
+  it("removes a lock from DynamoDB after unlocking") {
+    withLocalDynamoDbTable { lockTable =>
+      withLockDao(lockTable, seconds = 1) { lockDao =>
+        lockDao.lock(staticId, staticContextId).right.value
+        lockDao.unlock(staticContextId)
+        assertNoLocks(lockTable)
+      }
+    }
+  }
+
   describe("Locking problem:") {
     it("fails if there is a problem writing the lock") {
       val mockClient = mock[AmazonDynamoDB]
-
-      val id = Random.nextString(9)
 
       val putItem = mockClient.putItem(any[PutItemRequest])
       val error = new InternalServerErrorException("FAILED")
@@ -140,8 +174,8 @@ class DynamoLockDaoTest
       when(putItem).thenThrow(error)
 
       withLockDao(mockClient) { lockDao =>
-        lockDao.lock(id, staticContextId)
-          .left.value shouldBe LockFailure(id, error)
+        lockDao.lock(staticId, staticContextId)
+          .left.value shouldBe LockFailure(staticId, error)
       }
     }
   }

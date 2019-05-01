@@ -8,7 +8,7 @@ import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
 import com.gu.scanamo.Scanamo
 import com.gu.scanamo.syntax._
-import org.scalatest.{EitherValues, OptionValues}
+import org.scalatest.{Assertion, EitherValues, OptionValues}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.dynamo._
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
@@ -24,6 +24,9 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
     )(
       lockTable.name
     )('id -> id).get.right.value
+
+  def assertNoLocks(lockTable: Table): Assertion =
+    Scanamo.scan[ExpiringLock](dynamoDbClient)(lockTable.name) shouldBe empty
 
   def createRandomContextId: UUID = UUID.randomUUID()
   def createRandomId: String = Random.nextString(32)
