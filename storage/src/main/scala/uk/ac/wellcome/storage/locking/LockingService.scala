@@ -35,30 +35,22 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
 
   protected def createContextId(): lockDao.ContextId
 
-  private def safeF(ctxId: lockDao.ContextId)(
+  private def safeF(contextId: lockDao.ContextId)(
     f: => OutMonad[Out]
   )(implicit monadError: OutMonadError): OutMonad[Process] = {
     val partialF = f.map(o => {
-      debug(s"Processing $ctxId (got $o)")
-      unlock(ctxId)
+      debug(s"Processing $contextId (got $o)")
+      unlock(contextId)
       Either.right[FailedLockingServiceOp, Out](o)
     })
 
     monadError.handleError(partialF) { e =>
-      unlock(ctxId)
+      unlock(contextId)
       Either.left[FailedLockingServiceOp, Out](
-        FailedProcess[lockDao.ContextId](ctxId, e)
+        FailedProcess[lockDao.ContextId](contextId, e)
       )
     }
   }
-
-  private def getFailedLocks(locks: Set[lockDao.LockResult]): Set[LockFailure[lockDao.Ident]] =
-    locks.foldLeft(Set.empty[LockFailure[lockDao.Ident]]) { (acc, o) =>
-      o match {
-        case Right(_)         => acc
-        case Left(failedLock) => acc + failedLock
-      }
-    }
 
   /** Lock the entire set of identifiers we were given.  If any of them fail,
     * unlock the entire context and report a failure.
@@ -76,6 +68,14 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
     }
   }
 
+  private def getFailedLocks(locks: Set[lockDao.LockResult]): Set[LockFailure[lockDao.Ident]] =
+    locks.foldLeft(Set.empty[LockFailure[lockDao.Ident]]) { (acc, o) =>
+      o match {
+        case Right(_)         => acc
+        case Left(failedLock) => acc + failedLock
+      }
+    }
+
   protected def unlock(ctxId: lockDao.ContextId): Unit = {
     // Deal with unlocking _nothing_
     val unlock = Option(lockDao.unlock(ctxId))
@@ -90,7 +90,6 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
       }
     }
   }
-
 }
 
 sealed trait FailedLockingServiceOp
