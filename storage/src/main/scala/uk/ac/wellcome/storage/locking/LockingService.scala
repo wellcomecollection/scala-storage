@@ -54,7 +54,7 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
     }
   }
 
-  private def getFailedLocks(locks: Set[DaoLockEither]): Set[DaoLockFailure] =
+  private def getFailedLocks(locks: Set[lockDao.LockResult]): Set[DaoLockFailure] =
     locks.foldLeft(Set.empty[LockFailure[lockDao.Ident]]) { (acc, o) =>
       o match {
         case Right(_)         => acc
@@ -64,7 +64,7 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
 
   private def getLocks(ctxId: lockDao.ContextId)(
     ids: Set[lockDao.Ident]): Lock = {
-    val locks = ids.map(lock(_, ctxId))
+    val locks = ids.map { lockDao.lock(_, ctxId) }
     val failedLocks = getFailedLocks(locks)
 
     if (failedLocks.isEmpty) {
@@ -76,21 +76,6 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
   }
 
   protected def createContextId(): lockDao.ContextId
-
-  protected def lock(id: lockDao.Ident,
-                     ctxId: lockDao.ContextId): DaoLockEither = {
-    val lock = Option(lockDao.lock(id, ctxId))
-      .getOrElse(
-        Left(
-          LockFailure(
-            id,
-            new RuntimeException(
-              s"Found nothing to lock for $id in $ctxId!"
-            )))
-      )
-
-    lock.map(_ => ())
-  }
 
   protected def unlock(ctxId: lockDao.ContextId): Unit = {
     // Deal with unlocking _nothing_

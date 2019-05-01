@@ -6,8 +6,6 @@ import java.util.UUID
 import cats.implicits._
 import com.gu.scanamo.Scanamo
 import com.gu.scanamo.error.DynamoReadError
-import org.mockito.Matchers.any
-import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{EitherValues, FunSpec}
 import uk.ac.wellcome.monitoring.fixtures.MetricsSenderFixture
@@ -36,7 +34,7 @@ class DynamoLockingServiceTest
   it("locks around a callback") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { dynamoRowLockDao =>
-        withLockingService(dynamoRowLockDao) {
+        withDynamoLockingService(dynamoRowLockDao) {
           lockingService =>
 
             val lockedDuringCallback =
@@ -58,7 +56,7 @@ class DynamoLockingServiceTest
   it("doesn't call lock if lockIds is empty") {
     withLocalDynamoDbTable { lockTable =>
       val mockDynamoRowLockDao = mock[DynamoLockDao]
-      withLockingService(mockDynamoRowLockDao) {
+      withDynamoLockingService(mockDynamoRowLockDao) {
         lockingService =>
 
           var callbackCalled = false
@@ -80,7 +78,7 @@ class DynamoLockingServiceTest
   it("fails and releases locks when a row lock fails") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { dynamoRowLockDao =>
-        withLockingService(dynamoRowLockDao) {
+        withDynamoLockingService(dynamoRowLockDao) {
           lockingService =>
             val idA = "id"
             val lockedId = "lockedId"
@@ -110,7 +108,7 @@ class DynamoLockingServiceTest
   it("releases locks when a nested row lock fails") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { dynamoRowLockDao =>
-        withLockingService(dynamoRowLockDao) {
+        withDynamoLockingService(dynamoRowLockDao) {
           lockingService =>
 
             val idA = "idA"
@@ -136,41 +134,40 @@ class DynamoLockingServiceTest
     }
   }
 
-  it("fails and releases locks when unlocking fails") {
+  it("returns a success if unlocking fails") {
+    class BrokenUnlockDynamoLockDao(table: Table) extends DynamoLockDao(
+      client = dynamoDbClient,
+      config = DynamoLockDaoConfig(
+        dynamoConfig = createDynamoConfigWith(table)
+      )
+    ) {
+      override def unlock(contextId: ContextId): UnlockResult =
+        Left(UnlockFailure(ctxId = contextId, e = new Throwable("BOOM!")))
+    }
+
     withLocalDynamoDbTable { lockTable =>
-      val mockDynamoRowLockDao = mock[DynamoLockDao]
+      val brokenUnlockDao = new BrokenUnlockDynamoLockDao(lockTable)
 
-      val error = new RuntimeException("BOOM!")
-
-      val unlock = mockDynamoRowLockDao.unlock(any())
-      val failedUnlock = Left(UnlockFailure(createRandomContextId, error))
-
-      when(unlock).thenReturn(failedUnlock)
-
-      withLockingService(mockDynamoRowLockDao) {
-        lockingService =>
-
-          val eventuallyLockFails =
-            lockingService.withLocks(Set(id))(Future {
-
-              ()
-            })
-
-          whenReady(eventuallyLockFails) { failure =>
-            failure shouldBe a[Left[_, _]]
-
-            // Expect original locks to exist
-            assertNoLocks(lockTable)
+      withDynamoLockingService(brokenUnlockDao) { lockingService =>
+        val eventuallyLockFails =
+          lockingService.withLocks(Set(id)) {
+            Future.successful(Unit)
           }
+
+        whenReady(eventuallyLockFails) { failure =>
+          failure shouldBe a[Right[_, _]]
+        }
+
+        // Expect original locks to exist
+        getDynamo(lockTable)(id).id shouldBe id
       }
     }
   }
 
-
   it("releases locks when the callback fails") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable) { dynamoRowLockDao =>
-        withLockingService(dynamoRowLockDao) {
+        withDynamoLockingService(dynamoRowLockDao) {
           lockingService =>
             case class ExpectedException() extends Exception()
 
