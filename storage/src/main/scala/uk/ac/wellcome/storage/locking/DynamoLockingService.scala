@@ -1,62 +1,13 @@
 package uk.ac.wellcome.storage.locking
 
-import java.util.UUID.randomUUID
+import java.util.UUID
 
-import grizzled.slf4j.Logging
-import uk.ac.wellcome.monitoring.MetricsSender
+import uk.ac.wellcome.storage.LockingService
 
-import scala.collection.Set
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-class DynamoLockingService(
-  lockNamePrefix: String,
-  dynamoRowLockDao: DynamoRowLockDao,
-  metricsSender: MetricsSender)(implicit ec: ExecutionContext)
-    extends Logging {
-
-  private val failedLockMetricName: String = s"${lockNamePrefix}_FailedLock"
-  private val failedUnlockMetricName: String = s"${lockNamePrefix}_FailedUnlock"
-
-  def withLocks[T](ids: Set[String])(callback: => Future[T]): Future[T] =
-    if (ids.isEmpty) {
-      callback
-    } else {
-      executeWithLocks(ids, callback, randomUUID.toString, ids.map(Identifier))
-    }
-
-  private def executeWithLocks[T](ids: Set[String],
-                                  f: => Future[T],
-                                  contextGuid: String,
-                                  identifiers: Set[Identifier]) = {
-    debug(s"Locking ids $ids in context $contextGuid")
-    val eventuallyExecutedWithLock = for {
-      _ <- Future.sequence(
-        identifiers.map(dynamoRowLockDao.lockRow(_, contextGuid)))
-      result <- f
-    } yield {
-      result
-    }
-    eventuallyExecutedWithLock
-      .transformWith { triedResult =>
-        dynamoRowLockDao
-          .unlockRows(contextGuid)
-          .flatMap(_ => {
-            trace(s"Released locked identifiers $identifiers in $contextGuid")
-            Future.fromTry(triedResult)
-          })
-      }
-      .recover {
-        case failedLockException: FailedLockException =>
-          debug(failedLockErrorMessage("lock", failedLockException))
-          metricsSender.incrementCount(failedLockMetricName)
-          throw failedLockException
-        case failedUnlockException: FailedUnlockException =>
-          debug(failedLockErrorMessage("unlock", failedUnlockException))
-          metricsSender.incrementCount(failedUnlockMetricName)
-          throw failedUnlockException
-      }
-  }
-
-  private def failedLockErrorMessage[T](failure: String, exception: Exception) =
-    s"Failed to $failure ${exception.getClass.getSimpleName} ${exception.getMessage}"
+class DynamoLockingService(implicit val lockDao: DynamoLockDao)
+    extends LockingService[Unit, Future, DynamoLockDao] {
+  override protected def createContextId(): lockDao.ContextId =
+    UUID.randomUUID()
 }

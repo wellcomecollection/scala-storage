@@ -1,6 +1,7 @@
 package uk.ac.wellcome.storage.fixtures
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
+import com.gu.scanamo.error.DynamoReadError
 import com.gu.scanamo.syntax._
 import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.Matchers
@@ -98,9 +99,8 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
     records.head shouldBe Right(item)
   }
 
-  def listTableItems[T: DynamoFormat](table: Table) = {
+  def listTableItems[T: DynamoFormat](table: Table): List[Either[DynamoReadError, Any]] =
     Scanamo.scan[T](dynamoDbClient)(table.name)
-  }
 
   def createDynamoConfigWith(table: Table): DynamoConfig =
     DynamoConfig(
