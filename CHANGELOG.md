@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## v4.0.0 - 2019-05-02
+
+This is a major change to the way we do locking.
+
+We now provide generic type classes `LockDao` and `LockingService`, and
+concrete implementations as `DynamoLockDao` and `DynamoLockingService`.
+
 ## v3.9.0 - 2019-04-26
 
 Add a `join()` method to `ObjectLocation` that lets you append to the key.
