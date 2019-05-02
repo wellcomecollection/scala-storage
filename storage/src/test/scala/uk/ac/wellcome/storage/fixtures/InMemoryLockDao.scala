@@ -8,6 +8,8 @@ import uk.ac.wellcome.storage.{Lock, LockDao, LockFailure}
 class InMemoryLockDao extends LockDao[String, UUID] with Logging {
   private var locks: Map[String, PermanentLock] = Map.empty
 
+  var history: List[PermanentLock] = List.empty
+
   override def lock(id: String, contextId: UUID): LockResult = {
     info(s"Locking ID <$id> in context <$contextId>")
 
@@ -25,6 +27,7 @@ class InMemoryLockDao extends LockDao[String, UUID] with Logging {
           contextId = contextId
         )
         locks = locks ++ Map(id -> rowLock)
+        history = history :+ rowLock
         Right(rowLock)
     }
   }

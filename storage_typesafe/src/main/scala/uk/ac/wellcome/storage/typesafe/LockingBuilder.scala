@@ -12,6 +12,7 @@ import uk.ac.wellcome.storage.locking.{
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
 
 import scala.concurrent.ExecutionContext
+import scala.language.higherKinds
 
 object LockingBuilder {
   def buildDynamoLockDao(config: Config)(
@@ -27,8 +28,8 @@ object LockingBuilder {
       )
     )
 
-  def buildDynamoLockingService(config: Config)(
-    implicit ec: ExecutionContext): DynamoLockingService = {
+  def buildDynamoLockingService[Out, OutMonad[_]](config: Config)(
+    implicit ec: ExecutionContext): DynamoLockingService[Out, OutMonad] = {
     implicit val dynamoLockDao: DynamoLockDao = buildDynamoLockDao(config)
 
     new DynamoLockingService()

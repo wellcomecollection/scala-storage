@@ -2,12 +2,13 @@ package uk.ac.wellcome.storage.locking
 
 import java.util.UUID
 
-import uk.ac.wellcome.storage.LockingService
+import uk.ac.wellcome.storage.{LockDao, LockingService}
 
-import scala.concurrent.Future
+import scala.language.higherKinds
 
-class DynamoLockingService(implicit val lockDao: DynamoLockDao)
-    extends LockingService[Unit, Future, DynamoLockDao] {
+class DynamoLockingService[Out, OutMonad[_]](
+  implicit val lockDao: DynamoLockDao)
+    extends LockingService[Out, OutMonad, LockDao[String, UUID]] {
   override protected def createContextId(): lockDao.ContextId =
     UUID.randomUUID()
 }
