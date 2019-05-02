@@ -27,14 +27,10 @@ class DynamoLockingServiceTest
 
         val lockedDuringCallback =
 
-          // Acquire an initial lock, and check that it's
+          // Acquire a lock, and check that it's
           // recorded in DynamoDB
-          lockingService.withLocks(Set("1")) { Future {
-            assertDynamoHasLockIds(Set("1"), lockTable)
-
-            lockingService.withLocks(Set("2", "3")) { Future {
-              assertDynamoHasLockIds(Set("1", "2", "3"), lockTable)
-            }}
+          lockingService.withLocks(Set("1", "2")) { Future {
+            assertDynamoHasLockIds(Set("1", "2"), lockTable)
 
             ()
           }}
