@@ -3,8 +3,7 @@ package uk.ac.wellcome.storage.locking
 import java.util.UUID
 
 import org.scalatest.{EitherValues, FunSpec, Matchers}
-import uk.ac.wellcome.storage.LockDao
-import uk.ac.wellcome.storage.fixtures.InMemoryLockDao
+import uk.ac.wellcome.storage.fixtures.{InMemoryLockDao, PermanentLock}
 
 import scala.util.Random
 
@@ -14,7 +13,7 @@ class InMemoryLockDaoTest
     with EitherValues {
 
   it("behaves correctly") {
-    val dao: LockDao[String, UUID] = new InMemoryLockDao()
+    val dao = new InMemoryLockDao()
 
     val id1 = createId
     val id2 = createId
@@ -36,6 +35,24 @@ class InMemoryLockDaoTest
     dao.lock(id1, contextId2) shouldBe a[Right[_,_]]
     dao.lock(id2, contextId1).left.value.e.getMessage shouldBe
       s"Failed to lock <$id2> in context <$contextId1>; already locked as <$contextId2>"
+  }
+
+  it("records a history of locks") {
+    val dao = new InMemoryLockDao()
+
+    val id1 = createId
+
+    val contextId1 = createContextId
+    val contextId2 = createContextId
+
+    dao.lock(id1, contextId1)
+    dao.unlock(contextId1)
+    dao.lock(id1, contextId2)
+
+    dao.history shouldBe List(
+      PermanentLock(id1, contextId1),
+      PermanentLock(id1, contextId2),
+    )
   }
 
   def createId: String = Random.alphanumeric take 8 mkString
