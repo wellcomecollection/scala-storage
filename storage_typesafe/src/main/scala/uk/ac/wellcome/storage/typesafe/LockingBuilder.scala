@@ -12,6 +12,7 @@ import uk.ac.wellcome.storage.locking.{
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
 
 import scala.concurrent.ExecutionContext
+import scala.language.higherKinds
 
 object LockingBuilder {
   def buildDynamoLockDao(config: Config)(
