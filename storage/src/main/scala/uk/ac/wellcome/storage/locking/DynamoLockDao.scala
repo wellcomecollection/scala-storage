@@ -36,7 +36,7 @@ class DynamoLockDao(
     val rowLock = ExpiringLock.create(
       id = id,
       contextId = contextId,
-      duration = config.duration
+      duration = config.expiryTime
     )
 
     debug(s"Locking $rowLock: START")

@@ -6,5 +6,5 @@ import uk.ac.wellcome.storage.dynamo.DynamoConfig
 
 case class DynamoLockDaoConfig(
   dynamoConfig: DynamoConfig,
-  duration: Duration = Duration.ofSeconds(180)
+  expiryTime: Duration = Duration.ofSeconds(180)
 )
