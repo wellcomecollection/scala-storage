@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v4.1.0 - 2019-05-02
+
+*   Add type parameters to `DynamoLockingService`
+*   Record a lock history on `InMemoryLockDao` for use in tests
+
 ## v4.0.0 - 2019-05-02
 
 This is a major change to the way we do locking.
