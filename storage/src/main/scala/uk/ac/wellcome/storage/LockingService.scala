@@ -82,24 +82,24 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
       }
     }
 
-  private def unlock(ctxId: lockDao.ContextId): Unit =
+  private def unlock(contextId: lockDao.ContextId): Unit =
     lockDao
-      .unlock(ctxId)
+      .unlock(contextId)
       .leftMap { error =>
-        warn(s"Unable to unlock context $ctxId fully: $error")
+        warn(s"Unable to unlock context $contextId fully: $error")
       }
 }
 
 sealed trait FailedLockingServiceOp
 
-case class FailedLock[ContextId, Ident](ctxId: ContextId,
+case class FailedLock[ContextId, Ident](contextId: ContextId,
                                         lockFailures: Set[LockFailure[Ident]])
     extends FailedLockingServiceOp
 
-case class FailedUnlock[ContextId, Ident](ctxId: ContextId,
+case class FailedUnlock[ContextId, Ident](contextId: ContextId,
                                           ids: List[Ident],
                                           e: Throwable)
     extends FailedLockingServiceOp
 
-case class FailedProcess[ContextId](ctxId: ContextId, e: Throwable)
+case class FailedProcess[ContextId](contextId: ContextId, e: Throwable)
     extends FailedLockingServiceOp
