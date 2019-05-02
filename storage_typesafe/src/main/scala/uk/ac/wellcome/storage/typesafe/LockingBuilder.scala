@@ -27,8 +27,8 @@ object LockingBuilder {
       )
     )
 
-  def buildDynamoLockingService(config: Config)(
-    implicit ec: ExecutionContext): DynamoLockingService = {
+  def buildDynamoLockingService[Out, OutMonad[_]](config: Config)(
+    implicit ec: ExecutionContext): DynamoLockingService[Out, OutMonad] = {
     implicit val dynamoLockDao: DynamoLockDao = buildDynamoLockDao(config)
 
     new DynamoLockingService()
