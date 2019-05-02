@@ -62,8 +62,8 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
     */
   private def getLocks(ids: Set[lockDao.Ident],
                        contextId: lockDao.ContextId): LockingServiceResult = {
-    val locks = ids.map { lockDao.lock(_, contextId) }
-    val failedLocks = getFailedLocks(locks)
+    val lockResults = ids.map { lockDao.lock(_, contextId) }
+    val failedLocks = getFailedLocks(lockResults)
 
     if (failedLocks.isEmpty) {
       Right(contextId)
@@ -74,8 +74,8 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
   }
 
   private def getFailedLocks(
-    locks: Set[lockDao.LockResult]): Set[LockFailure[lockDao.Ident]] =
-    locks.foldLeft(Set.empty[LockFailure[lockDao.Ident]]) { (acc, o) =>
+    lockResults: Set[lockDao.LockResult]): Set[LockFailure[lockDao.Ident]] =
+    lockResults.foldLeft(Set.empty[LockFailure[lockDao.Ident]]) { (acc, o) =>
       o match {
         case Right(_)         => acc
         case Left(failedLock) => acc + failedLock

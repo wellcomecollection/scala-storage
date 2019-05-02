@@ -116,7 +116,7 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
 
   def withDynamoLockingService[R](dynamoLockDao: DynamoLockDao)(
     testWith: TestWith[DynamoLockingService, R]): R = {
-    val lockingService = new DynamoLockingService()(dynamoLockDao)
+    val lockingService = new DynamoLockingService(dynamoLockDao)
     testWith(lockingService)
   }
 
