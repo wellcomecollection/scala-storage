@@ -18,10 +18,6 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
 
   type OutMonadError = MonadError[OutMonad, Throwable]
 
-  def withLock(id: lockDao.Ident)(f: => OutMonad[Out])(
-    implicit m: OutMonadError): OutMonad[Process] =
-    withLocks(Set(id)) { f }
-
   def withLocks(ids: Set[lockDao.Ident])(
     f: => OutMonad[Out]
   )(implicit m: OutMonadError): OutMonad[Process] = {
@@ -38,6 +34,10 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
   }
 
   protected def createContextId(): lockDao.ContextId
+
+  def withLock(id: lockDao.Ident)(f: => OutMonad[Out])(
+    implicit m: OutMonadError): OutMonad[Process] =
+    withLocks(Set(id)) { f }
 
   private def safeF(contextId: lockDao.ContextId)(
     f: => OutMonad[Out]
@@ -82,20 +82,12 @@ trait LockingService[Out, OutMonad[_], LockDaoImpl <: LockDao[_, _]]
       }
     }
 
-  protected def unlock(ctxId: lockDao.ContextId): Unit = {
-    // Deal with unlocking _nothing_
-    val unlock = Option(lockDao.unlock(ctxId))
-
-    if (unlock.isEmpty) {
-      warn(s"Found nothing to unlock for $ctxId!")
-    }
-
-    unlock.map {
-      _.leftMap { error =>
+  private def unlock(ctxId: lockDao.ContextId): Unit =
+    lockDao
+      .unlock(ctxId)
+      .leftMap { error =>
         warn(s"Unable to unlock context $ctxId fully: $error")
       }
-    }
-  }
 }
 
 sealed trait FailedLockingServiceOp
