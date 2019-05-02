@@ -15,6 +15,7 @@ import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.locking.{DynamoLockDao, DynamoLockDaoConfig, DynamoLockingService, ExpiringLock}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.Random
 
 trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionValues {
@@ -114,14 +115,16 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
     table
   }
 
+  type DynamoLockingServiceStub = DynamoLockingService[Unit, Future]
+
   def withDynamoLockingService[R](
-    testWith: TestWith[DynamoLockingService, R])(implicit dynamoLockDao: DynamoLockDao): R = {
-    val lockingService = new DynamoLockingService()
+    testWith: TestWith[DynamoLockingServiceStub, R])(implicit dynamoLockDao: DynamoLockDao): R = {
+    val lockingService = new DynamoLockingService[Unit, Future]()
     testWith(lockingService)
   }
 
   def withDynamoLockingService[R](table: Table)(
-    testWith: TestWith[DynamoLockingService, R]): R =
+    testWith: TestWith[DynamoLockingServiceStub, R]): R =
     withLockDao(table) { implicit lockDao =>
       withDynamoLockingService { lockingService =>
         testWith(lockingService)
