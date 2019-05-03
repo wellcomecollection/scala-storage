@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v4.2.0 - 2019-05-03
+
+Bump version of scala-monitoring to 2.2.0.
+
 ## v4.1.0 - 2019-05-02
 
 *   Add type parameters to `DynamoLockingService`
