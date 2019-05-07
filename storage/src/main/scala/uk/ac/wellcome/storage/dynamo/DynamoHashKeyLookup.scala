@@ -37,7 +37,8 @@ class DynamoHashKeyLookup[T, HashKeyValue](
 
   private val documentClient = new DynamoDB(dynamoClient)
 
-  private def lookup(value: HashKeyValue, lowestValueFirst: Boolean): Future[Option[T]] = Future {
+  private def lookup(value: HashKeyValue,
+                     lowestValueFirst: Boolean): Future[Option[T]] = Future {
 
     // Query results are sorted by the range key.
     val querySpec = new QuerySpec()
@@ -53,10 +54,13 @@ class DynamoHashKeyLookup[T, HashKeyValue](
 
     if (result.hasNext) {
       val item: DynamoItem = result.next()
-      val avMap: java.util.Map[String, AttributeValue] = InternalUtils.toAttributeValues(item)
+      val avMap: java.util.Map[String, AttributeValue] =
+        InternalUtils.toAttributeValues(item)
       ScanamoFree.read[T](avMap) match {
         case Right(record) => Some(record)
-        case Left(error) => throw new RuntimeException(s"Error parsing $item with Scanamo: $error")
+        case Left(error) =>
+          throw new RuntimeException(
+            s"Error parsing $item with Scanamo: $error")
       }
     } else {
       None
