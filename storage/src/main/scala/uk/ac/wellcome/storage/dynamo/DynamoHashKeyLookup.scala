@@ -23,7 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * the highest/lowest version associated with each identifier.
   *
   */
-class DynamoHashKeyLookup[T](
+class DynamoHashKeyLookup[T, HashKeyValue](
   dynamoClient: AmazonDynamoDB,
   dynamoConfig: DynamoConfig
 )(implicit
@@ -32,7 +32,7 @@ class DynamoHashKeyLookup[T](
 
   private val documentClient = new DynamoDB(dynamoClient)
 
-  private def lookup[HashKeyValue](name: String, value: HashKeyValue, lowestValueFirst: Boolean): Future[Option[T]] = Future {
+  private def lookup(name: String, value: HashKeyValue, lowestValueFirst: Boolean): Future[Option[T]] = Future {
 
     // Query results are sorted by the range key.
     val querySpec = new QuerySpec()
@@ -58,9 +58,9 @@ class DynamoHashKeyLookup[T](
     }
   }
 
-  def lookupHighestHashKey[HashKeyValue](name: String, value: HashKeyValue): Future[Option[T]] =
+  def lookupHighestHashKey(name: String, value: HashKeyValue): Future[Option[T]] =
     lookup(name, value, lowestValueFirst = false)
 
-  def lookupLowestHashKey[HashKeyValue](name: String, value: HashKeyValue): Future[Option[T]] =
+  def lookupLowestHashKey(name: String, value: HashKeyValue): Future[Option[T]] =
     lookup(name, value, lowestValueFirst = true)
 }
