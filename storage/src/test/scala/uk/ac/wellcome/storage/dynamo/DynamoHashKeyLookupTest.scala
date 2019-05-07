@@ -137,6 +137,39 @@ class DynamoHashKeyLookupTest extends FunSpec with Matchers with ScalaFutures wi
     }
   }
 
+  it("returns a failure if you ask for a different case class") {
+    withLocalDynamoDbTable { table =>
+      put(table, Payload(id = "123", version = 1, contents = "Payload the first"))
+      put(table, Payload(id = "123", version = 2, contents = "Payload the second"))
+      put(table, Payload(id = "123", version = 3, contents = "Payload the third"))
+
+      case class DifferentPayload(
+        id: Int,
+        version: String,
+        text: String
+      )
+
+      val brokenLookup = new DynamoHashKeyLookup[DifferentPayload, Int](
+        dynamoClient = dynamoDbClient,
+        dynamoConfig = createDynamoConfigWith(table)
+      )
+
+      whenReady(brokenLookup.lookupHighestHashKey("id", value = 123).failed) { err =>
+        err shouldBe a[RuntimeException]
+        err.getMessage should startWith("One or more parameter values were invalid")
+      }
+    }
+  }
+
+  it("returns a failure if you pass the wrong hash key name") {
+    withDynamoLookup { lookup =>
+      whenReady(lookup.lookupHighestHashKey("identifier", value = "123").failed) { err =>
+        err shouldBe a[AmazonDynamoDBException]
+        err.getMessage should startWith("Query condition missed key schema element")
+      }
+    }
+  }
+
   it("returns a failure if it can't find the table") {
     val brokenLookup = new DynamoHashKeyLookup[Payload, String](
       dynamoClient = dynamoDbClient,
