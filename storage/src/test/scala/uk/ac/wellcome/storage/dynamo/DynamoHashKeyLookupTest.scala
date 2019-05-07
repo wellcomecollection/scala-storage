@@ -67,7 +67,7 @@ class DynamoHashKeyLookupTest extends FunSpec with Matchers with ScalaFutures wi
       withDynamoLookup(table) { testWith }
     }
 
-  it("returns None if the table is empty") {
+  it("returns None if it can't find any rows with the given hash key value") {
     withDynamoLookup { lookup =>
       whenReady(lookup.lookupHighestHashKey("id", value = "123")) { _ shouldBe None }
       whenReady(lookup.lookupLowestHashKey("id", value = "123")) { _ shouldBe None }
@@ -120,6 +120,32 @@ class DynamoHashKeyLookupTest extends FunSpec with Matchers with ScalaFutures wi
           payload.contents shouldBe "Payload the first"
         }
       }
+    }
+  }
+
+  it("returns a failure if you pass the wrong hash key type") {
+    withLocalDynamoDbTable { table =>
+      val brokenLookup = new DynamoHashKeyLookup[Payload, Int](
+        dynamoClient = dynamoDbClient,
+        dynamoConfig = createDynamoConfigWith(table)
+      )
+
+      whenReady(brokenLookup.lookupHighestHashKey("id", value = 123).failed) { err =>
+        err shouldBe a[AmazonDynamoDBException]
+        err.getMessage should startWith("One or more parameter values were invalid")
+      }
+    }
+  }
+
+  it("returns a failure if it can't find the table") {
+    val brokenLookup = new DynamoHashKeyLookup[Payload, String](
+      dynamoClient = dynamoDbClient,
+      dynamoConfig = createDynamoConfigWith(Table("does-not-exist", "no-such-index"))
+    )
+
+    whenReady(brokenLookup.lookupHighestHashKey("id", value = "123").failed) { err =>
+      err shouldBe a[AmazonDynamoDBException]
+      err.getMessage should startWith("Cannot do operations on a non-existent table")
     }
   }
 
