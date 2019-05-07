@@ -7,7 +7,7 @@ import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.gu.scanamo.{DynamoFormat, ScanamoFree}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /** If you have a DynamoDB table with a hash key and a range key, and you
   * want to look up record with the highest/lowest value of the range key
@@ -23,14 +23,16 @@ import scala.concurrent.Future
   * the highest/lowest version associated with each identifier.
   *
   */
-class DynamoHashKeyLookup[T, HashKeyValue](
+class DynamoHashKeyLookup[T](
   dynamoClient: AmazonDynamoDB,
   dynamoConfig: DynamoConfig
-)(implicit evidence: DynamoFormat[T]) {
+)(implicit
+  ec: ExecutionContext,
+  evidence: DynamoFormat[T]) {
 
   private val documentClient = new DynamoDB(dynamoClient)
 
-  private def lookup(name: String, value: HashKeyValue, lowestValueFirst: Boolean): Future[Option[T]] = Future {
+  private def lookup[HashKeyValue](name: String, value: HashKeyValue, lowestValueFirst: Boolean): Future[Option[T]] = Future {
 
     // Query results are sorted by the range key.
     val querySpec = new QuerySpec()
@@ -56,9 +58,9 @@ class DynamoHashKeyLookup[T, HashKeyValue](
     }
   }
 
-  def lookupHighestHashKey(name: String, value: HashKeyValue): Future[Option[T]] =
+  def lookupHighestHashKey[HashKeyValue](name: String, value: HashKeyValue): Future[Option[T]] =
     lookup(name, value, lowestValueFirst = false)
 
-  def lookupLowestHashKey(name: String, value: HashKeyValue): Future[Option[T]] =
+  def lookupLowestHashKey[HashKeyValue](name: String, value: HashKeyValue): Future[Option[T]] =
     lookup(name, value, lowestValueFirst = true)
 }
