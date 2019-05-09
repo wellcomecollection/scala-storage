@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v4.3.0 - 2019-05-09
+
+Add a decoder/encoder for s3:// URIs.
+
 ## v4.2.0 - 2019-05-03
 
 Bump version of scala-monitoring to 2.2.0.
