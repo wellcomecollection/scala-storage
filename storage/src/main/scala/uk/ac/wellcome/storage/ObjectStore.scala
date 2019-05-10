@@ -31,7 +31,7 @@ object ObjectStore {
   def apply[T](implicit store: ObjectStore[T]): ObjectStore[T] =
     store
 
-  implicit def createObjectStore[T, R <: BetterStorageBackend](
+  implicit def createObjectStore[T, R <: StorageBackend](
     implicit storageStrategy: SerialisationStrategy[T],
     storageBackend: R,
     ec: ExecutionContext): ObjectStore[T] = new ObjectStore[T] {
