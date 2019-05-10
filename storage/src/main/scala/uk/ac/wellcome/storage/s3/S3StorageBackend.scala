@@ -6,13 +6,13 @@ import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import com.amazonaws.util.IOUtils
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.{ObjectLocation, StorageBackend}
+import uk.ac.wellcome.storage.{BetterStorageBackend, ObjectLocation}
 
-import scala.concurrent.{blocking, ExecutionContext, Future}
 import scala.collection.JavaConverters._
+import scala.util.Try
 
-class S3StorageBackend(s3Client: AmazonS3)(implicit ec: ExecutionContext)
-    extends StorageBackend
+class S3StorageBackend(s3Client: AmazonS3)
+    extends BetterStorageBackend
     with Logging {
 
   private def generateMetadata(
@@ -27,7 +27,7 @@ class S3StorageBackend(s3Client: AmazonS3)(implicit ec: ExecutionContext)
 
   def put(location: ObjectLocation,
           input: InputStream,
-          metadata: Map[String, String]): Future[Unit] = {
+          metadata: Map[String, String]): Try[Unit] = Try {
 
     // Yes, it's moderately daft that we get an InputStream which we
     // immediately load into a ByteArray, then turn it into a different
@@ -62,33 +62,22 @@ class S3StorageBackend(s3Client: AmazonS3)(implicit ec: ExecutionContext)
     )
 
     debug(s"Attempt: PUT object to s3://$bucketName/$key")
-    val putObject = Future {
-      blocking {
-        s3Client.putObject(putObjectRequest)
-      }
-    }
+    s3Client.putObject(putObjectRequest)
 
-    putObject.map { _ =>
-      debug(s"Success: PUT object to s3://$bucketName/$key")
-      ObjectLocation(bucketName, key)
-    }
+    debug(s"Success: PUT object to s3://$bucketName/$key")
+    ObjectLocation(bucketName, key)
   }
 
-  def get(location: ObjectLocation): Future[InputStream] = {
+  def get(location: ObjectLocation): Try[InputStream] = Try {
     val bucketName = location.namespace
     val key = location.key
 
     debug(s"Attempt: GET object from s3://$bucketName/$key")
 
-    val futureInputStream = Future {
-      blocking {
-        s3Client.getObject(bucketName, key).getObjectContent
-      }
-    }
+    val inputStream = s3Client.getObject(bucketName, key).getObjectContent
 
-    futureInputStream.foreach(_ =>
-      debug(s"Success: GET object from s3://$bucketName/$key"))
+    debug(s"Success: GET object from s3://$bucketName/$key")
 
-    futureInputStream
+    inputStream
   }
 }

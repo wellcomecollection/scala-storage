@@ -31,7 +31,7 @@ object ObjectStore {
   def apply[T](implicit store: ObjectStore[T]): ObjectStore[T] =
     store
 
-  implicit def createObjectStore[T, R <: StorageBackend](
+  implicit def createObjectStore[T, R <: BetterStorageBackend](
     implicit storageStrategy: SerialisationStrategy[T],
     storageBackend: R,
     ec: ExecutionContext): ObjectStore[T] = new ObjectStore[T] {
@@ -47,7 +47,7 @@ object ObjectStore {
       val suffix = normalizePathFragment(keySuffix.value)
       val storageKey = storageStream.storageKey.value
 
-      val key = s"$prefix/${storageKey}$suffix"
+      val key = s"$prefix/$storageKey$suffix"
 
       val location = ObjectLocation(namespace, key)
 
@@ -57,12 +57,12 @@ object ObjectStore {
         userMetadata
       )
 
-      stored.map(_ => location)
+      Future.fromTry { stored }.map(_ => location)
     }
 
     def get(objectLocation: ObjectLocation): Future[T] = {
       for {
-        input <- storageBackend.get(objectLocation)
+        input <- Future.fromTry { storageBackend.get(objectLocation) }
         a <- Future.fromTry(storageStrategy.fromStream(input))
         _ <- Future.fromTry(Try {
           if (a.isInstanceOf[InputStream]) () else input.close()

@@ -86,7 +86,7 @@ class ObjectStoreTest extends FunSpec with S3 with ScalaFutures with PropertyChe
   }
 
   it("closes the input stream when retrieving an object if the returned type is not input stream") {
-    val storageBackend = mock[StorageBackend]
+    val storageBackend = mock[BetterStorageBackend]
 
     val objectStore = ObjectStore.createObjectStore(
       storageStrategy = SerialisationStrategy.stringSerialisationStrategy,
@@ -109,7 +109,7 @@ class ObjectStoreTest extends FunSpec with S3 with ScalaFutures with PropertyChe
   }
 
   it("does not close the stream when retrieving an object if the returned type is InputStream") {
-    val storageBackend = mock[StorageBackend]
+    val storageBackend = mock[BetterStorageBackend]
 
     val objectStore = ObjectStore.createObjectStore(
       storageStrategy = SerialisationStrategy.streamSerialisationStrategy,
