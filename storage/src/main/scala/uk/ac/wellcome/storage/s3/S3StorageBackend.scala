@@ -25,7 +25,7 @@ class S3StorageBackend(s3Client: AmazonS3) extends StorageBackend with Logging {
 
   def put(location: ObjectLocation,
           input: InputStream,
-          metadata: Map[String, String]): Try[Unit] = Try {
+          metadata: Map[String, String] = Map.empty): Try[Unit] = Try {
 
     // Yes, it's moderately daft that we get an InputStream which we
     // immediately load into a ByteArray, then turn it into a different

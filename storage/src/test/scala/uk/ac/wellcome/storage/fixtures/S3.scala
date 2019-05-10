@@ -1,7 +1,6 @@
 package uk.ac.wellcome.storage.fixtures
 
 import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.PutObjectResult
 import grizzled.slf4j.Logging
 import io.circe.{Decoder, Json}
 import io.circe.parser.parse
@@ -25,7 +24,7 @@ object S3 {
   }
 }
 
-trait S3 extends Logging with Eventually with IntegrationPatience with Matchers {
+trait S3 extends Logging with Eventually with IntegrationPatience with Matchers with StreamHelpers {
 
   import S3._
 
@@ -66,31 +65,27 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
       }
     )
 
+  @deprecated("Use getContentFromS3(objectLocation) instead", since = "2019-05-10")
   def getContentFromS3(bucket: Bucket, key: String): String =
-    scala.io.Source
-      .fromInputStream(
-        s3Client.getObject(bucket.name, key).getObjectContent
-      )
-      .mkString
+    getContentFromS3(createObjectLocationWith(bucket, key))
 
   def getContentFromS3(location: ObjectLocation): String =
-    getContentFromS3(bucket = Bucket(location.namespace), key = location.key)
+    fromStream(storageBackend.get(location).get)
 
+  @deprecated("Use getJsonFromS3(objectLocation) instead", since = "2019-05-10")
   def getJsonFromS3(bucket: Bucket, key: String): Json =
-    parse(getContentFromS3(bucket, key)).right.get
+    getJsonFromS3(createObjectLocationWith(bucket, key))
 
   def getJsonFromS3(location: ObjectLocation): Json =
-    getJsonFromS3(bucket = Bucket(location.namespace), key = location.key)
+    parse(getContentFromS3(location)).right.get
 
+  @deprecated("Use getObjectFromS3(objectLocation) instead", since = "2019-05-10")
   def getObjectFromS3[T](bucket: Bucket, key: String)(
     implicit decoder: Decoder[T]): T =
-    fromJson[T](getContentFromS3(bucket = bucket, key = key)).get
+    getObjectFromS3[T](createObjectLocationWith(bucket, key))
 
   def getObjectFromS3[T](location: ObjectLocation)(implicit decoder: Decoder[T]): T =
-    getObjectFromS3[T](
-      bucket = Bucket(location.namespace),
-      key = location.key
-    )
+    fromJson[T](getContentFromS3(location)).get
 
   def createBucketName: String =
     // Bucket names
@@ -114,12 +109,9 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
 
   def createObjectLocation: ObjectLocation = createObjectLocationWith()
 
-  def createObject(location: ObjectLocation, content: String = randomAlphanumeric): PutObjectResult =
-    s3Client.putObject(
-      location.namespace,
-      location.key,
-      content
-    )
+  def createObject(location: ObjectLocation,
+                   content: String = randomAlphanumeric): Unit =
+    storageBackend.put(location = location, input = toStream(content)).get
 
   def assertEqualObjects(x: ObjectLocation, y: ObjectLocation): Assertion =
     getContentFromS3(x) shouldBe getContentFromS3(y)
@@ -147,7 +139,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
     */
   def getAllObjectContents(bucket: Bucket): Map[String, String] =
     listKeysInBucket(bucket).map { key =>
-      key -> getContentFromS3(bucket = bucket, key = key)
+      key -> getContentFromS3(createObjectLocationWith(bucket, key))
     }.toMap
 
   def createS3ConfigWith(bucket: Bucket): S3Config =

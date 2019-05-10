@@ -8,21 +8,23 @@ import grizzled.slf4j.Logging
 import org.apache.commons.io.IOUtils
 import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
   private val transferManager = TransferManagerBuilder.standard
     .withS3Client(s3Client)
     .build
 
-  def copy(src: ObjectLocation, dst: ObjectLocation): Unit = {
-    debug(s"Copying ${s3Uri(src)} -> ${s3Uri(dst)}")
+  private val backend = new S3StorageBackend(s3Client)
 
-    getInputStream(dst) match {
+  def copy(src: ObjectLocation, dst: ObjectLocation): Unit = {
+    debug(s"Copying ${S3Urls.encode(src)} -> ${S3Urls.encode(dst)}")
+
+    backend.get(dst) match {
       // If the destination object exists and is the same as the source
       // object, we can skip the copy operation.
       case Success(dstStream) =>
-        getInputStream(src) match {
+        backend.get(src) match {
           case Success(srcStream) =>
             compare(srcStream, dstStream)
 
@@ -49,7 +51,7 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
 
     def compare(srcStream: InputStream, dstStream: InputStream): Unit = {
       if (IOUtils.contentEquals(srcStream, dstStream)) {
-        debug(s"No-op copy: ${s3Uri(src)} == ${s3Uri(dst)}")
+        debug(s"No-op copy: ${S3Urls.encode(src)} == ${S3Urls.encode(dst)}")
       } else {
         throw new RuntimeException(
           s"Destination object $dst exists and is different from $src!"
@@ -68,13 +70,4 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
 
     copyTransfer.waitForCopyResult()
   }
-
-  private def getInputStream(objectLocation: ObjectLocation) = Try {
-    s3Client
-      .getObject(objectLocation.namespace, objectLocation.key)
-      .getObjectContent
-  }
-
-  private def s3Uri(objectLocation: ObjectLocation): String =
-    s"s3://${objectLocation.namespace}/${objectLocation.key}"
 }
