@@ -5,7 +5,7 @@ import java.io.{ByteArrayInputStream, InputStream}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.BetterObjectStore
+import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.LocalVersionedHybridStore
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
@@ -32,9 +32,9 @@ class StreamStoreVersionedHybridStoreTest
     table: Table,
     globalS3Prefix: String = defaultGlobalS3Prefix)(
     testWith: TestWith[
-      VersionedHybridStore[InputStream, Metadata, BetterObjectStore[InputStream]],
+      VersionedHybridStore[InputStream, Metadata, ObjectStore[InputStream]],
       R])(
-    implicit objectStore: BetterObjectStore[InputStream]
+    implicit objectStore: ObjectStore[InputStream]
   ): R = {
     val vhsConfig = createVHSConfigWith(
       table = table,
@@ -45,7 +45,7 @@ class StreamStoreVersionedHybridStoreTest
     val store = new VersionedHybridStore[
       InputStream,
       Metadata,
-      BetterObjectStore[InputStream]](
+      ObjectStore[InputStream]](
       vhsConfig = vhsConfig,
       objectStore = objectStore,
       dynamoDbClient = dynamoDbClient
@@ -58,7 +58,7 @@ class StreamStoreVersionedHybridStoreTest
     testWith: TestWith[(Table,
                         VersionedHybridStore[InputStream,
                                              EmptyMetadata,
-                                             BetterObjectStore[InputStream]]),
+                                             ObjectStore[InputStream]]),
                        R]): R =
     withLocalS3Bucket[R] { bucket =>
       withLocalDynamoDbTable[R] { table =>

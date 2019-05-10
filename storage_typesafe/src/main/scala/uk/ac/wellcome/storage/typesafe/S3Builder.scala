@@ -3,7 +3,7 @@ package uk.ac.wellcome.storage.typesafe
 import com.amazonaws.services.s3.AmazonS3
 import com.typesafe.config.Config
 import uk.ac.wellcome.config.models.AWSClientConfig
-import uk.ac.wellcome.storage.BetterObjectStore
+import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.s3._
 import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
 import uk.ac.wellcome.typesafe.config.builders.AWSClientConfigBuilder
@@ -36,12 +36,12 @@ object S3Builder extends AWSClientConfigBuilder {
 
   def buildObjectStore[T](config: Config)(
     implicit
-    serialisationStrategy: SerialisationStrategy[T]): BetterObjectStore[T] = {
+    serialisationStrategy: SerialisationStrategy[T]): ObjectStore[T] = {
     implicit val storageBackend: S3StorageBackend = new S3StorageBackend(
       s3Client = buildS3Client(config)
     )
 
-    BetterObjectStore[T]
+    ObjectStore[T]
   }
 
   def buildS3PrefixCopier(config: Config)(

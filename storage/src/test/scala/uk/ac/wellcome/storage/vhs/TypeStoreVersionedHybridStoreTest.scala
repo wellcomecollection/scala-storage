@@ -4,7 +4,7 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.json.JsonUtil._
-import uk.ac.wellcome.storage.BetterObjectStore
+import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.LocalVersionedHybridStore
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
@@ -31,7 +31,7 @@ class TypeStoreVersionedHybridStoreTest
                         Table,
                         VersionedHybridStore[ExampleRecord,
                                              EmptyMetadata,
-                                             BetterObjectStore[ExampleRecord]]),
+                                             ObjectStore[ExampleRecord]]),
                        R]
   ): R =
     withLocalS3Bucket[R] { bucket =>

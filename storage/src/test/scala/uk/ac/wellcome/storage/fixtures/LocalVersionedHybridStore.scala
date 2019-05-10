@@ -7,7 +7,7 @@ import org.scalatest.{Assertion, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.json.utils.JsonAssertions
-import uk.ac.wellcome.storage.BetterObjectStore
+import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
 import uk.ac.wellcome.storage.vhs.{HybridRecord, VHSConfig, VersionedHybridStore}
@@ -25,8 +25,8 @@ trait LocalVersionedHybridStore
   def withTypeVHS[T, Metadata, R](bucket: Bucket,
                                   table: Table,
                                   globalS3Prefix: String = defaultGlobalS3Prefix)(
-    testWith: TestWith[VersionedHybridStore[T, Metadata, BetterObjectStore[T]], R])(
-    implicit objectStore: BetterObjectStore[T]
+    testWith: TestWith[VersionedHybridStore[T, Metadata, ObjectStore[T]], R])(
+    implicit objectStore: ObjectStore[T]
   ): R = {
     val vhsConfig = createVHSConfigWith(
       table = table,
@@ -34,7 +34,7 @@ trait LocalVersionedHybridStore
       globalS3Prefix = globalS3Prefix
     )
 
-    val store = new VersionedHybridStore[T, Metadata, BetterObjectStore[T]](
+    val store = new VersionedHybridStore[T, Metadata, ObjectStore[T]](
       vhsConfig = vhsConfig,
       objectStore = objectStore,
       dynamoDbClient = dynamoDbClient

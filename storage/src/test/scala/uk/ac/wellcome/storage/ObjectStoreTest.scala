@@ -14,13 +14,13 @@ import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
 
 import scala.util.Success
 
-class BetterObjectStoreTest extends FunSpec with Matchers with MockitoSugar with PropertyChecks with S3 {
+class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with PropertyChecks with S3 {
 
   case class ObjectRecord(data: String)
 
   val namespace = "BetterObjectStoreTest_namespace"
 
-  def createObjectStore[T](implicit strategy: SerialisationStrategy[T]): BetterObjectStore[T] = new BetterObjectStore[T] {
+  def createObjectStore[T](implicit strategy: SerialisationStrategy[T]): ObjectStore[T] = new ObjectStore[T] {
     override implicit val serialisationStrategy: SerialisationStrategy[T] = strategy
     override implicit val storageBackend: StorageBackend = new MemoryStorageBackend()
   }
@@ -75,7 +75,7 @@ class BetterObjectStoreTest extends FunSpec with Matchers with MockitoSugar with
   it("closes the input stream when retrieving an object if the returned type is not input stream") {
     val mockBackend = mock[StorageBackend]
 
-    val objectStore = new BetterObjectStore[String] {
+    val objectStore = new ObjectStore[String] {
       override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringSerialisationStrategy
       override implicit val storageBackend: StorageBackend = mockBackend
     }
@@ -98,7 +98,7 @@ class BetterObjectStoreTest extends FunSpec with Matchers with MockitoSugar with
   it("does not close the stream when retrieving an object if the returned type is InputStream") {
     val mockBackend = mock[StorageBackend]
 
-    val objectStore = new BetterObjectStore[String] {
+    val objectStore = new ObjectStore[String] {
       override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringSerialisationStrategy
       override implicit val storageBackend: StorageBackend = mockBackend
     }

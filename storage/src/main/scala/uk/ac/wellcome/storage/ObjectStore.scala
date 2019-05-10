@@ -9,7 +9,7 @@ import scala.util.Try
 case class KeyPrefix(value: String) extends AnyVal
 case class KeySuffix(value: String) extends AnyVal
 
-trait BetterObjectStore[T] {
+trait ObjectStore[T] {
   implicit val serialisationStrategy: SerialisationStrategy[T]
   implicit val storageBackend: StorageBackend
 
@@ -52,13 +52,13 @@ trait BetterObjectStore[T] {
       .stripSuffix("/")
 }
 
-object BetterObjectStore {
-  def apply[T](implicit store: BetterObjectStore[T]): BetterObjectStore[T] =
+object ObjectStore {
+  def apply[T](implicit store: ObjectStore[T]): ObjectStore[T] =
     store
 
   implicit def createObjectStore[T](
     implicit strategy: SerialisationStrategy[T],
-    backend: StorageBackend): BetterObjectStore[T] = new BetterObjectStore[T] {
+    backend: StorageBackend): ObjectStore[T] = new ObjectStore[T] {
       override implicit val serialisationStrategy: SerialisationStrategy[T] = strategy
       override implicit val storageBackend: StorageBackend = backend
     }

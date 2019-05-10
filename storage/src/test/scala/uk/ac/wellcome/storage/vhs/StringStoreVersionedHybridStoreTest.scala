@@ -3,7 +3,7 @@ package uk.ac.wellcome.storage.vhs
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{Assertion, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.BetterObjectStore
+import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.LocalVersionedHybridStore
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
@@ -25,9 +25,9 @@ class StringStoreVersionedHybridStoreTest
     table: Table,
     globalS3Prefix: String = defaultGlobalS3Prefix)(
     testWith: TestWith[
-      VersionedHybridStore[String, Metadata, BetterObjectStore[String]],
+      VersionedHybridStore[String, Metadata, ObjectStore[String]],
       R])(
-    implicit objectStore: BetterObjectStore[String]
+    implicit objectStore: ObjectStore[String]
   ): R = {
     val vhsConfig = createVHSConfigWith(
       table = table,
@@ -36,7 +36,7 @@ class StringStoreVersionedHybridStoreTest
     )
 
     val store =
-      new VersionedHybridStore[String, Metadata, BetterObjectStore[String]](
+      new VersionedHybridStore[String, Metadata, ObjectStore[String]](
         vhsConfig = vhsConfig,
         objectStore = objectStore,
         dynamoDbClient = dynamoDbClient
@@ -48,7 +48,7 @@ class StringStoreVersionedHybridStoreTest
   def withS3StringStoreFixtures[R](
     testWith: TestWith[
       (Table,
-       VersionedHybridStore[String, EmptyMetadata, BetterObjectStore[String]]),
+       VersionedHybridStore[String, EmptyMetadata, ObjectStore[String]]),
       R]
   ): R =
     withLocalS3Bucket[R] { bucket =>

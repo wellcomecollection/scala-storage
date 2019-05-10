@@ -6,13 +6,13 @@ import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.dynamo.{DynamoVersionedDao, UpdateExpressionGenerator}
 import uk.ac.wellcome.storage.type_classes.Migration._
 import uk.ac.wellcome.storage.type_classes.{HybridRecordEnricher, IdGetter, VersionGetter, VersionUpdater, _}
-import uk.ac.wellcome.storage.{BetterObjectStore, KeyPrefix, ObjectLocation}
+import uk.ac.wellcome.storage.{ObjectStore, KeyPrefix, ObjectLocation}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 case class EmptyMetadata()
 
-class VersionedHybridStore[T, Metadata, Store <: BetterObjectStore[T]](
+class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
   vhsConfig: VHSConfig,
   objectStore: Store,
   dynamoDbClient: AmazonDynamoDB
