@@ -4,7 +4,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.gu.scanamo.DynamoFormat
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.type_classes.Migration._
-import uk.ac.wellcome.storage.dynamo.{UpdateExpressionGenerator, DynamoVersionedDao}
+import uk.ac.wellcome.storage.dynamo.{
+  DynamoVersionedDao,
+  UpdateExpressionGenerator
+}
 import uk.ac.wellcome.storage.type_classes.{
   HybridRecordEnricher,
   IdGetter,
@@ -31,7 +34,8 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
     versionUpdater: VersionUpdater[DynamoRow],
     idGetter: IdGetter[DynamoRow],
     versionGetter: VersionGetter[DynamoRow],
-    updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow]): DynamoVersionedDao[DynamoRow] =
+    updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow])
+    : DynamoVersionedDao[DynamoRow] =
     new DynamoVersionedDao[DynamoRow](
       dynamoDbClient = dynamoDbClient,
       dynamoConfig = vhsConfig.dynamoConfig
@@ -153,7 +157,9 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
         t,
         keyPrefix = KeyPrefix(buildKeyPrefix(id))
       )
-      dynamoRow <- Future.fromTry { versionedDao[DynamoRow].put(f(objectLocation)) }
+      dynamoRow <- Future.fromTry {
+        versionedDao[DynamoRow].put(f(objectLocation))
+      }
     } yield dynamoRow.migrateTo[HybridRecord]
 
   // To spread objects evenly in our S3 bucket, we take the last two

@@ -5,10 +5,7 @@ import com.amazonaws.services.dynamodbv2.model.{
   ConditionalCheckFailedException,
   ProvisionedThroughputExceededException
 }
-import com.gu.scanamo.error.{
-  ConditionNotMet,
-  ScanamoError
-}
+import com.gu.scanamo.error.{ConditionNotMet, ScanamoError}
 import com.gu.scanamo.ops.ScanamoOps
 import com.gu.scanamo.query.{KeyEquals, UniqueKey}
 import com.gu.scanamo.syntax.{attributeExists, not, _}
@@ -34,7 +31,8 @@ class DynamoVersionedDao[T](
   idGetter: IdGetter[T],
   versionGetter: VersionGetter[T],
   updateExpressionGenerator: UpdateExpressionGenerator[T])
-    extends Logging with VersionedDao[T] {
+    extends Logging
+    with VersionedDao[T] {
 
   val table: Table[T] = Table[T](dynamoConfig.table)
 
