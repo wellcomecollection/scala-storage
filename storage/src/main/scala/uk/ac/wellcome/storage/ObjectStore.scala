@@ -2,7 +2,10 @@ package uk.ac.wellcome.storage
 
 import java.io.InputStream
 
-import uk.ac.wellcome.storage.type_classes.{SerialisationStrategy, StorageStream}
+import uk.ac.wellcome.storage.type_classes.{
+  SerialisationStrategy,
+  StorageStream
+}
 
 import scala.util.Try
 
@@ -56,10 +59,11 @@ object ObjectStore {
   def apply[T](implicit store: ObjectStore[T]): ObjectStore[T] =
     store
 
-  implicit def createObjectStore[T](
-    implicit strategy: SerialisationStrategy[T],
-    backend: StorageBackend): ObjectStore[T] = new ObjectStore[T] {
-      override implicit val serialisationStrategy: SerialisationStrategy[T] = strategy
+  implicit def createObjectStore[T](implicit strategy: SerialisationStrategy[T],
+                                    backend: StorageBackend): ObjectStore[T] =
+    new ObjectStore[T] {
+      override implicit val serialisationStrategy: SerialisationStrategy[T] =
+        strategy
       override implicit val storageBackend: StorageBackend = backend
     }
 }

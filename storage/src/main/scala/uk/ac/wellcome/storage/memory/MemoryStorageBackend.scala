@@ -16,19 +16,20 @@ class MemoryStorageBackend() extends StorageBackend {
 
   var storage: Map[ObjectLocation, StoredStream] = Map.empty
 
-  override def put(
-    location: ObjectLocation,
-    input: InputStream,
-    metadata: Map[String, String]): Try[Unit] = Try {
-    storage = storage ++ Map(location -> StoredStream(
-      s = Source.fromInputStream(input).mkString,
-      metadata = metadata
-    ))
+  override def put(location: ObjectLocation,
+                   input: InputStream,
+                   metadata: Map[String, String]): Try[Unit] = Try {
+    storage = storage ++ Map(
+      location -> StoredStream(
+        s = Source.fromInputStream(input).mkString,
+        metadata = metadata
+      ))
   }
 
   override def get(location: ObjectLocation): Try[InputStream] =
     storage.get(location) match {
-      case Some(storedStream) => Success(IOUtils.toInputStream(storedStream.s, "UTF-8"))
+      case Some(storedStream) =>
+        Success(IOUtils.toInputStream(storedStream.s, "UTF-8"))
       case None => Failure(new Throwable(s"Nothing at $location"))
     }
 }

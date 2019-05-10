@@ -6,14 +6,12 @@ import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import com.amazonaws.util.IOUtils
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.{StorageBackend, ObjectLocation}
+import uk.ac.wellcome.storage.{ObjectLocation, StorageBackend}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-class S3StorageBackend(s3Client: AmazonS3)
-    extends StorageBackend
-    with Logging {
+class S3StorageBackend(s3Client: AmazonS3) extends StorageBackend with Logging {
 
   private def generateMetadata(
     userMetadata: Map[String, String],
