@@ -22,7 +22,7 @@ class BetterObjectStoreTest extends FunSpec with Matchers with MockitoSugar with
 
   def createObjectStore[T](implicit strategy: SerialisationStrategy[T]): BetterObjectStore[T] = new BetterObjectStore[T] {
     override implicit val serialisationStrategy: SerialisationStrategy[T] = strategy
-    override implicit val backend: StorageBackend = new MemoryStorageBackend()
+    override implicit val storageBackend: StorageBackend = new MemoryStorageBackend()
   }
 
   it("stores a record and can retrieve it") {
@@ -77,7 +77,7 @@ class BetterObjectStoreTest extends FunSpec with Matchers with MockitoSugar with
 
     val objectStore = new BetterObjectStore[String] {
       override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringSerialisationStrategy
-      override implicit val backend: StorageBackend = mockBackend
+      override implicit val storageBackend: StorageBackend = mockBackend
     }
 
     val location = createObjectLocation
@@ -100,7 +100,7 @@ class BetterObjectStoreTest extends FunSpec with Matchers with MockitoSugar with
 
     val objectStore = new BetterObjectStore[String] {
       override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringSerialisationStrategy
-      override implicit val backend: StorageBackend = mockBackend
+      override implicit val storageBackend: StorageBackend = mockBackend
     }
 
     val location = createObjectLocation

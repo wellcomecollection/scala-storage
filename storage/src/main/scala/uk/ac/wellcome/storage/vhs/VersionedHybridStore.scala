@@ -3,25 +3,16 @@ package uk.ac.wellcome.storage.vhs
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.gu.scanamo.DynamoFormat
 import grizzled.slf4j.Logging
+import uk.ac.wellcome.storage.dynamo.{DynamoVersionedDao, UpdateExpressionGenerator}
 import uk.ac.wellcome.storage.type_classes.Migration._
-import uk.ac.wellcome.storage.dynamo.{
-  DynamoVersionedDao,
-  UpdateExpressionGenerator
-}
-import uk.ac.wellcome.storage.type_classes.{
-  HybridRecordEnricher,
-  IdGetter,
-  VersionGetter,
-  VersionUpdater
-}
-import uk.ac.wellcome.storage.type_classes._
-import uk.ac.wellcome.storage.{KeyPrefix, ObjectLocation, ObjectStore}
+import uk.ac.wellcome.storage.type_classes.{HybridRecordEnricher, IdGetter, VersionGetter, VersionUpdater, _}
+import uk.ac.wellcome.storage.{BetterObjectStore, KeyPrefix, ObjectLocation}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 case class EmptyMetadata()
 
-class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
+class VersionedHybridStore[T, Metadata, Store <: BetterObjectStore[T]](
   vhsConfig: VHSConfig,
   objectStore: Store,
   dynamoDbClient: AmazonDynamoDB
@@ -153,10 +144,12 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow]
   ): Future[HybridRecord] =
     for {
-      objectLocation <- objectStore.put(vhsConfig.s3Config.bucketName)(
-        t,
-        keyPrefix = KeyPrefix(buildKeyPrefix(id))
-      )
+      objectLocation <- Future.fromTry {
+        objectStore.put(vhsConfig.s3Config.bucketName)(
+          t,
+          keyPrefix = KeyPrefix(buildKeyPrefix(id))
+        )
+      }
       dynamoRow <- Future.fromTry {
         versionedDao[DynamoRow].put(f(objectLocation))
       }
@@ -202,8 +195,10 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
           metadata = metadata
         )
 
-        objectStore
-          .get(hybridRecord.location)
+        Future.fromTry {
+          objectStore
+            .get(hybridRecord.location)
+        }
           .map { s3Object =>
             Some(
               VersionedHybridObject(

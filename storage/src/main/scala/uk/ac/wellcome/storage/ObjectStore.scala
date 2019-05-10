@@ -4,7 +4,6 @@ import java.io.InputStream
 
 import uk.ac.wellcome.storage.type_classes.{SerialisationStrategy, StorageStream}
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 case class KeyPrefix(value: String) extends AnyVal
@@ -12,7 +11,7 @@ case class KeySuffix(value: String) extends AnyVal
 
 trait BetterObjectStore[T] {
   implicit val serialisationStrategy: SerialisationStrategy[T]
-  implicit val backend: StorageBackend
+  implicit val storageBackend: StorageBackend
 
   def put(namespace: String)(
     input: T,
@@ -30,7 +29,7 @@ trait BetterObjectStore[T] {
       storageKey = storageStream.storageKey.value
       key = s"$prefix/$storageKey$suffix"
       location = ObjectLocation(namespace, key)
-      _ <- backend.put(
+      _ <- storageBackend.put(
         location = location,
         input = storageStream.inputStream,
         metadata = userMetadata
@@ -40,7 +39,7 @@ trait BetterObjectStore[T] {
 
   def get(objectLocation: ObjectLocation): Try[T] =
     for {
-      input <- backend.get(objectLocation)
+      input <- storageBackend.get(objectLocation)
       t <- serialisationStrategy.fromStream(input)
       _ <- Try {
         if (t.isInstanceOf[InputStream]) () else input.close()
@@ -53,67 +52,14 @@ trait BetterObjectStore[T] {
       .stripSuffix("/")
 }
 
-
-
-
-trait ObjectStore[T] {
-  def put(namespace: String)(
-    input: T,
-    keyPrefix: KeyPrefix = KeyPrefix(""),
-    keySuffix: KeySuffix = KeySuffix(""),
-    userMetadata: Map[String, String] = Map()
-  ): Future[ObjectLocation]
-
-  def get(objectLocation: ObjectLocation): Future[T]
-}
-
-object ObjectStore {
-
-  private def normalizePathFragment(prefix: String) =
-    prefix
-      .stripPrefix("/")
-      .stripSuffix("/")
-
-  def apply[T](implicit store: ObjectStore[T]): ObjectStore[T] =
+object BetterObjectStore {
+  def apply[T](implicit store: BetterObjectStore[T]): BetterObjectStore[T] =
     store
 
-  implicit def createObjectStore[T, R <: StorageBackend](
-    implicit storageStrategy: SerialisationStrategy[T],
-    storageBackend: R,
-    ec: ExecutionContext): ObjectStore[T] = new ObjectStore[T] {
-    def put(namespace: String)(
-      t: T,
-      keyPrefix: KeyPrefix = KeyPrefix(""),
-      keySuffix: KeySuffix = KeySuffix(""),
-      userMetadata: Map[String, String] = Map()
-    ): Future[ObjectLocation] = {
-      val storageStream = storageStrategy.toStream(t)
-
-      val prefix = normalizePathFragment(keyPrefix.value)
-      val suffix = normalizePathFragment(keySuffix.value)
-      val storageKey = storageStream.storageKey.value
-
-      val key = s"$prefix/$storageKey$suffix"
-
-      val location = ObjectLocation(namespace, key)
-
-      val stored = storageBackend.put(
-        location,
-        storageStream.inputStream,
-        userMetadata
-      )
-
-      Future.fromTry { stored }.map(_ => location)
+  implicit def createObjectStore[T](
+    implicit strategy: SerialisationStrategy[T],
+    backend: StorageBackend): BetterObjectStore[T] = new BetterObjectStore[T] {
+      override implicit val serialisationStrategy: SerialisationStrategy[T] = strategy
+      override implicit val storageBackend: StorageBackend = backend
     }
-
-    def get(objectLocation: ObjectLocation): Future[T] = {
-      for {
-        input <- Future.fromTry { storageBackend.get(objectLocation) }
-        a <- Future.fromTry(storageStrategy.fromStream(input))
-        _ <- Future.fromTry(Try {
-          if (a.isInstanceOf[InputStream]) () else input.close()
-        })
-      } yield a
-    }
-  }
 }
