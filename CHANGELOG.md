@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v4.4.0 - 2019-05-10
+
+Add a new trait for database objects that manage versioning:
+
+```scala
+trait VersionedDao[T] {
+  def put(value: T): Try[T]
+  def get(id: String): Try[Option[T]]
+}
+```
+
+See `InMemoryVersionedDao` for an example implementation.
+
+The previous VersionedDao (now DynamoVersionedDao) is another implementation of this trait.
+
 ## v4.3.0 - 2019-05-09
 
 Add a decoder/encoder for s3:// URIs.
