@@ -10,3 +10,5 @@ trait VersionedDao[T] {
 ```
 
 See `InMemoryVersionedDao` for an example implementation.
+
+The previous VersionedDao (now DynamoVersionedDao) is another implementation of this trait.
