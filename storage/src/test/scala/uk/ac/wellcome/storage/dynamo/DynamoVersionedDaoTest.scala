@@ -8,9 +8,9 @@ import com.amazonaws.services.dynamodbv2.model.{
   UpdateItemRequest
 }
 import com.gu.scanamo.Scanamo
-import com.gu.scanamo.syntax._
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
+import org.scalatest.Assertion
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSpec, Matchers}
@@ -19,9 +19,20 @@ import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDbVersioned
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
 
-case class TestVersioned(id: String, data: String, version: Int)
+case class Record(
+  id: String,
+  data: String,
+  version: Int
+)
+
+case class ExtendedRecord(
+  id: String,
+  data: String,
+  version: Int,
+  moreData: Int
+)
 
 class DynamoVersionedDaoTest
     extends FunSpec
@@ -31,40 +42,36 @@ class DynamoVersionedDaoTest
     with MockitoSugar
     with Matchers {
 
-  def withFixtures[R](testWith: TestWith[(Table, DynamoVersionedDao), R]): R = {
+  def withFixtures[R](testWith: TestWith[(Table, DynamoVersionedDao[Record]), R]): R = {
     withLocalDynamoDbTable[R] { table =>
-      withVersionedDao[R](table) { versionedDao =>
+      withVersionedDao[Record, R](table) { versionedDao =>
         testWith((table, versionedDao))
       }
     }
   }
 
   describe("get a record") {
-    it("returns a future of a record if its in dynamo") {
+    it("returns the record if it's in Dynamo") {
       withFixtures {
         case (table, versionedDao) =>
-          val testVersioned = TestVersioned(
+          val record = Record(
             id = "testSource/b110101001",
             data = "whatever",
             version = 0
           )
 
-          Scanamo.put(dynamoDbClient)(table.name)(testVersioned)
+          Scanamo.put(dynamoDbClient)(table.name)(record)
 
-          whenReady(versionedDao.getRecord[TestVersioned](testVersioned.id)) {
-            record =>
-              record shouldBe Some(testVersioned)
-          }
+          val result = versionedDao.get(record.id)
+          result shouldBe Success(Some(record))
       }
     }
 
-    it("returns a future of None if the record isn't in dynamo") {
+    it("returns None if the record isn't in Dynamo") {
       withFixtures {
         case (_, versionedDao) =>
-          whenReady(versionedDao.getRecord[TestVersioned]("testSource/b88888")) {
-            record =>
-              record shouldBe None
-          }
+          val result = versionedDao.get("testSource/b88888")
+          result shouldBe Success(None)
       }
     }
 
@@ -75,12 +82,10 @@ class DynamoVersionedDaoTest
         when(mockDynamoDbClient.getItem(any[GetItemRequest]))
           .thenThrow(expectedException)
 
-        withVersionedDao(mockDynamoDbClient, table = table) { versionedDao =>
-          val future = versionedDao.getRecord[TestVersioned]("testSource/b88888")
+        withVersionedDao[Record, Assertion](mockDynamoDbClient, table = table) { versionedDao =>
+          val result = versionedDao.get("testSource/b88888")
 
-          whenReady(future.failed) { ex =>
-            ex shouldBe expectedException
-          }
+          result shouldBe Failure(expectedException)
         }
       }
     }
@@ -90,131 +95,82 @@ class DynamoVersionedDaoTest
     it("inserts a new record if it doesn't already exist") {
       withFixtures {
         case (table, versionedDao) =>
-          val testVersioned = TestVersioned(
+          val newRecord = Record(
             id = "testSource/b1111",
             data = "whatever",
             version = 0
           )
 
-          val expectedTestVersioned = testVersioned.copy(version = 1)
+          val expectedRecord = newRecord.copy(version = 1)
 
-          whenReady(versionedDao.updateRecord(testVersioned)) { result =>
-            Scanamo
-              .get[TestVersioned](dynamoDbClient)(table.name)(
-                'id -> testVersioned.id)
-              .get shouldBe Right(expectedTestVersioned)
+          versionedDao.put(newRecord)
 
-            result shouldBe expectedTestVersioned
-          }
+          assertTableHasItem(id = newRecord.id, expectedRecord, table)
       }
     }
 
     it("updates an existing record if the update has a higher version") {
       withFixtures {
         case (table, versionedDao) =>
-          val testVersioned = TestVersioned(
+          val existingRecord = Record(
             id = "testSource/b1111",
             data = "whatever",
             version = 0
           )
 
-          val newerTestVersioned = testVersioned.copy(version = 2)
+          val updatedRecord = existingRecord.copy(version = 2)
 
-          Scanamo.put(dynamoDbClient)(table.name)(testVersioned)
+          Scanamo.put(dynamoDbClient)(table.name)(existingRecord)
 
-          whenReady(
-            versionedDao.updateRecord[TestVersioned](newerTestVersioned)) {
-            result =>
-              val expectedTestVersioned = newerTestVersioned.copy(version = 3)
-              Scanamo
-                .get[TestVersioned](dynamoDbClient)(table.name)(
-                  'id -> testVersioned.id)
-                .get shouldBe Right(expectedTestVersioned)
+          versionedDao.put(updatedRecord)
 
-
-          }
+          val expectedTestVersioned = updatedRecord.copy(version = 3)
+          assertTableHasItem(id = existingRecord.id, expectedTestVersioned, table)
       }
     }
 
     it("updates a record if it already exists and has the same version") {
       withFixtures {
         case (table, versionedDao) =>
-          val testVersioned = TestVersioned(
+          val existingRecord = Record(
             id = "testSource/b1111",
             data = "whatever",
             version = 1
           )
 
-          Scanamo.put(dynamoDbClient)(table.name)(testVersioned)
+          Scanamo.put(dynamoDbClient)(table.name)(existingRecord)
 
-          whenReady(versionedDao.updateRecord(testVersioned)) { result =>
-            val expectedTestVersioned = testVersioned.copy(version = 2)
-            Scanamo
-              .get[TestVersioned](dynamoDbClient)(table.name)(
-                'id -> testVersioned.id)
-              .get shouldBe Right(
-              expectedTestVersioned
-            )
+          versionedDao.put(existingRecord)
 
-            result shouldBe expectedTestVersioned
-          }
+          val expectedRecord = existingRecord.copy(version = 2)
+          assertTableHasItem(id = existingRecord.id, expectedRecord, table)
       }
     }
 
     it("does not update an existing record if the update has a lower version") {
       withFixtures {
         case (table, versionedDao) =>
-          val testVersioned = TestVersioned(
+          val updateRecord = Record(
             id = "testSource/b1111",
             data = "whatever",
             version = 1
           )
 
-          val newerTestVersioned = TestVersioned(
+          val existingRecord = Record(
             id = "testSource/b1111",
             data = "whatever",
             version = 2
           )
 
-          Scanamo.put(dynamoDbClient)(table.name)(newerTestVersioned)
+          Scanamo.put(dynamoDbClient)(table.name)(existingRecord)
 
-          whenReady(versionedDao.updateRecord(testVersioned).failed) { ex =>
-            ex shouldBe a[DynamoNonFatalError]
-            ex.getMessage should include("The conditional request failed")
+          val result = versionedDao.put(updateRecord)
+          result.isFailure shouldBe true
+          println(result)
+          result.failed.get shouldBe a[DynamoNonFatalError]
+          result.failed.get.getMessage should startWith("The conditional request failed")
 
-            Scanamo
-              .get[TestVersioned](dynamoDbClient)(table.name)(
-                'id -> testVersioned.id)
-              .get shouldBe Right(
-              newerTestVersioned
-            )
-          }
-      }
-    }
-
-    it("inserts an HList into dynamoDB") {
-      withFixtures {
-        case (table, versionedDao) =>
-          val id = "111"
-          val version = 3
-          val testVersioned = TestVersioned(
-            id = id,
-            data = "whatever",
-            version = version
-          )
-
-          val gen = LabelledGeneric[TestVersioned]
-          val list = gen.to(testVersioned)
-
-          val future = for {
-            _ <- versionedDao.updateRecord(list)
-            actualDynamoRecord <- versionedDao.getRecord[TestVersioned](id)
-          } yield (actualDynamoRecord)
-
-          whenReady(future) { actualDynamoRecord =>
-            actualDynamoRecord shouldBe Some(
-              testVersioned.copy(version = version + 1))
-          }
+          assertTableHasItem(id = updateRecord.id, existingRecord, table)
       }
     }
 
@@ -225,37 +181,35 @@ class DynamoVersionedDaoTest
           val id = "111"
           val version = 3
 
-          case class FullRecord(id: String,
-                                data: String,
-                                moreData: Int,
-                                version: Int)
-
-          case class PartialRecord(id: String, moreData: Int, version: Int)
-
-          val fullRecord = FullRecord(
+          val extendedRecord = ExtendedRecord(
             id = id,
             data = "A friendly fish fry with francis and frankie in France.",
-            moreData = 0,
-            version = version
+            version = version,
+            moreData = 0
           )
-          val newMoreData = 2
 
-          val future = for {
-            _ <- versionedDao.updateRecord(fullRecord)
-            maybePartialRecord <- versionedDao.getRecord[PartialRecord](
-              fullRecord.id)
-            partialRecord = maybePartialRecord.get
-            updatedPartialRecord = partialRecord.copy(moreData = newMoreData)
-            _ <- versionedDao.updateRecord(updatedPartialRecord)
-            maybeFullRecord <- versionedDao.getRecord[FullRecord](id)
-          } yield maybeFullRecord
+          Scanamo.put(dynamoDbClient)(table.name)(extendedRecord)
 
-          whenReady(future) { maybeFullRecord =>
-            val expectedFullRecord = fullRecord.copy(
-              moreData = newMoreData,
-              version = fullRecord.version + 2)
-            maybeFullRecord shouldBe Some(expectedFullRecord)
-          }
+          val result = versionedDao.get(extendedRecord.id)
+          result shouldBe Success(Some(
+            Record(
+              id = extendedRecord.id,
+              data = extendedRecord.data,
+              version = extendedRecord.version
+            )
+          ))
+
+          val updatedRecord = result.get.get.copy(
+            version = 5
+          )
+
+          versionedDao.put(updatedRecord)
+
+          assertTableHasItem(
+            id = updatedRecord.id,
+            extendedRecord.copy(version = 6),
+            table
+          )
       }
     }
 
@@ -314,7 +268,7 @@ class DynamoVersionedDaoTest
               .thenThrow(exceptionThrownByGetItem)
 
             withVersionedDao(mockDynamoDbClient, table) { failingDao =>
-              whenReady(failingDao.getRecord[TestVersioned](id = "123").failed) { ex =>
+              whenReady(failingDao.getRecord[Record](id = "123").failed) { ex =>
                 ex shouldBe expectedException
               }
             }
@@ -329,14 +283,14 @@ class DynamoVersionedDaoTest
           when(mockDynamoDbClient.updateItem(any[UpdateItemRequest]))
             .thenThrow(exceptionThrownByUpdateItem)
 
-          val testVersioned = TestVersioned(
+          val record = Record(
             id = "testSource/b1111",
             data = "whatever",
             version = 1
           )
 
           withVersionedDao(mockDynamoDbClient, table) { failingDao =>
-            whenReady(failingDao.updateRecord(testVersioned).failed) { ex =>
+            whenReady(failingDao.updateRecord(record).failed) { ex =>
               ex shouldBe expectedException
             }
           }

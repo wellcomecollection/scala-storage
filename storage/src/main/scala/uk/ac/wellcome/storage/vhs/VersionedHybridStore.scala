@@ -24,10 +24,18 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
   dynamoDbClient: AmazonDynamoDB
 )(implicit ec: ExecutionContext)
     extends Logging {
-  val versionedDao = new DynamoVersionedDao(
-    dynamoDbClient = dynamoDbClient,
-    dynamoConfig = vhsConfig.dynamoConfig
-  )
+
+  def versionedDao[DynamoRow](
+    implicit
+    dynamoFormat: DynamoFormat[DynamoRow],
+    versionUpdater: VersionUpdater[DynamoRow],
+    idGetter: IdGetter[DynamoRow],
+    versionGetter: VersionGetter[DynamoRow],
+    updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow]): DynamoVersionedDao[DynamoRow] =
+    new DynamoVersionedDao[DynamoRow](
+      dynamoDbClient = dynamoDbClient,
+      dynamoConfig = vhsConfig.dynamoConfig
+    )
 
   private case class VersionedHybridObject(
     vhsIndexEntry: VHSIndexEntry[Metadata],
@@ -113,6 +121,10 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
   def getRecord[DynamoRow](id: String)(
     implicit enricher: HybridRecordEnricher.Aux[Metadata, DynamoRow],
     dynamoFormat: DynamoFormat[DynamoRow],
+    versionUpdater: VersionUpdater[DynamoRow],
+    idGetter: IdGetter[DynamoRow],
+    versionGetter: VersionGetter[DynamoRow],
+    updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow],
     migrationH: Migration[DynamoRow, HybridRecord],
     migrationM: Migration[DynamoRow, Metadata]
   ): Future[Option[T]] = {
@@ -141,7 +153,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
         t,
         keyPrefix = KeyPrefix(buildKeyPrefix(id))
       )
-      dynamoRow <- versionedDao.updateRecord(f(objectLocation))
+      dynamoRow <- Future.fromTry { versionedDao[DynamoRow].put(f(objectLocation)) }
     } yield dynamoRow.migrateTo[HybridRecord]
 
   // To spread objects evenly in our S3 bucket, we take the last two
@@ -159,13 +171,19 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
     s"${vhsConfig.globalS3Prefix.stripSuffix("/")}/$id"
 
   private def getObject[DynamoRow](id: String)(
-    implicit dynamoFormat: DynamoFormat[DynamoRow],
+    implicit
+    dynamoFormat: DynamoFormat[DynamoRow],
+    versionUpdater: VersionUpdater[DynamoRow],
+    idGetter: IdGetter[DynamoRow],
+    versionGetter: VersionGetter[DynamoRow],
+    updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow],
     migrationH: Migration[DynamoRow, HybridRecord],
     migrationM: Migration[DynamoRow, Metadata]
   ): Future[Option[VersionedHybridObject]] = {
 
-    val dynamoRecord: Future[Option[DynamoRow]] =
-      versionedDao.getRecord[DynamoRow](id = id)
+    val dynamoRecord: Future[Option[DynamoRow]] = Future.fromTry {
+      versionedDao[DynamoRow].get(id = id)
+    }
 
     dynamoRecord.flatMap {
       case Some(dynamoRow) => {

@@ -84,7 +84,7 @@ class DynamoVersionedDao[T](
   }
 
   @deprecated("Use put() instead of updateRecord()", since = "2019-05-10")
-  def updateRecord(record: T): Future[T] =
+  def updateRecord[R](record: T): Future[T] =
     Future
       .fromTry { put(record) }
       .recover {
@@ -93,7 +93,7 @@ class DynamoVersionedDao[T](
       }
 
   @deprecated("Use get() instead of getRecord()", since = "2019-05-10")
-  def getRecord(id: String): Future[Option[T]] =
+  def getRecord[R](id: String): Future[Option[T]] =
     Future
       .fromTry { get(id) }
       .recover {
