@@ -1,13 +1,12 @@
 package uk.ac.wellcome.storage.memory
 
-import org.apache.commons.io.IOUtils
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.storage.ObjectLocation
+import uk.ac.wellcome.storage.fixtures.StreamHelpers
 
-import scala.io.Source
 import scala.util.{Failure, Success, Try}
 
-class MemoryStorageBackendTest extends FunSpec with Matchers {
+class MemoryStorageBackendTest extends FunSpec with Matchers with StreamHelpers {
   it("behaves correctly") {
     val backend = new MemoryStorageBackend()
 
@@ -30,12 +29,12 @@ class MemoryStorageBackendTest extends FunSpec with Matchers {
   }
 
   private def get(backend: MemoryStorageBackend, location: ObjectLocation): Try[String] =
-    backend.get(location).map { Source.fromInputStream(_).mkString }
+    backend.get(location).map { fromStream }
 
   private def put(backend: MemoryStorageBackend, location: ObjectLocation, s: String): Try[Unit] =
     backend.put(
       location = location,
-      input = IOUtils.toInputStream(s, "UTF-8"),
+      input = toStream(s),
       metadata = Map.empty
     )
 }
