@@ -15,6 +15,7 @@ import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.Success
 
 class ObjectStoreTest extends FunSpec with S3 with ScalaFutures with PropertyChecks with MockitoSugar {
   case class TestClass(id: String)
@@ -99,7 +100,7 @@ class ObjectStoreTest extends FunSpec with S3 with ScalaFutures with PropertyChe
     val file = File.createTempFile("stream-test", ".txt")
     FileUtils.writeStringToFile(file, string, "UTF-8")
     val stream = FileUtils.openInputStream(file)
-    Mockito.when(storageBackend.get(location)).thenReturn(Future(stream))
+    Mockito.when(storageBackend.get(location)).thenReturn(Success(stream))
 
     Await.result(objectStore.get(location), 10 seconds) shouldBe string
 
@@ -122,7 +123,7 @@ class ObjectStoreTest extends FunSpec with S3 with ScalaFutures with PropertyChe
     val file = File.createTempFile("stream-test", ".txt")
     FileUtils.writeStringToFile(file, string, "UTF-8")
     val stream = FileUtils.openInputStream(file)
-    Mockito.when(storageBackend.get(location)).thenReturn(Future(stream))
+    Mockito.when(storageBackend.get(location)).thenReturn(Success(stream))
 
     IOUtils.toString(Await.result(objectStore.get(location), 10 seconds), "UTF-8") shouldBe string
 

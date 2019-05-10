@@ -13,11 +13,9 @@ import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config, S3StorageBackend}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
 object S3 {
-
   class Bucket(val name: String) extends AnyVal {
     override def toString = s"S3.Bucket($name)"
   }
@@ -25,7 +23,6 @@ object S3 {
   object Bucket {
     def apply(name: String): Bucket = new Bucket(name)
   }
-
 }
 
 trait S3 extends Logging with Eventually with IntegrationPatience with Matchers {
