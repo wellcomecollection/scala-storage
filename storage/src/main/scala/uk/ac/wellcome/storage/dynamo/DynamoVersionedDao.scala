@@ -5,96 +5,103 @@ import com.amazonaws.services.dynamodbv2.model.{
   ConditionalCheckFailedException,
   ProvisionedThroughputExceededException
 }
-import com.gu.scanamo.error.{ConditionNotMet, ScanamoError}
+import com.gu.scanamo.error.{
+  ConditionNotMet,
+  ScanamoError
+}
 import com.gu.scanamo.ops.ScanamoOps
 import com.gu.scanamo.query.{KeyEquals, UniqueKey}
 import com.gu.scanamo.syntax.{attributeExists, not, _}
 import com.gu.scanamo.{DynamoFormat, Scanamo, Table}
 import grizzled.slf4j.Logging
+import uk.ac.wellcome.storage.VersionedDao
 import uk.ac.wellcome.storage.type_classes.{
   IdGetter,
   VersionGetter,
   VersionUpdater
 }
 
-import scala.concurrent.{blocking, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
-class DynamoVersionedDao(
+class DynamoVersionedDao[T](
   dynamoDbClient: AmazonDynamoDB,
   dynamoConfig: DynamoConfig
-)(implicit ec: ExecutionContext)
-    extends Logging {
+)(implicit
+  ec: ExecutionContext,
+  evidence: DynamoFormat[T],
+  versionUpdater: VersionUpdater[T],
+  idGetter: IdGetter[T],
+  versionGetter: VersionGetter[T],
+  updateExpressionGenerator: UpdateExpressionGenerator[T])
+    extends Logging with VersionedDao[T] {
 
-  def updateRecord[T](record: T)(
-    implicit evidence: DynamoFormat[T],
-    versionUpdater: VersionUpdater[T],
-    idGetter: IdGetter[T],
-    versionGetter: VersionGetter[T],
-    updateExpressionGenerator: UpdateExpressionGenerator[T]
-  ): Future[T] =
-    Future {
-      val id = idGetter.id(record)
-      debug(s"Attempting to update Dynamo record: $id")
+  val table: Table[T] = Table[T](dynamoConfig.table)
 
-      val ops = updateBuilder(record)
-      blocking(Scanamo.exec(dynamoDbClient)(ops)) match {
-        case Left(ConditionNotMet(e: ConditionalCheckFailedException)) =>
-          throw DynamoNonFatalError(e)
-        case Left(scanamoError) =>
-          val exception = new RuntimeException(scanamoError.toString)
+  def put(value: T): Try[T] = Try {
+    val id = idGetter.id(value)
+    debug(s"Attempting to update Dynamo record: $id")
 
-          warn(s"Failed to update Dynamo record: $id", exception)
+    val ops = updateBuilder(value)
+    Scanamo.exec(dynamoDbClient)(ops) match {
+      case Left(ConditionNotMet(e: ConditionalCheckFailedException)) =>
+        throw DynamoNonFatalError(e)
+      case Left(scanamoError) =>
+        val exception = new RuntimeException(scanamoError.toString)
 
-          throw exception
-        case Right(result) =>
-          debug(s"Successfully updated Dynamo record: $id")
-          result
+        warn(s"Failed to update Dynamo record: $id", exception)
+
+        throw exception
+      case Right(result) =>
+        debug(s"Successfully updated Dynamo record: $id")
+        result
+    }
+  }
+
+  def get(id: String): Try[Option[T]] = Try {
+    debug(s"Attempting to retrieve Dynamo record: $id")
+    Scanamo.exec(dynamoDbClient)(table.get('id -> id)) match {
+      case Some(Right(record)) => {
+        debug(s"Successfully retrieved Dynamo record: $id")
+
+        Some(record)
+      }
+      case Some(Left(scanamoError)) =>
+        val exception = new RuntimeException(scanamoError.toString)
+
+        error(
+          s"An error occurred while retrieving $id from DynamoDB",
+          exception
+        )
+
+        throw exception
+      case None => {
+        debug(s"No Dynamo record found for id: $id")
+
+        None
+      }
+    }
+  }
+
+  @deprecated("Use put() instead of updateRecord()", since = "2019-05-10")
+  def updateRecord(record: T): Future[T] =
+    Future
+      .fromTry { put(record) }
+      .recover {
+        case t: ProvisionedThroughputExceededException =>
+          throw DynamoNonFatalError(t)
       }
 
-    }.recover {
-      case t: ProvisionedThroughputExceededException =>
-        throw DynamoNonFatalError(t)
-    }
-
-  def getRecord[T](id: String)(
-    implicit evidence: DynamoFormat[T]): Future[Option[T]] =
-    Future {
-      val table = Table[T](dynamoConfig.table)
-
-      debug(s"Attempting to retrieve Dynamo record: $id")
-      blocking(Scanamo.exec(dynamoDbClient)(table.get('id -> id))) match {
-        case Some(Right(record)) => {
-          debug(s"Successfully retrieved Dynamo record: $id")
-
-          Some(record)
-        }
-        case Some(Left(scanamoError)) =>
-          val exception = new RuntimeException(scanamoError.toString)
-
-          error(
-            s"An error occurred while retrieving $id from DynamoDB",
-            exception
-          )
-
-          throw exception
-        case None => {
-          debug(s"No Dynamo record found for id: $id")
-
-          None
-        }
+  @deprecated("Use get() instead of getRecord()", since = "2019-05-10")
+  def getRecord(id: String): Future[Option[T]] =
+    Future
+      .fromTry { get(id) }
+      .recover {
+        case t: ProvisionedThroughputExceededException =>
+          throw DynamoNonFatalError(t)
       }
-    }.recover {
-      case t: ProvisionedThroughputExceededException =>
-        throw DynamoNonFatalError(t)
-    }
 
-  private def updateBuilder[T](record: T)(
-    implicit evidence: DynamoFormat[T],
-    versionUpdater: VersionUpdater[T],
-    versionGetter: VersionGetter[T],
-    idGetter: IdGetter[T],
-    updateExpressionGenerator: UpdateExpressionGenerator[T]
-  ): ScanamoOps[Either[ScanamoError, T]] = {
+  private def updateBuilder(record: T): ScanamoOps[Either[ScanamoError, T]] = {
     val version = versionGetter.version(record)
     val newVersion = version + 1
 
