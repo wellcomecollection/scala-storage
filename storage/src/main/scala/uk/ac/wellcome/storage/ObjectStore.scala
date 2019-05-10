@@ -2,13 +2,59 @@ package uk.ac.wellcome.storage
 
 import java.io.InputStream
 
-import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
+import uk.ac.wellcome.storage.type_classes.{SerialisationStrategy, StorageStream}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 case class KeyPrefix(value: String) extends AnyVal
 case class KeySuffix(value: String) extends AnyVal
+
+trait BetterObjectStore[T] {
+  implicit val serialisationStrategy: SerialisationStrategy[T]
+  implicit val backend: StorageBackend
+
+  def put(namespace: String)(
+    input: T,
+    keyPrefix: KeyPrefix = KeyPrefix(""),
+    keySuffix: KeySuffix = KeySuffix(""),
+    userMetadata: Map[String, String] = Map.empty
+  ): Try[ObjectLocation] = {
+    val prefix = normalizePathFragment(keyPrefix.value)
+    val suffix = normalizePathFragment(keySuffix.value)
+
+    for {
+      storageStream: StorageStream <- Try {
+        serialisationStrategy.toStream(input)
+      }
+      storageKey = storageStream.storageKey.value
+      key = s"$prefix/$storageKey$suffix"
+      location = ObjectLocation(namespace, key)
+      _ <- backend.put(
+        location = location,
+        input = storageStream.inputStream,
+        metadata = userMetadata
+      )
+    } yield location
+  }
+
+  def get(objectLocation: ObjectLocation): Try[T] =
+    for {
+      input <- backend.get(objectLocation)
+      t <- serialisationStrategy.fromStream(input)
+      _ <- Try {
+        if (t.isInstanceOf[InputStream]) () else input.close()
+      }
+    } yield t
+
+  private def normalizePathFragment(prefix: String): String =
+    prefix
+      .stripPrefix("/")
+      .stripSuffix("/")
+}
+
+
+
 
 trait ObjectStore[T] {
   def put(namespace: String)(
