@@ -166,8 +166,7 @@ class DynamoVersionedDaoTest
 
           val result = versionedDao.put(updateRecord)
           result.isFailure shouldBe true
-          println(result)
-          result.failed.get shouldBe a[DynamoNonFatalError]
+          result.failed.get shouldBe a[ConditionalCheckFailedException]
           result.failed.get.getMessage should startWith("The conditional request failed")
 
           assertTableHasItem(id = updateRecord.id, existingRecord, table)
