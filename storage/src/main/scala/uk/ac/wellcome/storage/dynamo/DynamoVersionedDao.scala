@@ -44,8 +44,9 @@ class DynamoVersionedDao[T](
 
     val ops = updateBuilder(value)
     Scanamo.exec(dynamoDbClient)(ops) match {
-      case Left(ConditionNotMet(e: ConditionalCheckFailedException)) =>
-        throw DynamoNonFatalError(e)
+      case Left(ConditionNotMet(exc: ConditionalCheckFailedException)) =>
+        warn("Failed a conditional check", exc)
+        throw exc
       case Left(scanamoError) =>
         val exception = new RuntimeException(scanamoError.toString)
 
