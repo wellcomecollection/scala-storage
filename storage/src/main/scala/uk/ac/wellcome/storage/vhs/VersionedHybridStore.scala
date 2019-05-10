@@ -4,7 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.gu.scanamo.DynamoFormat
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.type_classes.Migration._
-import uk.ac.wellcome.storage.dynamo.{UpdateExpressionGenerator, VersionedDao}
+import uk.ac.wellcome.storage.dynamo.{UpdateExpressionGenerator, DynamoVersionedDao}
 import uk.ac.wellcome.storage.type_classes.{
   HybridRecordEnricher,
   IdGetter,
@@ -24,7 +24,7 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
   dynamoDbClient: AmazonDynamoDB
 )(implicit ec: ExecutionContext)
     extends Logging {
-  val versionedDao = new VersionedDao(
+  val versionedDao = new DynamoVersionedDao(
     dynamoDbClient = dynamoDbClient,
     dynamoConfig = vhsConfig.dynamoConfig
   )

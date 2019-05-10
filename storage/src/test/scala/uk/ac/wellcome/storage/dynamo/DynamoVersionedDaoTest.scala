@@ -23,7 +23,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 case class TestVersioned(id: String, data: String, version: Int)
 
-class VersionedDaoTest
+class DynamoVersionedDaoTest
     extends FunSpec
     with LocalDynamoDbVersioned
     with ScalaFutures
@@ -31,7 +31,7 @@ class VersionedDaoTest
     with MockitoSugar
     with Matchers {
 
-  def withFixtures[R](testWith: TestWith[(Table, VersionedDao), R]): R = {
+  def withFixtures[R](testWith: TestWith[(Table, DynamoVersionedDao), R]): R = {
     withLocalDynamoDbTable[R] { table =>
       withVersionedDao[R](table) { versionedDao =>
         testWith((table, versionedDao))

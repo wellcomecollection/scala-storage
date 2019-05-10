@@ -7,7 +7,7 @@ import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.fixtures._
-import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig, VersionedDao}
+import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig, DynamoVersionedDao}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
@@ -54,15 +54,15 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
   )
 
   def withVersionedDao[R](table: Table)(
-    testWith: TestWith[VersionedDao, R]): R =
+    testWith: TestWith[DynamoVersionedDao, R]): R =
     withVersionedDao(dynamoDbClient, table = table) { dao =>
       testWith(dao)
     }
 
   def withVersionedDao[R](dynamoDbClient: AmazonDynamoDB, table: Table)(
-    testWith: TestWith[VersionedDao, R]): R = {
+    testWith: TestWith[DynamoVersionedDao, R]): R = {
     val dynamoConfig = createDynamoConfigWith(table)
-    val dao = new VersionedDao(dynamoDbClient, dynamoConfig)
+    val dao = new DynamoVersionedDao(dynamoDbClient, dynamoConfig)
     testWith(dao)
   }
 

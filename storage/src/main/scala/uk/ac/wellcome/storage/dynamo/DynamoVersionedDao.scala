@@ -19,7 +19,7 @@ import uk.ac.wellcome.storage.type_classes.{
 
 import scala.concurrent.{blocking, ExecutionContext, Future}
 
-class VersionedDao(
+class DynamoVersionedDao(
   dynamoDbClient: AmazonDynamoDB,
   dynamoConfig: DynamoConfig
 )(implicit ec: ExecutionContext)

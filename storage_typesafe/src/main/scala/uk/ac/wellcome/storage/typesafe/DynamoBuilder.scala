@@ -6,7 +6,7 @@ import uk.ac.wellcome.config.models.AWSClientConfig
 import uk.ac.wellcome.storage.dynamo.{
   DynamoClientFactory,
   DynamoConfig,
-  VersionedDao
+  DynamoVersionedDao
 }
 import uk.ac.wellcome.typesafe.config.builders.AWSClientConfigBuilder
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
@@ -42,8 +42,8 @@ object DynamoBuilder extends AWSClientConfigBuilder {
     )
 
   def buildVersionedDao(config: Config, namespace: String = "")(
-    implicit ec: ExecutionContext): VersionedDao =
-    new VersionedDao(
+    implicit ec: ExecutionContext): DynamoVersionedDao =
+    new DynamoVersionedDao(
       dynamoDbClient = buildDynamoClient(config),
       dynamoConfig = buildDynamoConfig(config, namespace = namespace)
     )
