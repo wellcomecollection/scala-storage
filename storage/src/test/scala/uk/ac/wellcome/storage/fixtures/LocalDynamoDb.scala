@@ -10,7 +10,6 @@ import uk.ac.wellcome.fixtures._
 import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig, DynamoVersionedDao, UpdateExpressionGenerator}
 import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter, VersionUpdater}
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 

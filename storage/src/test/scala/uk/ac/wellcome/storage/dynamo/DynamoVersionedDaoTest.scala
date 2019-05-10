@@ -214,70 +214,54 @@ class DynamoVersionedDaoTest
     }
 
     describe("DynamoDB failures") {
-      it("returns a DynamoNonFatalError if we exceed throughput limits on an UpdateItem") {
-        val exceptionThrownByUpdateItem = new ProvisionedThroughputExceededException(
-          "You tried to write to DynamoDB too quickly!"
-        )
-        val expectedException = DynamoNonFatalError(exceptionThrownByUpdateItem)
-
+      it("fails if we exceed throughput limits on an UpdateItem") {
         assertUpdateFailsWithCorrectException(
-          exceptionThrownByUpdateItem = exceptionThrownByUpdateItem,
-          expectedException = expectedException
+          new ProvisionedThroughputExceededException(
+            "You tried to write to DynamoDB too quickly!"
+          )
         )
       }
 
-      it("returns a DynamoNonFatalError if we fail the conditional update") {
-        val exceptionThrownByUpdateItem = new ConditionalCheckFailedException(
-          "true is not equal to false!"
-        )
-        val expectedException = DynamoNonFatalError(exceptionThrownByUpdateItem)
-
+      it("fails if we fail the conditional update") {
         assertUpdateFailsWithCorrectException(
-          exceptionThrownByUpdateItem = exceptionThrownByUpdateItem,
-          expectedException = expectedException
+          new ConditionalCheckFailedException(
+            "true is not equal to false!"
+          )
         )
       }
 
-      it("returns the raw exception if there's an unexpected error") {
-        val exception = new RuntimeException("AAAAAARGH!")
-
+      it("fails if there's an unexpected error") {
         assertUpdateFailsWithCorrectException(
-          exceptionThrownByUpdateItem = exception,
-          expectedException = exception
+          new RuntimeException("AAAAAARGH!")
         )
       }
 
-      it("returns a DynamoNonFatalError if we exceed throughput limits on a GetItem") {
-        val exceptionThrownByGetItem = new ProvisionedThroughputExceededException(
-          "You tried to read from DynamoDB too quickly!"
-        )
-        val expectedException = DynamoNonFatalError(exceptionThrownByGetItem)
-
+      it("fails if we exceed throughput limits on a GetItem") {
         assertGetFailsWithCorrectException(
-          exceptionThrownByGetItem = exceptionThrownByGetItem,
-          expectedException = expectedException
+          new ProvisionedThroughputExceededException(
+            "You tried to read from DynamoDB too quickly!"
+          )
         )
       }
 
       def assertGetFailsWithCorrectException(
-        exceptionThrownByGetItem: Throwable,
-        expectedException: Throwable) = {
+        exceptionThrownByGetItem: Throwable): Assertion = {
           withLocalDynamoDbTable { table =>
             val mockDynamoDbClient = mock[AmazonDynamoDB]
             when(mockDynamoDbClient.getItem(any[GetItemRequest]))
               .thenThrow(exceptionThrownByGetItem)
 
-            withVersionedDao(mockDynamoDbClient, table) { failingDao =>
-              whenReady(failingDao.getRecord[Record](id = "123").failed) { ex =>
-                ex shouldBe expectedException
-              }
+            withVersionedDao[Record, Assertion](mockDynamoDbClient, table) { failingDao =>
+              val result = failingDao.get(id = "123")
+
+              result.isFailure shouldBe true
+              result.failed.get shouldBe exceptionThrownByGetItem
             }
           }
         }
 
       def assertUpdateFailsWithCorrectException(
-        exceptionThrownByUpdateItem: Throwable,
-        expectedException: Throwable) = {
+        exceptionThrownByUpdateItem: Throwable): Assertion = {
         withLocalDynamoDbTable { table =>
           val mockDynamoDbClient = mock[AmazonDynamoDB]
           when(mockDynamoDbClient.updateItem(any[UpdateItemRequest]))
@@ -289,10 +273,11 @@ class DynamoVersionedDaoTest
             version = 1
           )
 
-          withVersionedDao(mockDynamoDbClient, table) { failingDao =>
-            whenReady(failingDao.updateRecord(record).failed) { ex =>
-              ex shouldBe expectedException
-            }
+          withVersionedDao[Record, Assertion](mockDynamoDbClient, table) { failingDao =>
+            val result = failingDao.put(record)
+
+            result.isFailure shouldBe true
+            result.failed.get shouldBe exceptionThrownByUpdateItem
           }
         }
       }
