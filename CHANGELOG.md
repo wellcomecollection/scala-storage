@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v4.5.0 - 2019-05-13
+
+Add a new class `DynamoHashKeyLookup` for looking up the record with the highest/lowest value of a range key.
+
 ## v4.4.0 - 2019-05-10
 
 Add a new trait for database objects that manage versioning:
