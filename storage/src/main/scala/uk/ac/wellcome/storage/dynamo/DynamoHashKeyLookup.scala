@@ -7,7 +7,7 @@ import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.gu.scanamo.{DynamoFormat, ScanamoFree}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 case class DynamoHashKeyLookupConfig(
   hashKeyName: String,
@@ -32,13 +32,12 @@ class DynamoHashKeyLookup[T, HashKeyValue](
   dynamoClient: AmazonDynamoDB,
   lookupConfig: DynamoHashKeyLookupConfig
 )(implicit
-  ec: ExecutionContext,
   evidence: DynamoFormat[T]) {
 
   private val documentClient = new DynamoDB(dynamoClient)
 
   private def lookup(value: HashKeyValue,
-                     lowestValueFirst: Boolean): Future[Option[T]] = Future {
+                     lowestValueFirst: Boolean): Try[Option[T]] = Try {
 
     // Query results are sorted by the range key.
     val querySpec = new QuerySpec()
@@ -67,9 +66,9 @@ class DynamoHashKeyLookup[T, HashKeyValue](
     }
   }
 
-  def lookupHighestHashKey(value: HashKeyValue): Future[Option[T]] =
+  def lookupHighestHashKey(value: HashKeyValue): Try[Option[T]] =
     lookup(value, lowestValueFirst = false)
 
-  def lookupLowestHashKey(value: HashKeyValue): Future[Option[T]] =
+  def lookupLowestHashKey(value: HashKeyValue): Try[Option[T]] =
     lookup(value, lowestValueFirst = true)
 }
