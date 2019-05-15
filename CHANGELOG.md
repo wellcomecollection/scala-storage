@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v4.6.0 - 2019-05-15
+
+DynamoHashKeyLookup now returns instances of Try, not Future.
+
 ## v4.5.0 - 2019-05-13
 
 Add a new class `DynamoHashKeyLookup` for looking up the record with the highest/lowest value of a range key.
