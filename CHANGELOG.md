@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v4.7.0 - 2019-05-15
+
+This modifies the StorageBackend and ObjectStore traits to use `Try` instead of `Future`.
+
+It also pushes more of the logic inside ObjectStore itself, is better tested, and should make it a bit easier to write tests that require an ObjectStore.
+
 ## v4.6.0 - 2019-05-15
 
 DynamoHashKeyLookup now returns instances of Try, not Future.
