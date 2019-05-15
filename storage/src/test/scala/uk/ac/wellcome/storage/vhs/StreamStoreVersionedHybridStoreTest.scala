@@ -4,10 +4,10 @@ import java.io.{ByteArrayInputStream, InputStream}
 
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FunSpec, Matchers}
-import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.fixtures.LocalVersionedHybridStore
+import uk.ac.wellcome.storage.ObjectStore
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
+import uk.ac.wellcome.storage.fixtures.LocalVersionedHybridStore
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
 
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -1,7 +1,7 @@
 package uk.ac.wellcome.storage.fixtures
 
-import com.gu.scanamo.{DynamoFormat, Scanamo}
 import com.gu.scanamo.syntax._
+import com.gu.scanamo.{DynamoFormat, Scanamo}
 import io.circe.Encoder
 import org.scalatest.{Assertion, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
