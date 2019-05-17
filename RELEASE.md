@@ -1,4 +1,4 @@
-RELEASE_TYPE: minor
+RELEASE_TYPE: major
 
 This release adds a bunch of new type classes for database access, which should make mocking instances of VersionedDao easier in tests.
 
