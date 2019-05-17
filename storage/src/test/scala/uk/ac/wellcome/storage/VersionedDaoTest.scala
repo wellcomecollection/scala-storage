@@ -1,10 +1,11 @@
-package uk.ac.wellcome.storage.memory
+package uk.ac.wellcome.storage
 
 import org.scalatest.{FunSpec, Matchers}
+import uk.ac.wellcome.storage.fixtures.StorageHelpers
 
 import scala.util.{Failure, Success}
 
-class MemoryVersionedDaoTest extends FunSpec with Matchers {
+class VersionedDaoTest extends FunSpec with Matchers with StorageHelpers {
   case class VersionedRecord(
     id: String,
     version: Int,
@@ -12,11 +13,7 @@ class MemoryVersionedDaoTest extends FunSpec with Matchers {
   )
 
   it("behaves correctly") {
-    val dao = new MemoryVersionedDao[String, VersionedRecord](
-      underlying = new MemoryConditionalUpdateDao[String, VersionedRecord](
-        underlying = new MemoryDao[String, VersionedRecord]()
-      )
-    )
+    val dao = createVersionedDao[String, VersionedRecord]
 
     // Check it increments the record upon storing
     val record1 = VersionedRecord(id = "1", version = 0, data = "first")

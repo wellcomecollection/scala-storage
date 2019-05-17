@@ -4,19 +4,8 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.gu.scanamo.DynamoFormat
 import com.typesafe.config.Config
 import uk.ac.wellcome.config.models.AWSClientConfig
-import uk.ac.wellcome.storage.dynamo.{
-  DynamoClientFactory,
-  DynamoConditionalUpdateDao,
-  DynamoConfig,
-  DynamoDao,
-  DynamoVersionedDao,
-  UpdateExpressionGenerator
-}
-import uk.ac.wellcome.storage.type_classes.{
-  IdGetter,
-  VersionGetter,
-  VersionUpdater
-}
+import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig, DynamoVersionedDao, UpdateExpressionGenerator}
+import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter, VersionUpdater}
 import uk.ac.wellcome.typesafe.config.builders.AWSClientConfigBuilder
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
 
@@ -50,7 +39,7 @@ object DynamoBuilder extends AWSClientConfigBuilder {
       awsClientConfig = buildAWSClientConfig(config, namespace = "dynamo")
     )
 
-  def buildVersionedDao[T](config: Config, namespace: String = "")(
+  def buildVersionedDao[Ident, T](config: Config, namespace: String = "")(
     implicit
     ec: ExecutionContext,
     evidence: DynamoFormat[T],
@@ -58,13 +47,9 @@ object DynamoBuilder extends AWSClientConfigBuilder {
     idGetter: IdGetter[T],
     versionGetter: VersionGetter[T],
     updateExpressionGenerator: UpdateExpressionGenerator[T])
-    : DynamoVersionedDao[T] =
-    new DynamoVersionedDao[T](
-      new DynamoConditionalUpdateDao[T](
-        new DynamoDao[T](
-          dynamoClient = buildDynamoClient(config),
-          dynamoConfig = buildDynamoConfig(config, namespace = namespace)
-        )
-      )
+    : DynamoVersionedDao[Ident, T] =
+    DynamoVersionedDao[Ident, T](
+      dynamoClient = buildDynamoClient(config),
+      dynamoConfig = buildDynamoConfig(config, namespace = namespace)
     )
 }

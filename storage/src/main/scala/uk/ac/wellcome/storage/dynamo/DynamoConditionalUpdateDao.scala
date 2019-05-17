@@ -1,5 +1,6 @@
 package uk.ac.wellcome.storage.dynamo
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.gu.scanamo.error.ScanamoError
 import com.gu.scanamo.ops.ScanamoOps
 import com.gu.scanamo.query.{KeyEquals, UniqueKey}
@@ -50,4 +51,17 @@ class DynamoConditionalUpdateDao[Ident, T](
         throw new Exception(
           "Trying to update a record that only has an id: this should be impossible!")
       )
+}
+
+object DynamoConditionalUpdateDao {
+  def apply[Ident, T](
+    dynamoClient: AmazonDynamoDB,
+    dynamoConfig: DynamoConfig
+  ): DynamoConditionalUpdateDao[Ident, T] =
+    new DynamoConditionalUpdateDao(
+      new DynamoDao[Ident, T](
+        dynamoClient = dynamoClient,
+        dynamoConfig = dynamoConfig
+      )
+    )
 }

@@ -1,17 +1,18 @@
 package uk.ac.wellcome.storage.memory
 
 import org.scalatest.{FunSpec, Matchers}
+import uk.ac.wellcome.storage.fixtures.StorageHelpers
 
 import scala.util.Success
 
-class MemoryDaoTest extends FunSpec with Matchers {
+class MemoryDaoTest extends FunSpec with Matchers with StorageHelpers {
   case class Record(
     id: String,
     data: String
   )
 
   it("behaves as a dao") {
-    val dao = new MemoryDao[String, Record]()
+    val dao = createDao[String, Record]
 
     dao.get(id = "1") shouldBe Success(None)
     dao.get(id = "2") shouldBe Success(None)

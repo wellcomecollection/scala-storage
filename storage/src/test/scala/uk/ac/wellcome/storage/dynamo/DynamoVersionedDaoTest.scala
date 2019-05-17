@@ -283,12 +283,8 @@ class DynamoVersionedDaoTest
   }
 
   def createDaoWith(dynamoClient: AmazonDynamoDB, table: Table): DynamoVersionedDao[String, Record] =
-    new DynamoVersionedDao[String, Record](
-      new DynamoConditionalUpdateDao[String, Record](
-        new DynamoDao[String, Record](
-          dynamoClient = dynamoClient,
-          dynamoConfig = createDynamoConfigWith(table)
-        )
-      )
+    DynamoVersionedDao[String, Record](
+      dynamoClient = dynamoClient,
+      dynamoConfig = createDynamoConfigWith(table)
     )
 }
