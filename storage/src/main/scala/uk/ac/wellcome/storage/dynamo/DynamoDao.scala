@@ -5,7 +5,6 @@ import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import com.gu.scanamo.{DynamoFormat, Scanamo, Table}
 import com.gu.scanamo.error.{ConditionNotMet, ScanamoError}
 import com.gu.scanamo.ops.ScanamoOps
-import com.gu.scanamo.query.{KeyEquals, UniqueKey}
 import com.gu.scanamo.syntax._
 import com.gu.scanamo.update.UpdateExpression
 import grizzled.slf4j.Logging
@@ -32,7 +31,7 @@ class DynamoDao[T](
       id = idGetter.id(t),
       ops = Table[T](dynamoConfig.table)
         .update(
-          UniqueKey(KeyEquals('id, idGetter.id(t))),
+          'id -> idGetter.id(t),
           buildUpdate(t)
             .getOrElse(
               throw new Throwable("Could not build update expression!"))

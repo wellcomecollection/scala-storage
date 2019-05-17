@@ -56,18 +56,6 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
 
   def withVersionedDao[T, R](table: Table)(
     testWith: TestWith[DynamoVersionedDao[T], R])(
-     implicit
-     evidence: DynamoFormat[T],
-     versionUpdater: VersionUpdater[T],
-     idGetter: IdGetter[T],
-     versionGetter: VersionGetter[T],
-     updateExpressionGenerator: UpdateExpressionGenerator[T]): R =
-    withVersionedDao[T, R](dynamoDbClient, table = table) { dao =>
-      testWith(dao)
-    }
-
-  def withVersionedDao[T, R](dynamoDbClient: AmazonDynamoDB, table: Table)(
-    testWith: TestWith[DynamoVersionedDao[T], R])(
     implicit
     evidence: DynamoFormat[T],
     versionUpdater: VersionUpdater[T],

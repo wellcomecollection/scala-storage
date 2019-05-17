@@ -1,7 +1,6 @@
 package uk.ac.wellcome.storage.dynamo
 
 import com.amazonaws.services.dynamodbv2.model._
-import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
 import org.scalatest.{Assertion, FunSpec, Matchers}
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb

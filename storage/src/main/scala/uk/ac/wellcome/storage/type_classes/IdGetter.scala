@@ -21,9 +21,7 @@ object IdGetter {
   def apply[A](implicit enc: IdGetter[A]): IdGetter[A] =
     enc
 
-  def createIdGetter[T](f: T => String): IdGetter[T] = new IdGetter[T] {
-    def id(t: T) = f(t)
-  }
+  def createIdGetter[T](f: T => String): IdGetter[T] = (t: T) => f(t)
 
   // Generates an IdGetter for an HList.
   //
@@ -35,7 +33,7 @@ object IdGetter {
   //  - the type of the returned value (String)
   //
   implicit def hlistIdGetter[L <: HList](
-    implicit selector: Selector.Aux[L, IdKey, String]) =
+    implicit selector: Selector.Aux[L, IdKey, String]): IdGetter[L] =
     createIdGetter { t: L =>
       selector(t)
     }
@@ -50,7 +48,7 @@ object IdGetter {
   //
   implicit def productIdGetter[C, L <: HList](
     implicit labelledGeneric: LabelledGeneric.Aux[C, L],
-    idGetter: IdGetter[L]) = createIdGetter[C] { c: C =>
+    idGetter: IdGetter[L]): IdGetter[C] = createIdGetter[C] { c: C =>
     idGetter.id(labelledGeneric.to(c))
   }
 }

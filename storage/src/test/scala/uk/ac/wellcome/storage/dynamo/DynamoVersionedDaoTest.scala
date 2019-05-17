@@ -83,11 +83,17 @@ class DynamoVersionedDaoTest
         when(mockDynamoDbClient.getItem(any[GetItemRequest]))
           .thenThrow(expectedException)
 
-        withVersionedDao[Record, Assertion](mockDynamoDbClient, table = table) { versionedDao =>
-          val result = versionedDao.get("testSource/b88888")
+        val failingDao = new DynamoVersionedDao[Record](
+          new DynamoConditionalUpdateDao[Record](
+            new DynamoDao[Record](
+              dynamoClient = mockDynamoDbClient,
+              dynamoConfig = createDynamoConfigWith(table)
+            )
+          )
+        )
 
-          result shouldBe Failure(expectedException)
-        }
+        val result = failingDao.get("testSource/b88888")
+        result shouldBe Failure(expectedException)
       }
     }
   }
@@ -251,12 +257,19 @@ class DynamoVersionedDaoTest
             when(mockDynamoDbClient.getItem(any[GetItemRequest]))
               .thenThrow(exceptionThrownByGetItem)
 
-            withVersionedDao[Record, Assertion](mockDynamoDbClient, table) { failingDao =>
-              val result = failingDao.get(id = "123")
+            val failingDao = new DynamoVersionedDao[Record](
+              new DynamoConditionalUpdateDao[Record](
+                new DynamoDao[Record](
+                  dynamoClient = mockDynamoDbClient,
+                  dynamoConfig = createDynamoConfigWith(table)
+                )
+              )
+            )
 
-              result.isFailure shouldBe true
-              result.failed.get shouldBe exceptionThrownByGetItem
-            }
+            val result = failingDao.get(id = "123")
+
+            result.isFailure shouldBe true
+            result.failed.get shouldBe exceptionThrownByGetItem
           }
         }
 
