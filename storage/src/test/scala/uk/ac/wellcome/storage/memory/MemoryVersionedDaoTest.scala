@@ -1,21 +1,18 @@
-package uk.ac.wellcome.storage.fixtures
+package uk.ac.wellcome.storage.memory
 
 import org.scalatest.{FunSpec, Matchers}
 
 import scala.util.{Failure, Success}
 
-case class Record(
-  id: String,
-  version: Int,
-  data: String
-)
-
-class InMemoryVersionedDaoTest extends FunSpec with Matchers {
-  def createDao: InMemoryVersionedDao[Record] =
-    new InMemoryVersionedDao[Record]()
+class MemoryVersionedDaoTest extends FunSpec with Matchers {
+  case class Record(
+    id: String,
+    version: Int,
+    data: String
+  )
 
   it("behaves correctly") {
-    val dao = createDao
+    val dao = new MemoryVersionedDao[Record]()
 
     val record1 = Record(id = "1", version = 0, data = "first")
     val record2 = Record(id = "2", version = 0, data = "second")
@@ -34,7 +31,7 @@ class InMemoryVersionedDaoTest extends FunSpec with Matchers {
     // Put with a higher version
     dao.put(record1.copy(version = 5)) shouldBe Success(record1.copy(version = 6))
 
-    // Put with the existing version
-    dao.put(record1.copy(version = 6)) shouldBe a[Failure[_]]
+    // Put with a lower version
+    dao.put(record1.copy(version = 4)) shouldBe a[Failure[_]]
   }
 }
