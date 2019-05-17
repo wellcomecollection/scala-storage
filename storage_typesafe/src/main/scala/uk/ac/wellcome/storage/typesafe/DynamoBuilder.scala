@@ -6,7 +6,9 @@ import com.typesafe.config.Config
 import uk.ac.wellcome.config.models.AWSClientConfig
 import uk.ac.wellcome.storage.dynamo.{
   DynamoClientFactory,
+  DynamoConditionalUpdateDao,
   DynamoConfig,
+  DynamoDao,
   DynamoVersionedDao,
   UpdateExpressionGenerator
 }
@@ -58,7 +60,11 @@ object DynamoBuilder extends AWSClientConfigBuilder {
     updateExpressionGenerator: UpdateExpressionGenerator[T])
     : DynamoVersionedDao[T] =
     new DynamoVersionedDao[T](
-      dynamoDbClient = buildDynamoClient(config),
-      dynamoConfig = buildDynamoConfig(config, namespace = namespace)
+      new DynamoConditionalUpdateDao[T](
+        new DynamoDao[T](
+          dynamoClient = buildDynamoClient(config),
+          dynamoConfig = buildDynamoConfig(config, namespace = namespace)
+        )
+      )
     )
 }
