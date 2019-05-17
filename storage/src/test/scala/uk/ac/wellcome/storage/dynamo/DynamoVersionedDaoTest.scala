@@ -272,12 +272,19 @@ class DynamoVersionedDaoTest
             version = 1
           )
 
-          withVersionedDao[Record, Assertion](mockDynamoDbClient, table) { failingDao =>
-            val result = failingDao.put(record)
+          val failingDao = new DynamoVersionedDao[Record](
+            new DynamoConditionalUpdateDao[Record](
+              new DynamoDao[Record](
+                dynamoClient = mockDynamoDbClient,
+                dynamoConfig = createDynamoConfigWith(table)
+              )
+            )
+          )
 
-            result.isFailure shouldBe true
-            result.failed.get shouldBe exceptionThrownByUpdateItem
-          }
+          val result = failingDao.put(record)
+
+          result.isFailure shouldBe true
+          result.failed.get shouldBe exceptionThrownByUpdateItem
         }
       }
     }
