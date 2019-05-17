@@ -4,8 +4,17 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.gu.scanamo.DynamoFormat
 import com.typesafe.config.Config
 import uk.ac.wellcome.config.models.AWSClientConfig
-import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig, DynamoVersionedDao, UpdateExpressionGenerator}
-import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter, VersionUpdater}
+import uk.ac.wellcome.storage.dynamo.{
+  DynamoClientFactory,
+  DynamoConfig,
+  DynamoVersionedDao,
+  UpdateExpressionGenerator
+}
+import uk.ac.wellcome.storage.type_classes.{
+  IdGetter,
+  VersionGetter,
+  VersionUpdater
+}
 import uk.ac.wellcome.typesafe.config.builders.AWSClientConfigBuilder
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
 

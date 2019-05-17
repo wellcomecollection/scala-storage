@@ -27,9 +27,11 @@ class DynamoDao[Ident, T](
 
   val table: Table[T] = Table[T](dynamoConfig.table)
 
-  protected def buildPutKeyExpression(t: T): UniqueKey[_] = 'id -> idGetter.id(t)
+  protected def buildPutKeyExpression(t: T): UniqueKey[_] =
+    'id -> idGetter.id(t)
 
-  protected def buildGetKeyExpression(ident: Ident): UniqueKey[_] = 'id -> ident.toString
+  protected def buildGetKeyExpression(ident: Ident): UniqueKey[_] =
+    'id -> ident.toString
 
   def put(t: T): Try[T] =
     executeOps(

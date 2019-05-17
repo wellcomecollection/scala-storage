@@ -20,16 +20,17 @@ trait BetterVHS[Ident, T, Metadata] extends Logging {
   val objectStore: ObjectStore[T]
 
   def update(
-              id: Ident
-            )(
-              ifNotExisting: => (T, Metadata)
-            )(
-              ifExisting: (T, Metadata) => (T, Metadata)
-            ): Try[VHSEntry] =
+    id: Ident
+  )(
+    ifNotExisting: => (T, Metadata)
+  )(
+    ifExisting: (T, Metadata) => (T, Metadata)
+  ): Try[VHSEntry] =
     getObject(id).flatMap {
       case Some((storedObject, storedRow)) =>
         debug(s"Found existing object for $id")
-        val (newObject, newMetadata) = ifExisting(storedObject, storedRow.metadata)
+        val (newObject, newMetadata) =
+          ifExisting(storedObject, storedRow.metadata)
 
         if (newObject != storedObject || newMetadata != storedRow.metadata) {
           debug(s"Object for $id changed, updating")
@@ -52,16 +53,22 @@ trait BetterVHS[Ident, T, Metadata] extends Logging {
   def get(id: Ident): Try[Option[T]] =
     getObject(id).map {
       case Some((t, _)) => Some(t)
-      case None => None
+      case None         => None
     }
 
   private def getObject(id: Ident): Try[Option[(T, VHSEntry)]] =
     versionedDao.get(id).flatMap {
-      case Some(row) => objectStore.get(row.location).map { t: T => Some((t, row)) }
+      case Some(row) =>
+        objectStore.get(row.location).map { t: T =>
+          Some((t, row))
+        }
       case None => Success(None)
     }
 
-  private def putObject(id: Ident, existingRow: VHSEntry, newObject: T, newMetadata: Metadata): Try[VHSEntry] =
+  private def putObject(id: Ident,
+                        existingRow: VHSEntry,
+                        newObject: T,
+                        newMetadata: Metadata): Try[VHSEntry] =
     for {
       newLocation <- objectStore.put(namespace)(
         newObject,
