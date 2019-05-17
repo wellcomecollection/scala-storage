@@ -10,3 +10,10 @@ class MemoryVersionedDao[Ident, T](
   val versionGetter: VersionGetter[T],
   val versionUpdater: VersionUpdater[T]
 ) extends VersionedDao[Ident, T]
+
+object MemoryVersionedDao {
+  def apply[Ident, T](): MemoryVersionedDao[Ident, T] =
+    new MemoryVersionedDao(
+      MemoryConditionalUpdateDao[Ident, T]()
+    )
+}

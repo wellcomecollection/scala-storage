@@ -28,3 +28,10 @@ class MemoryConditionalUpdateDao[Ident, T](
     }
   }
 }
+
+object MemoryConditionalUpdateDao {
+  def apply[Ident, T](): MemoryConditionalUpdateDao[Ident, T] =
+    new MemoryConditionalUpdateDao[Ident, T](
+      new MemoryDao[Ident, T]()
+    )
+}

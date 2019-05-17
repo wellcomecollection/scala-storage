@@ -1,11 +1,10 @@
 package uk.ac.wellcome.storage.memory
 
 import org.scalatest.{FunSpec, Matchers}
-import uk.ac.wellcome.storage.fixtures.StorageHelpers
 
 import scala.util.{Failure, Random, Success}
 
-class MemoryConditionalUpdateDaoTest extends FunSpec with Matchers with StorageHelpers {
+class MemoryConditionalUpdateDaoTest extends FunSpec with Matchers {
   case class VersionedRecord(
     id: String,
     version: Int,
@@ -13,7 +12,7 @@ class MemoryConditionalUpdateDaoTest extends FunSpec with Matchers with StorageH
   )
 
   it("behaves as a dao") {
-    val dao = createConditionalUpdateDao[String, VersionedRecord]
+    val dao = MemoryConditionalUpdateDao[String, VersionedRecord]()
 
     dao.get(id = "1") shouldBe Success(None)
     dao.get(id = "2") shouldBe Success(None)
@@ -28,7 +27,7 @@ class MemoryConditionalUpdateDaoTest extends FunSpec with Matchers with StorageH
   }
 
   it("allows updating a record with a newer version") {
-    val dao = createConditionalUpdateDao[String, VersionedRecord]
+    val dao = MemoryConditionalUpdateDao[String, VersionedRecord]()
 
     (1 to 5).map { version =>
       val record = VersionedRecord(
@@ -43,7 +42,7 @@ class MemoryConditionalUpdateDaoTest extends FunSpec with Matchers with StorageH
   }
 
   it("blocks updating a record with an older version") {
-    val dao = createConditionalUpdateDao[String, VersionedRecord]
+    val dao = MemoryConditionalUpdateDao[String, VersionedRecord]()
 
     val v5 = VersionedRecord(
       id = "x",
@@ -63,7 +62,7 @@ class MemoryConditionalUpdateDaoTest extends FunSpec with Matchers with StorageH
   }
 
   it("blocks updating a record with the same version") {
-    val dao = createConditionalUpdateDao[String, VersionedRecord]
+    val dao = MemoryConditionalUpdateDao[String, VersionedRecord]()
 
     val record = VersionedRecord(
       id = "x",
