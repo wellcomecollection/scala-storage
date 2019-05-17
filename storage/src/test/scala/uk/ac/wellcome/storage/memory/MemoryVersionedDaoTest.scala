@@ -12,7 +12,11 @@ class MemoryVersionedDaoTest extends FunSpec with Matchers {
   )
 
   it("behaves correctly") {
-    val dao = new MemoryVersionedDao[Record]()
+    val dao = new MemoryVersionedDao[Record](
+      underlying = new MemoryConditionalUpdateDao[Record](
+        underlying = new MemoryDao[Record]()
+      )
+    )
 
     val record1 = Record(id = "1", version = 0, data = "first")
     val record2 = Record(id = "2", version = 0, data = "second")
@@ -30,6 +34,9 @@ class MemoryVersionedDaoTest extends FunSpec with Matchers {
 
     // Put with a higher version
     dao.put(record1.copy(version = 5)) shouldBe Success(record1.copy(version = 6))
+
+    // Put with the same version
+    dao.put(record1.copy(version = 6)) shouldBe a[Failure[_]]
 
     // Put with a lower version
     dao.put(record1.copy(version = 4)) shouldBe a[Failure[_]]

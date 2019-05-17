@@ -4,7 +4,7 @@ import com.gu.scanamo.error.ScanamoError
 import com.gu.scanamo.ops.ScanamoOps
 import com.gu.scanamo.query.{KeyEquals, UniqueKey}
 import com.gu.scanamo.syntax._
-import uk.ac.wellcome.storage.Dao
+import uk.ac.wellcome.storage.ConditionalUpdateDao
 import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter}
 
 import scala.util.Try
@@ -15,7 +15,7 @@ class DynamoConditionalUpdateDao[T](
   implicit
   idGetter: IdGetter[T],
   versionGetter: VersionGetter[T]
-) extends Dao[String, T] {
+) extends ConditionalUpdateDao[String, T] {
   override def get(id: String): Try[Option[T]] = underlying.get(id)
 
   override def put(t: T): Try[T] = underlying.executeOps(

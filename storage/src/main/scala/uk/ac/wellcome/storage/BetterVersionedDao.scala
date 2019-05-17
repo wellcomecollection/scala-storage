@@ -8,7 +8,7 @@ trait BetterVersionedDao[T] {
   implicit val versionGetter: VersionGetter[T]
   implicit val versionUpdater: VersionUpdater[T]
 
-  implicit val underlying: Dao[String, T]
+  implicit val underlying: ConditionalUpdateDao[String, T]
 
   def get(id: String): Try[Option[T]] = underlying.get(id)
 
