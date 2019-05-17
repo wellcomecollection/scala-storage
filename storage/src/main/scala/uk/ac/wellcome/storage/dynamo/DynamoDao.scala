@@ -22,20 +22,21 @@ class DynamoDao[T](
   evidence: DynamoFormat[T],
   idGetter: IdGetter[T],
   updateExpressionGenerator: UpdateExpressionGenerator[T]
-) extends Dao[String, T] with Logging {
+) extends Dao[String, T]
+    with Logging {
 
   val table: Table[T] = Table[T](dynamoConfig.table)
 
   def put(t: T): Try[T] =
     executeOps(
       id = idGetter.id(t),
-      ops =
-        Table[T](dynamoConfig.table)
-          .update(
-            UniqueKey(KeyEquals('id, idGetter.id(t))),
-            buildUpdate(t)
-              .getOrElse(throw new Throwable("Could not build update expression!"))
-          )
+      ops = Table[T](dynamoConfig.table)
+        .update(
+          UniqueKey(KeyEquals('id, idGetter.id(t))),
+          buildUpdate(t)
+            .getOrElse(
+              throw new Throwable("Could not build update expression!"))
+        )
     )
 
   def get(id: String): Try[Option[T]] = Try {
@@ -59,22 +60,24 @@ class DynamoDao[T](
     }
   }
 
-  def executeOps[S <: ScanamoError](id: String, ops: ScanamoOps[Either[S, T]]): Try[T] = Try {
-    Scanamo.exec(dynamoClient)(ops) match {
-      case Left(ConditionNotMet(exc: ConditionalCheckFailedException)) =>
-        warn(s"Failed a conditional check updating $id", exc)
-        throw exc
-      case Left(scanamoError) =>
-        val exception = new RuntimeException(scanamoError.toString)
+  def executeOps[S <: ScanamoError](id: String,
+                                    ops: ScanamoOps[Either[S, T]]): Try[T] =
+    Try {
+      Scanamo.exec(dynamoClient)(ops) match {
+        case Left(ConditionNotMet(exc: ConditionalCheckFailedException)) =>
+          warn(s"Failed a conditional check updating $id", exc)
+          throw exc
+        case Left(scanamoError) =>
+          val exception = new RuntimeException(scanamoError.toString)
 
-        warn(s"Failed to update Dynamo record: $id", exception)
+          warn(s"Failed to update Dynamo record: $id", exception)
 
-        throw exception
-      case Right(result) =>
-        debug(s"Successfully updated Dynamo record: $id")
-        result
+          throw exception
+        case Right(result) =>
+          debug(s"Successfully updated Dynamo record: $id")
+          result
+      }
     }
-  }
 
   def buildUpdate(t: T): Option[UpdateExpression] =
     updateExpressionGenerator

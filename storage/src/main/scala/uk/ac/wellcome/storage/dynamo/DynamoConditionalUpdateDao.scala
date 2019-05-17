@@ -23,8 +23,10 @@ class DynamoConditionalUpdateDao[T](
     ops = buildConditionalUpdate(t)
   )
 
-  private def buildConditionalUpdate(t: T): ScanamoOps[Either[ScanamoError, T]] =
-    underlying.buildUpdate(t)
+  private def buildConditionalUpdate(
+    t: T): ScanamoOps[Either[ScanamoError, T]] =
+    underlying
+      .buildUpdate(t)
       .map { updateExpression =>
         underlying.table
           .given(

@@ -16,7 +16,8 @@ class MemoryConditionalUpdateDao[T](
     val id = underlying.idGetter.id(t)
 
     val shouldUpdate = underlying.entries.get(id) match {
-      case Some(existing) => versionGetter.version(existing) < versionGetter.version(t)
+      case Some(existing) =>
+        versionGetter.version(existing) < versionGetter.version(t)
       case None => true
     }
 
