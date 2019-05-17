@@ -7,7 +7,7 @@ import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.fixtures._
-import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig, DynamoDao, DynamoVersionedDao, UpdateExpressionGenerator}
+import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConditionalUpdateDao, DynamoConfig, DynamoDao, DynamoVersionedDao, UpdateExpressionGenerator}
 import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter, VersionUpdater}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -133,4 +133,16 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
 
     testWith(dao)
   }
+
+  def withDynamoConditionalUpdateDao[T, R](table: Table)(testWith: TestWith[DynamoConditionalUpdateDao[T], R])(
+    implicit
+    evidence: DynamoFormat[T],
+    idGetter: IdGetter[T],
+    versionGetter: VersionGetter[T],
+    updateExpressionGenerator: UpdateExpressionGenerator[T]): R =
+    withDynamoDao[T, R](table) { underlying =>
+      val dao = new DynamoConditionalUpdateDao[T](underlying)
+
+      testWith(dao)
+    }
 }
