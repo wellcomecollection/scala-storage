@@ -18,6 +18,7 @@ class MemoryVersionedDaoTest extends FunSpec with Matchers {
       )
     )
 
+    // Check it increments the record upon storing
     val record1 = VersionedRecord(id = "1", version = 0, data = "first")
     val record2 = VersionedRecord(id = "2", version = 0, data = "second")
 

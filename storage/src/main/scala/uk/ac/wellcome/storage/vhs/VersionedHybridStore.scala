@@ -3,18 +3,9 @@ package uk.ac.wellcome.storage.vhs
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.gu.scanamo.DynamoFormat
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.dynamo.{
-  DynamoVersionedDao,
-  UpdateExpressionGenerator
-}
+import uk.ac.wellcome.storage.dynamo.{DynamoConditionalUpdateDao, DynamoDao, DynamoVersionedDao, UpdateExpressionGenerator}
 import uk.ac.wellcome.storage.type_classes.Migration._
-import uk.ac.wellcome.storage.type_classes.{
-  HybridRecordEnricher,
-  IdGetter,
-  VersionGetter,
-  VersionUpdater,
-  _
-}
+import uk.ac.wellcome.storage.type_classes.{HybridRecordEnricher, IdGetter, VersionGetter, VersionUpdater, _}
 import uk.ac.wellcome.storage.{KeyPrefix, ObjectLocation, ObjectStore}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,8 +28,12 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow])
     : DynamoVersionedDao[DynamoRow] =
     new DynamoVersionedDao[DynamoRow](
-      dynamoDbClient = dynamoDbClient,
-      dynamoConfig = vhsConfig.dynamoConfig
+      underlying = new DynamoConditionalUpdateDao[DynamoRow](
+        new DynamoDao[DynamoRow](
+          dynamoClient = dynamoDbClient,
+          dynamoConfig = vhsConfig.dynamoConfig
+        )
+      )
     )
 
   private case class VersionedHybridObject(

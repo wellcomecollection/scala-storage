@@ -73,11 +73,12 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
     versionUpdater: VersionUpdater[T],
     idGetter: IdGetter[T],
     versionGetter: VersionGetter[T],
-    updateExpressionGenerator: UpdateExpressionGenerator[T]): R = {
-    val dynamoConfig = createDynamoConfigWith(table)
-    val dao = new DynamoVersionedDao[T](dynamoDbClient, dynamoConfig)
-    testWith(dao)
-  }
+    updateExpressionGenerator: UpdateExpressionGenerator[T]): R =
+    withDynamoConditionalUpdateDao[T, R](table) { conditionalUpdateDao =>
+      val dao = new DynamoVersionedDao[T](conditionalUpdateDao)
+
+      testWith(dao)
+    }
 
   def createTable(table: LocalDynamoDb.Table): Table
 
