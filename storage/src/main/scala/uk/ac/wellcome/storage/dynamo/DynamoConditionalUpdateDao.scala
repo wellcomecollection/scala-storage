@@ -1,6 +1,7 @@
 package uk.ac.wellcome.storage.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
+import com.gu.scanamo.DynamoFormat
 import com.gu.scanamo.error.ScanamoError
 import com.gu.scanamo.ops.ScanamoOps
 import com.gu.scanamo.query.{KeyEquals, UniqueKey}
@@ -57,6 +58,12 @@ object DynamoConditionalUpdateDao {
   def apply[Ident, T](
     dynamoClient: AmazonDynamoDB,
     dynamoConfig: DynamoConfig
+  )(
+    implicit
+    evidence: DynamoFormat[T],
+    idGetter: IdGetter[T],
+    updateExpressionGenerator: UpdateExpressionGenerator[T],
+    versionGetter: VersionGetter[T]
   ): DynamoConditionalUpdateDao[Ident, T] =
     new DynamoConditionalUpdateDao(
       new DynamoDao[Ident, T](

@@ -57,7 +57,7 @@ trait BetterVHS[Ident, T, Metadata] extends Logging {
 
   private def getObject(id: Ident): Try[Option[(T, VHSEntry)]] =
     versionedDao.get(id).flatMap {
-      case Some(row) => objectStore.get(row.location).map { (_, row) }
+      case Some(row) => objectStore.get(row.location).map { t: T => Some((t, row)) }
       case None => Success(None)
     }
 
