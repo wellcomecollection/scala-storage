@@ -55,7 +55,7 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
   )
 
   def withVersionedDao[T, R](table: Table)(
-    testWith: TestWith[DynamoVersionedDao[T], R])(
+    testWith: TestWith[DynamoVersionedDao[String, T], R])(
     implicit
     evidence: DynamoFormat[T],
     versionUpdater: VersionUpdater[T],
@@ -63,7 +63,7 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
     versionGetter: VersionGetter[T],
     updateExpressionGenerator: UpdateExpressionGenerator[T]): R =
     withDynamoConditionalUpdateDao[T, R](table) { conditionalUpdateDao =>
-      val dao = new DynamoVersionedDao[T](conditionalUpdateDao)
+      val dao = new DynamoVersionedDao[String, T](conditionalUpdateDao)
 
       testWith(dao)
     }
@@ -110,12 +110,12 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
       maybeIndex = Some(table.index)
     )
 
-  def withDynamoDao[T, R](table: Table)(testWith: TestWith[DynamoDao[T], R])(
+  def withDynamoDao[T, R](table: Table)(testWith: TestWith[DynamoDao[String, T], R])(
     implicit
     evidence: DynamoFormat[T],
     idGetter: IdGetter[T],
     updateExpressionGenerator: UpdateExpressionGenerator[T]): R = {
-    val dao = new DynamoDao[T](
+    val dao = new DynamoDao[String, T](
       dynamoClient = dynamoDbClient,
       dynamoConfig = createDynamoConfigWith(table)
     )
@@ -123,14 +123,14 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
     testWith(dao)
   }
 
-  def withDynamoConditionalUpdateDao[T, R](table: Table)(testWith: TestWith[DynamoConditionalUpdateDao[T], R])(
+  def withDynamoConditionalUpdateDao[T, R](table: Table)(testWith: TestWith[DynamoConditionalUpdateDao[String, T], R])(
     implicit
     evidence: DynamoFormat[T],
     idGetter: IdGetter[T],
     versionGetter: VersionGetter[T],
     updateExpressionGenerator: UpdateExpressionGenerator[T]): R =
     withDynamoDao[T, R](table) { underlying =>
-      val dao = new DynamoConditionalUpdateDao[T](underlying)
+      val dao = new DynamoConditionalUpdateDao[String, T](underlying)
 
       testWith(dao)
     }

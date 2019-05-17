@@ -11,9 +11,9 @@ class MemoryConditionalUpdateDaoTest extends FunSpec with Matchers {
     data: String
   )
 
-  def createDao: MemoryConditionalUpdateDao[VersionedRecord] =
-    new MemoryConditionalUpdateDao[VersionedRecord](
-      underlying = new MemoryDao[VersionedRecord]()
+  def createDao: MemoryConditionalUpdateDao[String, VersionedRecord] =
+    new MemoryConditionalUpdateDao[String, VersionedRecord](
+      underlying = new MemoryDao[String, VersionedRecord]()
     )
 
   it("behaves as a dao") {

@@ -37,10 +37,10 @@ class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
     idGetter: IdGetter[DynamoRow],
     versionGetter: VersionGetter[DynamoRow],
     updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow])
-    : DynamoVersionedDao[DynamoRow] =
-    new DynamoVersionedDao[DynamoRow](
-      underlying = new DynamoConditionalUpdateDao[DynamoRow](
-        new DynamoDao[DynamoRow](
+    : DynamoVersionedDao[String, DynamoRow] =
+    new DynamoVersionedDao[String, DynamoRow](
+      underlying = new DynamoConditionalUpdateDao[String, DynamoRow](
+        new DynamoDao[String, DynamoRow](
           dynamoClient = dynamoDbClient,
           dynamoConfig = vhsConfig.dynamoConfig
         )

@@ -11,7 +11,7 @@ class MemoryDaoTest extends FunSpec with Matchers {
   )
 
   it("behaves as a dao") {
-    val dao = new MemoryDao[Record]()
+    val dao = new MemoryDao[String, Record]()
 
     dao.get(id = "1") shouldBe Success(None)
     dao.get(id = "2") shouldBe Success(None)

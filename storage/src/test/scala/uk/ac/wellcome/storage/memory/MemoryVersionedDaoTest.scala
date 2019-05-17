@@ -12,9 +12,9 @@ class MemoryVersionedDaoTest extends FunSpec with Matchers {
   )
 
   it("behaves correctly") {
-    val dao = new MemoryVersionedDao[VersionedRecord](
-      underlying = new MemoryConditionalUpdateDao[VersionedRecord](
-        underlying = new MemoryDao[VersionedRecord]()
+    val dao = new MemoryVersionedDao[String, VersionedRecord](
+      underlying = new MemoryConditionalUpdateDao[String, VersionedRecord](
+        underlying = new MemoryDao[String, VersionedRecord]()
       )
     )
 

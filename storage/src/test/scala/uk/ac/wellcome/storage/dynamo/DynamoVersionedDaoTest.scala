@@ -43,7 +43,7 @@ class DynamoVersionedDaoTest
     with MockitoSugar
     with Matchers {
 
-  def withFixtures[R](testWith: TestWith[(Table, DynamoVersionedDao[Record]), R]): R = {
+  def withFixtures[R](testWith: TestWith[(Table, DynamoVersionedDao[String, Record]), R]): R = {
     withLocalDynamoDbTable[R] { table =>
       withVersionedDao[Record, R](table) { versionedDao =>
         testWith((table, versionedDao))
@@ -83,14 +83,7 @@ class DynamoVersionedDaoTest
         when(mockDynamoDbClient.getItem(any[GetItemRequest]))
           .thenThrow(expectedException)
 
-        val failingDao = new DynamoVersionedDao[Record](
-          new DynamoConditionalUpdateDao[Record](
-            new DynamoDao[Record](
-              dynamoClient = mockDynamoDbClient,
-              dynamoConfig = createDynamoConfigWith(table)
-            )
-          )
-        )
+        val failingDao = createDaoWith(mockDynamoDbClient, table)
 
         val result = failingDao.get("testSource/b88888")
         result shouldBe Failure(expectedException)
@@ -257,14 +250,7 @@ class DynamoVersionedDaoTest
             when(mockDynamoDbClient.getItem(any[GetItemRequest]))
               .thenThrow(exceptionThrownByGetItem)
 
-            val failingDao = new DynamoVersionedDao[Record](
-              new DynamoConditionalUpdateDao[Record](
-                new DynamoDao[Record](
-                  dynamoClient = mockDynamoDbClient,
-                  dynamoConfig = createDynamoConfigWith(table)
-                )
-              )
-            )
+            val failingDao = createDaoWith(mockDynamoDbClient, table)
 
             val result = failingDao.get(id = "123")
 
@@ -286,14 +272,7 @@ class DynamoVersionedDaoTest
             version = 1
           )
 
-          val failingDao = new DynamoVersionedDao[Record](
-            new DynamoConditionalUpdateDao[Record](
-              new DynamoDao[Record](
-                dynamoClient = mockDynamoDbClient,
-                dynamoConfig = createDynamoConfigWith(table)
-              )
-            )
-          )
+          val failingDao = createDaoWith(mockDynamoDbClient, table)
 
           val result = failingDao.put(record)
 
@@ -303,4 +282,14 @@ class DynamoVersionedDaoTest
       }
     }
   }
+
+  def createDaoWith(dynamoClient: AmazonDynamoDB, table: Table): DynamoVersionedDao[String, Record] =
+    new DynamoVersionedDao[String, Record](
+      new DynamoConditionalUpdateDao[String, Record](
+        new DynamoDao[String, Record](
+          dynamoClient = dynamoClient,
+          dynamoConfig = createDynamoConfigWith(table)
+        )
+      )
+    )
 }

@@ -9,14 +9,14 @@ import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter}
 
 import scala.util.Try
 
-class DynamoConditionalUpdateDao[T](
-  underlying: DynamoDao[T]
+class DynamoConditionalUpdateDao[Ident, T](
+  underlying: DynamoDao[Ident, T]
 )(
   implicit
   idGetter: IdGetter[T],
   versionGetter: VersionGetter[T]
-) extends ConditionalUpdateDao[String, T] {
-  override def get(id: String): Try[Option[T]] = underlying.get(id)
+) extends ConditionalUpdateDao[Ident, T] {
+  override def get(id: Ident): Try[Option[T]] = underlying.get(id)
 
   override def put(t: T): Try[T] = underlying.executeOps(
     id = idGetter.id(t),

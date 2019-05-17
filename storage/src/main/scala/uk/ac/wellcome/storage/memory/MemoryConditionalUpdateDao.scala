@@ -5,12 +5,12 @@ import uk.ac.wellcome.storage.type_classes.VersionGetter
 
 import scala.util.{Failure, Try}
 
-class MemoryConditionalUpdateDao[T](
-  underlying: MemoryDao[T]
+class MemoryConditionalUpdateDao[Ident, T](
+  underlying: MemoryDao[Ident, T]
 )(
   implicit versionGetter: VersionGetter[T]
-) extends ConditionalUpdateDao[String, T] {
-  override def get(id: String): Try[Option[T]] = underlying.get(id)
+) extends ConditionalUpdateDao[Ident, T] {
+  override def get(id: Ident): Try[Option[T]] = underlying.get(id)
 
   override def put(t: T): Try[T] = {
     val id = underlying.idGetter.id(t)
