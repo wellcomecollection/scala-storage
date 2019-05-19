@@ -5,7 +5,7 @@ import java.nio.file.Paths
 import com.amazonaws.services.s3.AmazonS3
 import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
 
@@ -24,7 +24,7 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
   def copyObjects(
     srcLocationPrefix: ObjectLocation,
     dstLocationPrefix: ObjectLocation
-  ): Future[S3PrefixCopierResult] =
+  ): Try[S3PrefixCopierResult] =
     s3PrefixOperator.run(prefix = srcLocationPrefix) {
       srcLocation: ObjectLocation =>
         val relativeKey = srcLocation.key
@@ -45,8 +45,7 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
 }
 
 object S3PrefixCopier {
-  def apply(s3Client: AmazonS3, batchSize: Int = 1000)(
-    implicit ec: ExecutionContext): S3PrefixCopier =
+  def apply(s3Client: AmazonS3, batchSize: Int = 1000): S3PrefixCopier =
     new S3PrefixCopier(
       s3PrefixOperator = new S3PrefixOperator(s3Client, batchSize = batchSize),
       copier = new S3Copier(s3Client)

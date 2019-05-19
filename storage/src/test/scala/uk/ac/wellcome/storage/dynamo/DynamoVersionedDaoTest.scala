@@ -11,7 +11,6 @@ import com.gu.scanamo.Scanamo
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest.Assertion
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSpec, Matchers}
 import shapeless._
@@ -37,8 +36,6 @@ case class ExtendedRecord(
 class DynamoVersionedDaoTest
     extends FunSpec
     with LocalDynamoDbVersioned
-    with ScalaFutures
-    with IntegrationPatience
     with MockitoSugar
     with Matchers {
 
