@@ -14,10 +14,10 @@ case class BetterVHSEntry[Ident, Metadata](
 trait BetterVHS[Ident, T, Metadata] extends Logging {
   type VHSEntry = BetterVHSEntry[Ident, Metadata]
 
-  val namespace: String = ""
+  protected val namespace: String = ""
 
-  val versionedDao: VersionedDao[Ident, VHSEntry]
-  val objectStore: ObjectStore[T]
+  protected val versionedDao: VersionedDao[Ident, VHSEntry]
+  protected val objectStore: ObjectStore[T]
 
   def update(
     id: Ident
