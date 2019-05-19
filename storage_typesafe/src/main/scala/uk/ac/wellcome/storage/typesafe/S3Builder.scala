@@ -3,7 +3,7 @@ package uk.ac.wellcome.storage.typesafe
 import com.amazonaws.services.s3.AmazonS3
 import com.typesafe.config.Config
 import uk.ac.wellcome.config.models.AWSClientConfig
-import uk.ac.wellcome.storage.ObjectStore
+import uk.ac.wellcome.storage.{ObjectStore, SerialisationStrategy}
 import uk.ac.wellcome.storage.s3._
 import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
 import uk.ac.wellcome.typesafe.config.builders.AWSClientConfigBuilder
