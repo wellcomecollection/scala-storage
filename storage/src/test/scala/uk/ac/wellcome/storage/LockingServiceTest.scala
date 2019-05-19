@@ -1,10 +1,9 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage
 
 import java.util.UUID
 
 import cats.implicits._
 import org.scalatest._
-import uk.ac.wellcome.storage.{FailedProcess, LockDao, UnlockFailure}
 import uk.ac.wellcome.storage.fixtures.{InMemoryLockDao, LockingServiceFixtures, PermanentLock}
 
 import scala.util.Try
