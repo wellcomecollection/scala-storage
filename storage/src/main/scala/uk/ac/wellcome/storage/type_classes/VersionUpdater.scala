@@ -26,9 +26,7 @@ object VersionUpdater {
     updater
 
   def createVersionUpdater[T](f: (T, Int) => T): VersionUpdater[T] =
-    new VersionUpdater[T] {
-      def updateVersion(t: T, version: Int) = f(t, version)
-    }
+    (t: T, version: Int) => f(t, version)
 
   // Generates a VersionUpdater for an arbitrary HList.
   //
@@ -44,7 +42,7 @@ object VersionUpdater {
   // "version" field.  It can't add the field if it's not there already.
   //
   implicit def hlistVersionUpdater[L <: HList](
-    implicit updater: Updater.Aux[L, versionField, L]) =
+    implicit updater: Updater.Aux[L, versionField, L]): VersionUpdater[L] =
     createVersionUpdater[L] { (t: L, newVersion: Int) =>
       t.updated('version, newVersion)
     }
@@ -59,7 +57,7 @@ object VersionUpdater {
   //
   implicit def productVersionUpdater[C, L <: HList](
     implicit gen: LabelledGeneric.Aux[C, L],
-    versionUpdater: VersionUpdater[L]) = createVersionUpdater[C] {
+    versionUpdater: VersionUpdater[L]): VersionUpdater[C] = createVersionUpdater[C] {
     (c: C, newVersion: Int) =>
       gen.from(versionUpdater.updateVersion(gen.to(c), newVersion))
   }

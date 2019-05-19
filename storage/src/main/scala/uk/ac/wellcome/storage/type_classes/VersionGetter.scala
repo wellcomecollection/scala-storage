@@ -22,9 +22,7 @@ object VersionGetter {
     enc
 
   def createVersionGetter[T](f: T => Int): VersionGetter[T] =
-    new VersionGetter[T] {
-      def version(t: T) = f(t)
-    }
+    (t: T) => f(t)
 
   // Generates an VersionGetter for an HList.
   //
