@@ -2,11 +2,6 @@ package uk.ac.wellcome.storage
 
 import java.io.InputStream
 
-import uk.ac.wellcome.storage.type_classes.{
-  SerialisationStrategy,
-  StorageStream
-}
-
 import scala.util.Try
 
 case class KeyPrefix(value: String) extends AnyVal

@@ -10,7 +10,6 @@ import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.fixtures.S3
 import uk.ac.wellcome.storage.memory.MemoryObjectStore
-import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
 
 import scala.util.Success
 
@@ -74,7 +73,7 @@ class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with Prope
     val mockBackend = mock[StorageBackend]
 
     val objectStore = new ObjectStore[String] {
-      override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringSerialisationStrategy
+      override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringStrategy
       override implicit val storageBackend: StorageBackend = mockBackend
     }
 
@@ -97,7 +96,7 @@ class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with Prope
     val mockBackend = mock[StorageBackend]
 
     val objectStore = new ObjectStore[String] {
-      override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringSerialisationStrategy
+      override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringStrategy
       override implicit val storageBackend: StorageBackend = mockBackend
     }
 
