@@ -1,7 +1,7 @@
 package uk.ac.wellcome.storage.memory
 
 import uk.ac.wellcome.storage.ConditionalUpdateDao
-import uk.ac.wellcome.storage.type_classes.VersionGetter
+import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter}
 
 import scala.util.{Failure, Try}
 
@@ -30,7 +30,11 @@ class MemoryConditionalUpdateDao[Ident, T](
 }
 
 object MemoryConditionalUpdateDao {
-  def apply[Ident, T](): MemoryConditionalUpdateDao[Ident, T] =
+  def apply[Ident, T]()(
+    implicit
+    idGetter: IdGetter[T],
+    versionGetter: VersionGetter[T]
+  ): MemoryConditionalUpdateDao[Ident, T] =
     new MemoryConditionalUpdateDao[Ident, T](
       new MemoryDao[Ident, T]()
     )

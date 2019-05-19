@@ -65,10 +65,11 @@ trait BetterVHS[Ident, T, Metadata] extends Logging {
       case None => Success(None)
     }
 
-  private def putObject(id: Ident,
-                        existingRow: VHSEntry,
-                        newObject: T,
-                        newMetadata: Metadata): Try[VHSEntry] =
+  private def putObject(
+    id: Ident,
+    existingRow: VHSEntry,
+    newObject: T,
+    newMetadata: Metadata): Try[VHSEntry] =
     for {
       newLocation <- objectStore.put(namespace)(
         newObject,

@@ -9,7 +9,7 @@ import org.scalatest.prop.PropertyChecks
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.fixtures.S3
-import uk.ac.wellcome.storage.memory.{MemoryObjectStore, MemoryStorageBackend}
+import uk.ac.wellcome.storage.memory.MemoryObjectStore
 import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
 
 import scala.util.Success
