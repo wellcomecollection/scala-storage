@@ -22,4 +22,10 @@ trait VersionedDao[T] {
 
   def put(value: T): Try[T]
 }
+
+// A new VHS
+trait VersionedHybridStore[Ident, T, Metadata] {
+  def update: Try[Entry[Ident, Metadata]]
+  def get: Try[Option[T]]
+}
 ```
