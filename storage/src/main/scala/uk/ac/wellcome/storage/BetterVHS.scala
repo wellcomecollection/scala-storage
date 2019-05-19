@@ -1,6 +1,7 @@
 package uk.ac.wellcome.storage
 
 import grizzled.slf4j.Logging
+import uk.ac.wellcome.storage.vhs.EmptyMetadata
 
 import scala.util.{Failure, Success, Try}
 
@@ -109,4 +110,15 @@ trait BetterVHS[Ident, T, Metadata] extends Logging {
         )
       )
     } yield row
+}
+
+trait MetadataFreeVHS[Ident, T] extends BetterVHS[Ident, T, EmptyMetadata] {
+  def update(id: Ident)(ifNotExisting: => T)(ifExisting: T => T): Try[VHSEntry] =
+    super.update(
+      id = id
+    )(
+      ifNotExisting = (ifNotExisting, EmptyMetadata())
+    )(
+      ifExisting = (t, existingMetadata) => (ifExisting(t), existingMetadata)
+    )
 }
