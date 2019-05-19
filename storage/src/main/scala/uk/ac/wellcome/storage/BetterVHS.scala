@@ -2,7 +2,7 @@ package uk.ac.wellcome.storage
 
 import grizzled.slf4j.Logging
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 case class BetterVHSEntry[Ident, Metadata](
   id: Ident,
@@ -56,14 +56,25 @@ trait BetterVHS[Ident, T, Metadata] extends Logging {
       case None         => None
     }
 
-  private def getObject(id: Ident): Try[Option[(T, VHSEntry)]] =
-    versionedDao.get(id).flatMap {
-      case Some(row) =>
-        objectStore.get(row.location).map { t: T =>
-          Some((t, row))
-        }
-      case None => Success(None)
+  private def getObject(id: Ident): Try[Option[(T, VHSEntry)]] = {
+    val maybeRow = versionedDao.get(id)
+
+    maybeRow match {
+      case Success(Some(row)) =>
+        objectStore
+          .get(row.location).map { t: T => Some((t, row)) }
+          .recover {
+            case t: Throwable =>
+              throw new RuntimeException(
+                s"Dao entry for $id points to a location that can't be fetched from the object store: $t"
+              )
+          }
+      case Success(None) => Success(None)
+      case Failure(err) => Failure(
+        new RuntimeException(s"Cannot read record $id from dao: $err")
+      )
     }
+  }
 
   private def putObject(
     id: Ident,
