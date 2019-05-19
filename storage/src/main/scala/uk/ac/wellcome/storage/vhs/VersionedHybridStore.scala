@@ -1,19 +1,12 @@
-package uk.ac.wellcome.storage
+package uk.ac.wellcome.storage.vhs
 
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.vhs.EmptyMetadata
+import uk.ac.wellcome.storage.{KeyPrefix, ObjectStore, VersionedDao}
 
 import scala.util.{Failure, Success, Try}
 
-case class BetterVHSEntry[Ident, Metadata](
-  id: Ident,
-  version: Int,
-  location: ObjectLocation,
-  metadata: Metadata
-)
-
-trait BetterVHS[Ident, T, Metadata] extends Logging {
-  type VHSEntry = BetterVHSEntry[Ident, Metadata]
+trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
+  type VHSEntry = Entry[Ident, Metadata]
 
   protected val namespace: String = ""
 
@@ -102,7 +95,7 @@ trait BetterVHS[Ident, T, Metadata] extends Logging {
         keyPrefix = KeyPrefix(id.toString)
       )
       row <- versionedDao.put(
-        BetterVHSEntry[Ident, Metadata](
+        Entry[Ident, Metadata](
           id = id,
           version = 0,
           location = location,
@@ -110,15 +103,4 @@ trait BetterVHS[Ident, T, Metadata] extends Logging {
         )
       )
     } yield row
-}
-
-trait MetadataFreeVHS[Ident, T] extends BetterVHS[Ident, T, EmptyMetadata] {
-  def update(id: Ident)(ifNotExisting: => T)(ifExisting: T => T): Try[VHSEntry] =
-    super.update(
-      id = id
-    )(
-      ifNotExisting = (ifNotExisting, EmptyMetadata())
-    )(
-      ifExisting = (t, existingMetadata) => (ifExisting(t), existingMetadata)
-    )
 }

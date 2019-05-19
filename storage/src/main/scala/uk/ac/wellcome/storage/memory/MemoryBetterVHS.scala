@@ -1,8 +1,8 @@
 package uk.ac.wellcome.storage.memory
 
-import uk.ac.wellcome.storage.{BetterVHS, BetterVHSEntry}
+import uk.ac.wellcome.storage.vhs.{Entry, VersionedHybridStore}
 
 class MemoryBetterVHS[Ident, T, Metadata](
-  val versionedDao: MemoryVersionedDao[Ident, BetterVHSEntry[Ident, Metadata]],
+  val versionedDao: MemoryVersionedDao[Ident, Entry[Ident, Metadata]],
   val objectStore: MemoryObjectStore[T]
-) extends BetterVHS[Ident, T, Metadata]
+) extends VersionedHybridStore[Ident, T, Metadata]

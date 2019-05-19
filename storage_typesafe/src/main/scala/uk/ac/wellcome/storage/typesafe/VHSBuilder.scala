@@ -4,19 +4,20 @@ import com.gu.scanamo.DynamoFormat
 import com.typesafe.config.Config
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.dynamo.UpdateExpressionGenerator
+import uk.ac.wellcome.storage.vhs.{Entry, VersionedHybridStore}
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
 
 object VHSBuilder {
-  def buildVHS[Ident, T, Metadata](config: Config, namespace: String = "vhs")(
+  def buildVHS[Ident, T, Metadata](config: Config, configNamespace: String = "vhs")(
     implicit
-    evidence: DynamoFormat[BetterVHSEntry[Ident, Metadata]],
+    evidence: DynamoFormat[Entry[Ident, Metadata]],
     serialisationStrategy: SerialisationStrategy[T],
-    updateExpressionGenerator: UpdateExpressionGenerator[BetterVHSEntry[Ident, Metadata]]
+    updateExpressionGenerator: UpdateExpressionGenerator[Entry[Ident, Metadata]]
   )
-    : BetterVHS[Ident, T, Metadata] =
-    new BetterVHS[Ident, T, Metadata] {
-      override protected val versionedDao: VersionedDao[Ident, BetterVHSEntry[Ident, Metadata]] =
-        DynamoBuilder.buildVersionedDao[Ident, BetterVHSEntry[Ident, Metadata]](config, namespace = namespace)
+    : VersionedHybridStore[Ident, T, Metadata] =
+    new VersionedHybridStore[Ident, T, Metadata] {
+      override protected val versionedDao: VersionedDao[Ident, Entry[Ident, Metadata]] =
+        DynamoBuilder.buildVersionedDao[Ident, Entry[Ident, Metadata]](config, namespace = configNamespace)
       override protected val objectStore: ObjectStore[T] =
         S3Builder.buildObjectStore[T](config)
       override protected val namespace: String = config

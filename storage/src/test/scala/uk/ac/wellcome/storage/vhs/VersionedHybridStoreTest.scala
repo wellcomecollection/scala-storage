@@ -1,12 +1,13 @@
-package uk.ac.wellcome.storage
+package uk.ac.wellcome.storage.vhs
 
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.memory.{MemoryConditionalUpdateDao, MemoryObjectStore, MemoryVersionedDao}
+import uk.ac.wellcome.storage.{KeyPrefix, KeySuffix, ObjectLocation}
 
 import scala.util.{Failure, Success, Try}
 
-class BetterVHSTest extends FunSpec with Matchers {
+class VersionedHybridStoreTest extends FunSpec with Matchers {
 
   case class Shape(
     name: String,
@@ -19,8 +20,8 @@ class BetterVHSTest extends FunSpec with Matchers {
 
   type ShapeStore = MemoryObjectStore[Shape]
   type ShapeDao = MemoryVersionedDao[String, ShapeEntry]
-  type ShapeVHS = BetterVHS[String, Shape, ShapeMetadata]
-  type ShapeEntry = BetterVHSEntry[String, ShapeMetadata]
+  type ShapeVHS = VersionedHybridStore[String, Shape, ShapeMetadata]
+  type ShapeEntry = Entry[String, ShapeMetadata]
 
   def createStore: ShapeStore = new MemoryObjectStore[Shape]()
   def createDao: ShapeDao = MemoryVersionedDao[String, ShapeEntry]()
@@ -29,7 +30,7 @@ class BetterVHSTest extends FunSpec with Matchers {
     dao: ShapeDao = createDao,
     testNamespace: String = "testing"
   ): ShapeVHS =
-    new BetterVHS[String, Shape, ShapeMetadata] {
+    new VersionedHybridStore[String, Shape, ShapeMetadata] {
       override protected val versionedDao: ShapeDao = dao
       override protected val objectStore: ShapeStore = store
       override protected val namespace: String = testNamespace
