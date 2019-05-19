@@ -1,22 +1,22 @@
-package uk.ac.wellcome.storage.fixtures
+package uk.ac.wellcome.storage.memory
 
 import grizzled.slf4j.Logging
-import java.util.UUID
-
 import uk.ac.wellcome.storage.{Lock, LockDao, LockFailure}
 
-class InMemoryLockDao extends LockDao[String, UUID] with Logging {
-  private var locks: Map[String, PermanentLock] = Map.empty
+trait MemoryLockDao[MemoryIdent, MemoryContextId] extends LockDao[MemoryIdent, MemoryContextId] with Logging {
+  type MemoryLock = PermanentLock[MemoryIdent, MemoryContextId]
 
-  var history: List[PermanentLock] = List.empty
+  private var locks: Map[MemoryIdent, MemoryLock] = Map.empty
 
-  override def lock(id: String, contextId: UUID): LockResult = {
+  var history: List[MemoryLock] = List.empty
+
+  override def lock(id: MemoryIdent, contextId: MemoryContextId): LockResult = {
     info(s"Locking ID <$id> in context <$contextId>")
 
     locks.get(id) match {
       case Some(r @ PermanentLock(_, existingContextId)) if contextId == existingContextId => Right(r)
       case Some(PermanentLock(_, existingContextId)) if contextId != existingContextId => Left(
-        LockFailure[String](
+        LockFailure(
           id,
           new Throwable(s"Failed to lock <$id> in context <$contextId>; already locked as <$existingContextId>")
         )
@@ -32,7 +32,7 @@ class InMemoryLockDao extends LockDao[String, UUID] with Logging {
     }
   }
 
-  override def unlock(contextId: UUID): UnlockResult = {
+  override def unlock(contextId: MemoryContextId): UnlockResult = {
     info(s"Unlocking for context <$contextId>")
     locks = locks.filter { case (id, PermanentLock(_, lockContextId)) =>
       debug(s"Inspecting $id")
@@ -42,8 +42,8 @@ class InMemoryLockDao extends LockDao[String, UUID] with Logging {
     Right(())
   }
 
-  def getCurrentLocks: Set[String] =
+  def getCurrentLocks: Set[MemoryIdent] =
     locks.keys.toSet
 }
 
-case class PermanentLock(id: String, contextId: UUID) extends Lock[String, UUID]
+case class PermanentLock[Ident, ContextId](id: Ident, contextId: ContextId) extends Lock[Ident, ContextId]

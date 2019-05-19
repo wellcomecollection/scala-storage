@@ -4,7 +4,8 @@ import java.util.UUID
 
 import cats.implicits._
 import org.scalatest._
-import uk.ac.wellcome.storage.fixtures.{InMemoryLockDao, LockingServiceFixtures, PermanentLock}
+import uk.ac.wellcome.storage.fixtures.LockingServiceFixtures
+import uk.ac.wellcome.storage.memory.{MemoryLockDao, PermanentLock}
 
 import scala.util.Try
 
@@ -22,7 +23,7 @@ class LockingServiceTest
   val differentLockIds = Set("d", "e", "f")
 
   it("acquires a lock successfully, and returns the result") {
-    val lockDao = new InMemoryLockDao()
+    val lockDao = new MemoryLockDao[String, UUID] {}
 
     withLockingService(lockDao) { service =>
       assertLockSuccess(service.withLocks(lockIds) {
@@ -33,7 +34,7 @@ class LockingServiceTest
   }
 
   it("allows locking a single identifier") {
-    val lockDao = new InMemoryLockDao()
+    val lockDao = new MemoryLockDao[String, UUID] {}
 
     withLockingService(lockDao) { service =>
       assertLockSuccess(service.withLock("a") {
@@ -44,7 +45,7 @@ class LockingServiceTest
   }
 
   it("fails if you try to re-lock the same identifiers twice") {
-    val lockDao = new InMemoryLockDao()
+    val lockDao = new MemoryLockDao[String, UUID] {}
 
     withLockingService(lockDao) { service =>
       assertLockSuccess(service.withLocks(lockIds) {
@@ -59,7 +60,7 @@ class LockingServiceTest
   }
 
   it("fails if you try to re-lock an already locked identifier") {
-    val lockDao = new InMemoryLockDao()
+    val lockDao = new MemoryLockDao[String, UUID] {}
 
     withLockingService(lockDao) { service =>
       assertLockSuccess(service.withLocks(lockIds) {
@@ -144,7 +145,7 @@ class LockingServiceTest
   }
 
   it("releases locks if the callback fails") {
-    val lockDao = new InMemoryLockDao()
+    val lockDao = new MemoryLockDao[String, UUID] {}
 
     withLockingService(lockDao) { service =>
       val result = service.withLocks(lockIds) {
