@@ -1,6 +1,10 @@
 package uk.ac.wellcome.storage.memory
 
-import uk.ac.wellcome.storage.{ObjectStore, SerialisationStrategy, StorageBackend}
+import uk.ac.wellcome.storage.{
+  ObjectStore,
+  SerialisationStrategy,
+  StorageBackend
+}
 
 class MemoryObjectStore[T](
   implicit val serialisationStrategy: SerialisationStrategy[T]

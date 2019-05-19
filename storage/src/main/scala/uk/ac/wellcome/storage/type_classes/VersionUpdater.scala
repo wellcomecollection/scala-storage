@@ -57,8 +57,8 @@ object VersionUpdater {
   //
   implicit def productVersionUpdater[C, L <: HList](
     implicit gen: LabelledGeneric.Aux[C, L],
-    versionUpdater: VersionUpdater[L]): VersionUpdater[C] = createVersionUpdater[C] {
-    (c: C, newVersion: Int) =>
+    versionUpdater: VersionUpdater[L]): VersionUpdater[C] =
+    createVersionUpdater[C] { (c: C, newVersion: Int) =>
       gen.from(versionUpdater.updateVersion(gen.to(c), newVersion))
-  }
+    }
 }

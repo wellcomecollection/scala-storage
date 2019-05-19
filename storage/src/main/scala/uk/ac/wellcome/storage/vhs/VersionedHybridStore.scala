@@ -56,7 +56,10 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
     maybeRow match {
       case Success(Some(row)) =>
         objectStore
-          .get(row.location).map { t: T => Some((t, row)) }
+          .get(row.location)
+          .map { t: T =>
+            Some((t, row))
+          }
           .recover {
             case t: Throwable =>
               throw new RuntimeException(
@@ -64,17 +67,17 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
               )
           }
       case Success(None) => Success(None)
-      case Failure(err) => Failure(
-        new RuntimeException(s"Cannot read record $id from dao: $err")
-      )
+      case Failure(err) =>
+        Failure(
+          new RuntimeException(s"Cannot read record $id from dao: $err")
+        )
     }
   }
 
-  private def putObject(
-    id: Ident,
-    existingRow: VHSEntry,
-    newObject: T,
-    newMetadata: Metadata): Try[VHSEntry] =
+  private def putObject(id: Ident,
+                        existingRow: VHSEntry,
+                        newObject: T,
+                        newMetadata: Metadata): Try[VHSEntry] =
     for {
       newLocation <- objectStore.put(namespace)(
         newObject,
