@@ -1,222 +1,109 @@
 package uk.ac.wellcome.storage.vhs
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.gu.scanamo.DynamoFormat
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.dynamo.{
-  DynamoVersionedDao,
-  UpdateExpressionGenerator
-}
-import uk.ac.wellcome.storage.type_classes.Migration._
-import uk.ac.wellcome.storage.type_classes.{
-  HybridRecordEnricher,
-  IdGetter,
-  VersionGetter,
-  VersionUpdater,
-  _
-}
-import uk.ac.wellcome.storage.{KeyPrefix, ObjectLocation, ObjectStore}
+import uk.ac.wellcome.storage.{KeyPrefix, ObjectStore, VersionedDao}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
-case class EmptyMetadata()
+trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
+  type VHSEntry = Entry[Ident, Metadata]
 
-class VersionedHybridStore[T, Metadata, Store <: ObjectStore[T]](
-  vhsConfig: VHSConfig,
-  objectStore: Store,
-  dynamoDbClient: AmazonDynamoDB
-)(implicit ec: ExecutionContext)
-    extends Logging {
+  protected val namespace: String = ""
 
-  def versionedDao[DynamoRow](
-    implicit
-    dynamoFormat: DynamoFormat[DynamoRow],
-    versionUpdater: VersionUpdater[DynamoRow],
-    idGetter: IdGetter[DynamoRow],
-    versionGetter: VersionGetter[DynamoRow],
-    updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow])
-    : DynamoVersionedDao[DynamoRow] =
-    new DynamoVersionedDao[DynamoRow](
-      dynamoDbClient = dynamoDbClient,
-      dynamoConfig = vhsConfig.dynamoConfig
-    )
+  protected val versionedDao: VersionedDao[Ident, VHSEntry]
+  protected val objectStore: ObjectStore[T]
 
-  private case class VersionedHybridObject(
-    vhsIndexEntry: VHSIndexEntry[Metadata],
-    s3Object: T
-  )
+  def update(
+    id: Ident
+  )(
+    ifNotExisting: => (T, Metadata)
+  )(
+    ifExisting: (T, Metadata) => (T, Metadata)
+  ): Try[VHSEntry] =
+    getObject(id).flatMap {
+      case Some((storedObject, storedRow)) =>
+        debug(s"Found existing object for $id")
+        val (newObject, newMetadata) =
+          ifExisting(storedObject, storedRow.metadata)
 
-  // Store a single record in DynamoDB.
-  //
-  // You pass it a record and optionally a case class containing some metadata.
-  // The HybridRecordEnricher combines this with the HybridRecord, and stores
-  // both of them as a single row in DynamoDB.
-  //
-  // Update and version logic (e.g., do not store this record if a newer record already exists)
-  // is handled through the mappings ifNotExisting and ifExisting
-  //
-  def updateRecord[DynamoRow](id: String)(ifNotExisting: => (T, Metadata))(
-    ifExisting: (T, Metadata) => (T, Metadata))(
-    implicit enricher: HybridRecordEnricher.Aux[Metadata, DynamoRow],
-    dynamoFormat: DynamoFormat[DynamoRow],
-    versionUpdater: VersionUpdater[DynamoRow],
-    idGetter: IdGetter[DynamoRow],
-    versionGetter: VersionGetter[DynamoRow],
-    updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow],
-    migrationH: Migration[DynamoRow, HybridRecord],
-    migrationM: Migration[DynamoRow, Metadata]
-  ): Future[VHSIndexEntry[Metadata]] =
-    getObject[DynamoRow](id).flatMap {
-      case Some(
-          VersionedHybridObject(
-            VHSIndexEntry(storedHybridRecord, storedMetadata),
-            storedS3Record
-          )
-          ) =>
-        debug(s"Existing object $id")
-        val (transformedS3Record, transformedMetadata) =
-          ifExisting(storedS3Record, storedMetadata)
-
-        if (transformedS3Record != storedS3Record || transformedMetadata != storedMetadata) {
-          debug("existing object changed, updating")
+        if (newObject != storedObject || newMetadata != storedRow.metadata) {
+          debug(s"Object for $id changed, updating")
           putObject(
-            id,
-            transformedS3Record,
-            enricher
-              .enrichedHybridRecordHList(
-                id = id,
-                metadata = transformedMetadata,
-                version = storedHybridRecord.version)
-          ).map { hybridRecord =>
-            VHSIndexEntry(
-              hybridRecord = hybridRecord,
-              metadata = transformedMetadata
-            )
-          }
-        } else {
-          debug("existing object unchanged, not updating")
-          Future.successful(
-            VHSIndexEntry(
-              hybridRecord = storedHybridRecord,
-              metadata = storedMetadata
-            )
+            id = id,
+            existingRow = storedRow,
+            newObject = newObject,
+            newMetadata = newMetadata
           )
+        } else {
+          debug(s"Existing object for $id unchanged, not updating")
+          Success(storedRow)
         }
       case None =>
-        debug("NotExisting object")
-        val (s3Record, metadata) = ifNotExisting
-        debug(s"creating $id")
-        putObject(
-          id = id,
-          s3Record,
-          enricher.enrichedHybridRecordHList(
-            id = id,
-            metadata = metadata,
-            version = 0
-          )
-        ).map { hybridRecord =>
-          VHSIndexEntry(
-            hybridRecord = hybridRecord,
-            metadata = metadata
-          )
-        }
+        debug(s"There's no existing object for $id")
+        val (newObject, newMetadata) = ifNotExisting
+        putNewObject(id = id, newObject, newMetadata)
     }
 
-  def getRecord[DynamoRow](id: String)(
-    implicit enricher: HybridRecordEnricher.Aux[Metadata, DynamoRow],
-    dynamoFormat: DynamoFormat[DynamoRow],
-    versionUpdater: VersionUpdater[DynamoRow],
-    idGetter: IdGetter[DynamoRow],
-    versionGetter: VersionGetter[DynamoRow],
-    updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow],
-    migrationH: Migration[DynamoRow, HybridRecord],
-    migrationM: Migration[DynamoRow, Metadata]
-  ): Future[Option[T]] = {
+  def get(id: Ident): Try[Option[T]] =
+    getObject(id).map {
+      case Some((t, _)) => Some(t)
+      case None         => None
+    }
 
-    // The compiler wrongly thinks `enricher` is unused.
-    // This no-op persuades it to ignore it.
-    identity(enricher)
+  private def getObject(id: Ident): Try[Option[(T, VHSEntry)]] = {
+    val maybeRow = versionedDao.get(id)
 
-    getObject[DynamoRow](id).map { maybeObject =>
-      maybeObject.map(_.s3Object)
+    maybeRow match {
+      case Success(Some(row)) =>
+        objectStore
+          .get(row.location)
+          .map { t: T =>
+            Some((t, row))
+          }
+          .recover {
+            case t: Throwable =>
+              throw new RuntimeException(
+                s"Dao entry for $id points to a location that can't be fetched from the object store: $t"
+              )
+          }
+      case Success(None) => Success(None)
+      case Failure(err) =>
+        Failure(
+          new RuntimeException(s"Cannot read record $id from dao: $err")
+        )
     }
   }
 
-  private def putObject[DynamoRow](id: String,
-                                   t: T,
-                                   f: ObjectLocation => DynamoRow)(
-    implicit dynamoFormat: DynamoFormat[DynamoRow],
-    versionUpdater: VersionUpdater[DynamoRow],
-    idGetter: IdGetter[DynamoRow],
-    versionGetter: VersionGetter[DynamoRow],
-    migrationH: Migration[DynamoRow, HybridRecord],
-    updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow]
-  ): Future[HybridRecord] =
+  private def putObject(id: Ident,
+                        existingRow: VHSEntry,
+                        newObject: T,
+                        newMetadata: Metadata): Try[VHSEntry] =
     for {
-      objectLocation <- Future.fromTry {
-        objectStore.put(vhsConfig.s3Config.bucketName)(
-          t,
-          keyPrefix = KeyPrefix(buildKeyPrefix(id))
+      newLocation <- objectStore.put(namespace)(
+        newObject,
+        keyPrefix = KeyPrefix(id.toString)
+      )
+      newRow <- versionedDao.put(
+        existingRow.copy(
+          location = newLocation,
+          metadata = newMetadata
         )
-      }
-      dynamoRow <- Future.fromTry {
-        versionedDao[DynamoRow].put(f(objectLocation))
-      }
-    } yield dynamoRow.migrateTo[HybridRecord]
+      )
+    } yield newRow
 
-  // To spread objects evenly in our S3 bucket, we take the last two
-  // characters of the ID and reverse them.  This ensures that:
-  //
-  //  1.  We can find the S3 data corresponding to a given source ID
-  //      without consulting the index.
-  //
-  //  2.  We can identify which record an S3 object is associated with.
-  //
-  //  3.  Adjacent objects are stored in shards that are far apart,
-  //      e.g. 0001 and 0002 are separated by nine shards.
-  //
-  private def buildKeyPrefix(id: String): String =
-    s"${vhsConfig.globalS3Prefix.stripSuffix("/")}/$id"
-
-  private def getObject[DynamoRow](id: String)(
-    implicit
-    dynamoFormat: DynamoFormat[DynamoRow],
-    versionUpdater: VersionUpdater[DynamoRow],
-    idGetter: IdGetter[DynamoRow],
-    versionGetter: VersionGetter[DynamoRow],
-    updateExpressionGenerator: UpdateExpressionGenerator[DynamoRow],
-    migrationH: Migration[DynamoRow, HybridRecord],
-    migrationM: Migration[DynamoRow, Metadata]
-  ): Future[Option[VersionedHybridObject]] = {
-
-    val dynamoRecord: Future[Option[DynamoRow]] = Future.fromTry {
-      versionedDao[DynamoRow].get(id = id)
-    }
-
-    dynamoRecord.flatMap {
-      case Some(dynamoRow) => {
-
-        val hybridRecord = dynamoRow.migrateTo[HybridRecord]
-        val metadata = dynamoRow.migrateTo[Metadata]
-
-        val vhsIndexEntry = VHSIndexEntry(
-          hybridRecord = hybridRecord,
+  private def putNewObject(id: Ident, t: T, metadata: Metadata): Try[VHSEntry] =
+    for {
+      location <- objectStore.put(namespace)(
+        t,
+        keyPrefix = KeyPrefix(id.toString)
+      )
+      row <- versionedDao.put(
+        Entry[Ident, Metadata](
+          id = id,
+          version = 0,
+          location = location,
           metadata = metadata
         )
-
-        Future
-          .fromTry {
-            objectStore
-              .get(hybridRecord.location)
-          }
-          .map { s3Object =>
-            Some(
-              VersionedHybridObject(
-                vhsIndexEntry = vhsIndexEntry,
-                s3Object = s3Object))
-          }
-      }
-      case None => Future.successful(None)
-    }
-  }
+      )
+    } yield row
 }

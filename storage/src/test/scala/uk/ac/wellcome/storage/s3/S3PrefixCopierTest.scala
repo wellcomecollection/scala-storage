@@ -4,20 +4,17 @@ import java.nio.file.Paths
 
 import com.amazonaws.services.s3.iterable.S3Objects
 import com.amazonaws.services.s3.model._
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.storage.fixtures.S3
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
 import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
 
 class S3PrefixCopierTest
   extends FunSpec
     with Matchers
-    with ScalaFutures
-    with IntegrationPatience
     with S3 {
 
   val batchSize = 10
@@ -27,16 +24,13 @@ class S3PrefixCopierTest
     batchSize = batchSize
   )
 
-  it("returns a successful Future if there are no files in the prefix") {
+  it("succeeds if there are no files in the prefix") {
     withLocalS3Bucket { bucket =>
       val src = createObjectLocationWith(bucket, key = "src/")
       val dst = createObjectLocationWith(bucket, key = "dst/")
 
-      val future = s3PrefixCopier.copyObjects(src, dst)
-
-      whenReady(future) { _ =>
-        listKeysInBucket(bucket) shouldBe empty
-      }
+      s3PrefixCopier.copyObjects(src, dst) shouldBe a[Success[_]]
+      listKeysInBucket(bucket) shouldBe empty
     }
   }
 
@@ -55,12 +49,13 @@ class S3PrefixCopierTest
             val dstPrefix = createObjectLocationWith(dstBucket, key = "dst/")
             val dst = dstPrefix.copy(key = Paths.get(dstPrefix.key,"foo.txt").toString)
 
-            whenReady(s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)) { result =>
-              listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
-              assertEqualObjects(src, dst)
+            val result = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
+            result shouldBe a[Success[_]]
 
-              result.fileCount shouldBe 1
-            }
+            listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
+            assertEqualObjects(src, dst)
+
+            result.get.fileCount shouldBe 1
           }
         }
       }
@@ -80,12 +75,13 @@ class S3PrefixCopierTest
             val dstPrefix = createObjectLocationWith(dstBucket, key = "dst")
             val dst = dstPrefix.copy(key = Paths.get(dstPrefix.key,"foo.txt").toString)
 
-            whenReady(s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)) { result =>
-              listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
-              assertEqualObjects(src, dst)
+            val result = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
+            result shouldBe a[Success[_]]
 
-              result.fileCount shouldBe 1
-            }
+            listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
+            assertEqualObjects(src, dst)
+
+            result.get.fileCount shouldBe 1
           }
         }
       }
@@ -112,36 +108,34 @@ class S3PrefixCopierTest
           )
         }
 
-        val future = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
+        val result = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
+        result shouldBe a[Success[_]]
 
-        whenReady(future) { result =>
-          listKeysInBucket(dstBucket) shouldBe dstLocations.map {
-            _.key
-          }
-
-          srcLocations.zip(dstLocations).map {
-            case (src, dst) =>
-              assertEqualObjects(src, dst)
-          }
-
-          result.fileCount shouldBe 5
+        listKeysInBucket(dstBucket) shouldBe dstLocations.map {
+          _.key
         }
+
+        srcLocations.zip(dstLocations).map {
+          case (src, dst) =>
+            assertEqualObjects(src, dst)
+        }
+
+        result.get.fileCount shouldBe 5
       }
     }
   }
 
-  it("returns a failed Future if the source bucket does not exist") {
+  it("fails if the source bucket does not exist") {
     val srcPrefix = createObjectLocation
     val dstPrefix = createObjectLocation
 
-    val future = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
+    val result = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
 
-    whenReady(future.failed) { err =>
-      err shouldBe a[AmazonS3Exception]
-    }
+    result shouldBe a[Failure[_]]
+    result.failed.get shouldBe a[AmazonS3Exception]
   }
 
-  it("returns a failed Future if the destination bucket does not exist") {
+  it("fails if the destination bucket does not exist") {
     withLocalS3Bucket { bucket =>
       val srcPrefix = createObjectLocationWith(bucket)
 
@@ -150,11 +144,10 @@ class S3PrefixCopierTest
 
       val dstPrefix = createObjectLocationWith(Bucket("no_such_bucket"))
 
-      val future = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
+      val result = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
 
-      whenReady(future.failed) { err =>
-        err shouldBe a[AmazonS3Exception]
-      }
+      result shouldBe a[Failure[_]]
+      result.failed.get shouldBe a[AmazonS3Exception]
     }
   }
 
@@ -184,26 +177,27 @@ class S3PrefixCopierTest
           )
         }
 
-        whenReady(s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)) { result =>
-          val actualKeys = listKeysInBucket(dstBucket)
-          val expectedKeys = dstLocations.map {
-            _.key
-          }
-          actualKeys.size shouldBe expectedKeys.size
-          actualKeys should contain theSameElementsAs expectedKeys
+        val result = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
+        result shouldBe a[Success[_]]
 
-          srcLocations.zip(dstLocations).map {
-            case (src, dst) =>
-              assertEqualObjects(src, dst)
-          }
-
-          result.fileCount shouldBe 10
+        val actualKeys = listKeysInBucket(dstBucket)
+        val expectedKeys = dstLocations.map {
+          _.key
         }
+        actualKeys.size shouldBe expectedKeys.size
+        actualKeys should contain theSameElementsAs expectedKeys
+
+        srcLocations.zip(dstLocations).map {
+          case (src, dst) =>
+            assertEqualObjects(src, dst)
+        }
+
+        result.get.fileCount shouldBe 10
       }
     }
   }
 
-  it("returns a failed Future if one of the objects fails to copy") {
+  it("fails if one of the objects fails to copy") {
     val exception = new RuntimeException("Nope, that's not going to work")
 
     val brokenCopier = new ObjectCopier {
@@ -226,14 +220,13 @@ class S3PrefixCopierTest
         src
       }
 
-      val future = brokenPrefixCopier.copyObjects(
+      val result = brokenPrefixCopier.copyObjects(
         srcLocationPrefix = srcPrefix,
         dstLocationPrefix = srcPrefix.copy(key = "dst/")
       )
 
-      whenReady(future.failed) { err =>
-        err shouldBe exception
-      }
+      result shouldBe a[Failure[_]]
+      result.failed.get shouldBe exception
     }
   }
 

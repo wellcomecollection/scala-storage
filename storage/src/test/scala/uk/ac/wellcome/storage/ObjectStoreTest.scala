@@ -9,8 +9,7 @@ import org.scalatest.prop.PropertyChecks
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.fixtures.S3
-import uk.ac.wellcome.storage.memory.MemoryStorageBackend
-import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
+import uk.ac.wellcome.storage.memory.MemoryObjectStore
 
 import scala.util.Success
 
@@ -20,10 +19,8 @@ class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with Prope
 
   val namespace = "BetterObjectStoreTest_namespace"
 
-  def createObjectStore[T](implicit strategy: SerialisationStrategy[T]): ObjectStore[T] = new ObjectStore[T] {
-    override implicit val serialisationStrategy: SerialisationStrategy[T] = strategy
-    override implicit val storageBackend: StorageBackend = new MemoryStorageBackend()
-  }
+  def createObjectStore[T](implicit strategy: SerialisationStrategy[T]): ObjectStore[T] =
+    new MemoryObjectStore[T]()
 
   it("stores a record and can retrieve it") {
     val objectStore = createObjectStore[ObjectRecord]
@@ -76,7 +73,7 @@ class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with Prope
     val mockBackend = mock[StorageBackend]
 
     val objectStore = new ObjectStore[String] {
-      override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringSerialisationStrategy
+      override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringStrategy
       override implicit val storageBackend: StorageBackend = mockBackend
     }
 
@@ -99,7 +96,7 @@ class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with Prope
     val mockBackend = mock[StorageBackend]
 
     val objectStore = new ObjectStore[String] {
-      override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringSerialisationStrategy
+      override implicit val serialisationStrategy: SerialisationStrategy[String] = SerialisationStrategy.stringStrategy
       override implicit val storageBackend: StorageBackend = mockBackend
     }
 

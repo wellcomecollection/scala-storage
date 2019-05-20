@@ -1,40 +1,37 @@
 package uk.ac.wellcome.storage.typesafe
 
+import com.gu.scanamo.DynamoFormat
 import com.typesafe.config.Config
-import uk.ac.wellcome.storage.ObjectStore
-import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
-import uk.ac.wellcome.storage.vhs.{VHSConfig, VersionedHybridStore}
-import uk.ac.wellcome.typesafe.config.builders.AkkaBuilder
+import uk.ac.wellcome.storage._
+import uk.ac.wellcome.storage.dynamo.UpdateExpressionGenerator
+import uk.ac.wellcome.storage.type_classes.{
+  IdGetter,
+  VersionGetter,
+  VersionUpdater
+}
+import uk.ac.wellcome.storage.vhs.{Entry, VersionedHybridStore}
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
 
-import scala.concurrent.ExecutionContext
-
 object VHSBuilder {
-  def buildVHSConfig(config: Config): VHSConfig = {
-    val s3Config = S3Builder.buildS3Config(config, namespace = "vhs")
-    val dynamoConfig =
-      DynamoBuilder.buildDynamoConfig(config, namespace = "vhs")
-
-    val globalS3Prefix = config
-      .getOrElse[String]("aws.vhs.s3.globalPrefix")(default = "")
-
-    VHSConfig(
-      dynamoConfig = dynamoConfig,
-      s3Config = s3Config,
-      globalS3Prefix = globalS3Prefix
-    )
-  }
-
-  def buildVHS[T, M](config: Config)(
-    implicit serialisationStrategy: SerialisationStrategy[T])
-    : VersionedHybridStore[T, M, ObjectStore[T]] = {
-    implicit val executionContext: ExecutionContext =
-      AkkaBuilder.buildExecutionContext()
-
-    new VersionedHybridStore[T, M, ObjectStore[T]](
-      vhsConfig = buildVHSConfig(config),
-      objectStore = S3Builder.buildObjectStore[T](config),
-      dynamoDbClient = DynamoBuilder.buildDynamoClient(config)
-    )
-  }
+  def buildVHS[Ident, T, Metadata](config: Config,
+                                   configNamespace: String = "vhs")(
+    implicit
+    evidence: DynamoFormat[Entry[Ident, Metadata]],
+    idGetter: IdGetter[Entry[Ident, Metadata]],
+    serialisationStrategy: SerialisationStrategy[T],
+    versionGetter: VersionGetter[Entry[Ident, Metadata]],
+    versionUpdater: VersionUpdater[Entry[Ident, Metadata]],
+    updateExpressionGenerator: UpdateExpressionGenerator[Entry[Ident, Metadata]]
+  ): VersionedHybridStore[Ident, T, Metadata] =
+    new VersionedHybridStore[Ident, T, Metadata] {
+      override protected val versionedDao
+        : VersionedDao[Ident, Entry[Ident, Metadata]] =
+        DynamoBuilder.buildVersionedDao[Ident, Entry[Ident, Metadata]](
+          config,
+          namespace = configNamespace)
+      override protected val objectStore: ObjectStore[T] =
+        S3Builder.buildObjectStore[T](config)
+      override protected val namespace: String = config
+        .getOrElse[String]("aws.vhs.s3.globalPrefix")(default = "")
+    }
 }

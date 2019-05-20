@@ -3,13 +3,10 @@ package uk.ac.wellcome.storage.typesafe
 import com.amazonaws.services.s3.AmazonS3
 import com.typesafe.config.Config
 import uk.ac.wellcome.config.models.AWSClientConfig
-import uk.ac.wellcome.storage.ObjectStore
+import uk.ac.wellcome.storage.{ObjectStore, SerialisationStrategy}
 import uk.ac.wellcome.storage.s3._
-import uk.ac.wellcome.storage.type_classes.SerialisationStrategy
 import uk.ac.wellcome.typesafe.config.builders.AWSClientConfigBuilder
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
-
-import scala.concurrent.ExecutionContext
 
 object S3Builder extends AWSClientConfigBuilder {
   private def buildS3Client(awsClientConfig: AWSClientConfig): AmazonS3 =
@@ -44,7 +41,6 @@ object S3Builder extends AWSClientConfigBuilder {
     ObjectStore[T]
   }
 
-  def buildS3PrefixCopier(config: Config)(
-    implicit ec: ExecutionContext): S3PrefixCopier =
+  def buildS3PrefixCopier(config: Config): S3PrefixCopier =
     S3PrefixCopier(s3Client = buildS3Client(config))
 }

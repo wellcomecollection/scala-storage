@@ -46,7 +46,7 @@ class S3CopierTest extends FunSpec with Matchers with S3 {
     }
   }
 
-  it("returns a failed Future if the source object does not exist") {
+  it("fails if the source object does not exist") {
     val src = createObjectLocation
     val dst = createObjectLocation
 
@@ -55,7 +55,7 @@ class S3CopierTest extends FunSpec with Matchers with S3 {
     }
   }
 
-  it("returns a failed Future if the destination bucket does not exist") {
+  it("fails if the destination bucket does not exist") {
     withLocalS3Bucket { bucket =>
       val src = createObjectLocationWith(bucket)
       val dst = createObjectLocationWith(Bucket("no_such_bucket"))
@@ -80,7 +80,7 @@ class S3CopierTest extends FunSpec with Matchers with S3 {
     }
   }
 
-  it("returns a failed Future if the destination object exists and is different") {
+  it("fails if the destination object exists and is different") {
     withLocalS3Bucket { bucket =>
       val src = createObjectLocationWith(bucket, key = "src.txt")
       val dst = createObjectLocationWith(bucket, key = "dst.txt")

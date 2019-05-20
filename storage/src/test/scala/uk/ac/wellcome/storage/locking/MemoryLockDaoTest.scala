@@ -3,17 +3,17 @@ package uk.ac.wellcome.storage.locking
 import java.util.UUID
 
 import org.scalatest.{EitherValues, FunSpec, Matchers}
-import uk.ac.wellcome.storage.fixtures.{InMemoryLockDao, PermanentLock}
+import uk.ac.wellcome.storage.memory.{MemoryLockDao, PermanentLock}
 
 import scala.util.Random
 
-class InMemoryLockDaoTest
+class MemoryLockDaoTest
   extends FunSpec
     with Matchers
     with EitherValues {
 
   it("behaves correctly") {
-    val dao = new InMemoryLockDao()
+    val dao = new MemoryLockDao[String, UUID] {}
 
     val id1 = createId
     val id2 = createId
@@ -38,7 +38,7 @@ class InMemoryLockDaoTest
   }
 
   it("records a history of locks") {
-    val dao = new InMemoryLockDao()
+    val dao = new MemoryLockDao[String, UUID] {}
 
     val id1 = createId
 

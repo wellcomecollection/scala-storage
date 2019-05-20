@@ -6,6 +6,7 @@ import grizzled.slf4j.Logging
 import org.scalatest.{Assertion, EitherValues, Matchers, TryValues}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
+import uk.ac.wellcome.storage.memory.MemoryLockDao
 
 import scala.util.Try
 
@@ -33,7 +34,7 @@ trait LockingServiceFixtures
   }
 
   def withLockingService[R](testWith: TestWith[LockingServiceStub, R]): R =
-    withLockingService(new InMemoryLockDao()) { lockingService =>
+    withLockingService(new MemoryLockDao[String, UUID] {}) { lockingService =>
       testWith(lockingService)
     }
 

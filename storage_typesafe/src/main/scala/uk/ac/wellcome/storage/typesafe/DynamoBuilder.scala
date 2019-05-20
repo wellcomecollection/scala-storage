@@ -18,8 +18,6 @@ import uk.ac.wellcome.storage.type_classes.{
 import uk.ac.wellcome.typesafe.config.builders.AWSClientConfigBuilder
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
 
-import scala.concurrent.ExecutionContext
-
 object DynamoBuilder extends AWSClientConfigBuilder {
   def buildDynamoConfig(config: Config,
                         namespace: String = ""): DynamoConfig = {
@@ -48,17 +46,16 @@ object DynamoBuilder extends AWSClientConfigBuilder {
       awsClientConfig = buildAWSClientConfig(config, namespace = "dynamo")
     )
 
-  def buildVersionedDao[T](config: Config, namespace: String = "")(
+  def buildVersionedDao[Ident, T](config: Config, namespace: String = "")(
     implicit
-    ec: ExecutionContext,
     evidence: DynamoFormat[T],
     versionUpdater: VersionUpdater[T],
     idGetter: IdGetter[T],
     versionGetter: VersionGetter[T],
     updateExpressionGenerator: UpdateExpressionGenerator[T])
-    : DynamoVersionedDao[T] =
-    new DynamoVersionedDao[T](
-      dynamoDbClient = buildDynamoClient(config),
+    : DynamoVersionedDao[Ident, T] =
+    DynamoVersionedDao[Ident, T](
+      dynamoClient = buildDynamoClient(config),
       dynamoConfig = buildDynamoConfig(config, namespace = namespace)
     )
 }

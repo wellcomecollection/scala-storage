@@ -7,10 +7,9 @@ import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.fixtures._
-import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig, DynamoVersionedDao, UpdateExpressionGenerator}
+import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConditionalUpdateDao, DynamoConfig, DynamoDao, DynamoVersionedDao, UpdateExpressionGenerator}
 import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter, VersionUpdater}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
 object LocalDynamoDb {
@@ -34,7 +33,7 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
   )
 
   def withSpecifiedLocalDynamoDbTable[R](
-    createTable: (AmazonDynamoDB) => Table): Fixture[Table, R] =
+    createTable: AmazonDynamoDB => Table): Fixture[Table, R] =
     fixture[Table, R](
       create = createTable(dynamoDbClient),
       destroy = { table =>
@@ -55,29 +54,18 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
   )
 
   def withVersionedDao[T, R](table: Table)(
-    testWith: TestWith[DynamoVersionedDao[T], R])(
-     implicit
-     evidence: DynamoFormat[T],
-     versionUpdater: VersionUpdater[T],
-     idGetter: IdGetter[T],
-     versionGetter: VersionGetter[T],
-     updateExpressionGenerator: UpdateExpressionGenerator[T]): R =
-    withVersionedDao[T, R](dynamoDbClient, table = table) { dao =>
-      testWith(dao)
-    }
-
-  def withVersionedDao[T, R](dynamoDbClient: AmazonDynamoDB, table: Table)(
-    testWith: TestWith[DynamoVersionedDao[T], R])(
+    testWith: TestWith[DynamoVersionedDao[String, T], R])(
     implicit
     evidence: DynamoFormat[T],
     versionUpdater: VersionUpdater[T],
     idGetter: IdGetter[T],
     versionGetter: VersionGetter[T],
-    updateExpressionGenerator: UpdateExpressionGenerator[T]): R = {
-    val dynamoConfig = createDynamoConfigWith(table)
-    val dao = new DynamoVersionedDao[T](dynamoDbClient, dynamoConfig)
-    testWith(dao)
-  }
+    updateExpressionGenerator: UpdateExpressionGenerator[T]): R =
+    withDynamoConditionalUpdateDao[T, R](table) { conditionalUpdateDao =>
+      val dao = new DynamoVersionedDao[String, T](conditionalUpdateDao)
+
+      testWith(dao)
+    }
 
   def createTable(table: LocalDynamoDb.Table): Table
 
@@ -120,4 +108,29 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
       table = table.name,
       maybeIndex = Some(table.index)
     )
+
+  def withDynamoDao[T, R](table: Table)(testWith: TestWith[DynamoDao[String, T], R])(
+    implicit
+    evidence: DynamoFormat[T],
+    idGetter: IdGetter[T],
+    updateExpressionGenerator: UpdateExpressionGenerator[T]): R = {
+    val dao = new DynamoDao[String, T](
+      dynamoClient = dynamoDbClient,
+      dynamoConfig = createDynamoConfigWith(table)
+    )
+
+    testWith(dao)
+  }
+
+  def withDynamoConditionalUpdateDao[T, R](table: Table)(testWith: TestWith[DynamoConditionalUpdateDao[String, T], R])(
+    implicit
+    evidence: DynamoFormat[T],
+    idGetter: IdGetter[T],
+    versionGetter: VersionGetter[T],
+    updateExpressionGenerator: UpdateExpressionGenerator[T]): R =
+    withDynamoDao[T, R](table) { underlying =>
+      val dao = new DynamoConditionalUpdateDao[String, T](underlying)
+
+      testWith(dao)
+    }
 }

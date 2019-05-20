@@ -7,7 +7,7 @@ import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.ObjectLocation
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 /** Given an S3 ObjectLocation prefix and a function (ObjectLocation => Unit),
   * apply that function to every object under the prefix.
@@ -16,11 +16,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class S3PrefixOperator(
   s3Client: AmazonS3,
   batchSize: Int = 1000
-)(implicit ec: ExecutionContext)
-    extends Logging {
+) extends Logging {
   def run(prefix: ObjectLocation)(
-    f: ObjectLocation => Unit): Future[S3PrefixCopierResult] =
-    Future {
+    f: ObjectLocation => Unit): Try[S3PrefixCopierResult] =
+    Try {
 
       // Implementation note: this means we're single-threaded.  We're working
       // on a single object under a prefix at a time.
