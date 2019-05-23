@@ -8,8 +8,6 @@ sealed trait RetrievalError extends StorageError
 
 sealed trait EncoderError extends RetrievalError
 
-case class StringEncodingError(e: Throwable) extends EncoderError
-
 case class JsonEncodingError(e: Throwable) extends EncoderError
 
 sealed trait WriteError extends StorageError

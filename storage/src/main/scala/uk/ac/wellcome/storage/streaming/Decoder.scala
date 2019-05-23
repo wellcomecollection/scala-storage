@@ -18,6 +18,8 @@ trait Decoder[T] {
 object DecoderInstances {
   import io.circe.parser._
 
+  type ParseJson[T] = String => Either[JsonDecodingError, T]
+
   implicit val stringDecoder: Decoder[String] = (inputStream: InputStream) =>
     Try {
       IOUtils.toString(inputStream, Charset.defaultCharset)
@@ -27,7 +29,7 @@ object DecoderInstances {
     }
 
   implicit val jsonDecoder: Decoder[Json] = (inputStream: InputStream) => {
-    val parseJson = parse(_) match {
+    val parseJson: ParseJson[Json] = parse(_) match {
       case Left(err) => Left(JsonDecodingError(err))
       case Right(json) => Right(json)
     }
@@ -39,7 +41,7 @@ object DecoderInstances {
   }
 
   implicit def typeDecoder[T](implicit dec: circe.Decoder[T]): Decoder[T] = (inputStream: InputStream) => {
-    val parseJson = fromJson[T](_) match {
+    val parseJson: ParseJson[T] = fromJson[T](_) match {
       case Failure(err) => Left(JsonDecodingError(err))
       case Success(t) => Right(t)
     }
