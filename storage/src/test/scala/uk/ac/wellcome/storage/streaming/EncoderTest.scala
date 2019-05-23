@@ -35,7 +35,7 @@ class EncoderTest
     assertStreamEquals(stream.right.value, toJson(randomString).get)
   }
 
-  it("encodes some type T") {
+  it("encodes a type T") {
     case class FilmStar(name: String, age: Int)
 
     val michael = FilmStar("Michael J. Fox", 57)
