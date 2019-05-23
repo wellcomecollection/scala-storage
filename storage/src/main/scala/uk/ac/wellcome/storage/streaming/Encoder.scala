@@ -18,8 +18,8 @@ trait Encoder[T] {
 
 object EncoderInstances extends Logging {
   implicit def stringEncoder(
-                              implicit charset: Charset = StandardCharsets.UTF_8
-                            ): Encoder[String] =
+    implicit charset: Charset = StandardCharsets.UTF_8
+  ): Encoder[String] =
     (t: String) =>  {
       info(s"Encoding string <$t> with charset <$charset>")
 

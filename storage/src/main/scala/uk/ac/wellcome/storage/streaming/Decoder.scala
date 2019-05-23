@@ -1,7 +1,7 @@
 package uk.ac.wellcome.storage.streaming
 
 import java.io.InputStream
-import java.nio.charset.Charset
+import java.nio.charset.{Charset, StandardCharsets}
 
 import io.circe
 import io.circe.Json
@@ -20,9 +20,11 @@ object DecoderInstances {
 
   type ParseJson[T] = String => Either[JsonDecodingError, T]
 
-  implicit val stringDecoder: Decoder[String] = (inputStream: InputStream) =>
+  implicit def stringDecoder(
+    implicit charset: Charset = StandardCharsets.UTF_8
+  ): Decoder[String] = (inputStream: InputStream) =>
     Try {
-      IOUtils.toString(inputStream, Charset.defaultCharset)
+      IOUtils.toString(inputStream, charset)
     } match {
       case Success(string) => Right(string)
       case Failure(err) => Left(StringDecodingError(err))
