@@ -20,7 +20,7 @@ object EncoderInstances extends Logging {
   implicit def stringEncoder(
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Encoder[String] =
-    (t: String) =>  {
+    (t: String) => {
       info(s"Encoding string <$t> with charset <$charset>")
 
       // We tried to write a test that causes toInputStream to throw,
@@ -34,9 +34,10 @@ object EncoderInstances extends Logging {
     (t: Json) => stringEncoder.toStream(t.noSpaces)
 
   implicit def typeEncoder[T](implicit enc: circe.Encoder[T]): Encoder[T] =
-    (t: T) => toJson(t) match {
-      case Success(jsonString) => stringEncoder.toStream(jsonString)
-      case Failure(err) => Left(JsonEncodingError(err))
+    (t: T) =>
+      toJson(t) match {
+        case Success(jsonString) => stringEncoder.toStream(jsonString)
+        case Failure(err)        => Left(JsonEncodingError(err))
     }
 
   implicit val streamEncoder: Encoder[InputStream] =

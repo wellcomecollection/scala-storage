@@ -6,7 +6,12 @@ import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import com.amazonaws.util.IOUtils
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.{BackendReadError, BackendWriteError, ObjectLocation, StorageBackend}
+import uk.ac.wellcome.storage.{
+  BackendReadError,
+  BackendWriteError,
+  ObjectLocation,
+  StorageBackend
+}
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}

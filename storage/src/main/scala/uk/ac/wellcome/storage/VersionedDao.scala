@@ -16,6 +16,8 @@ trait VersionedDao[Ident, T] {
 
     versionUpdater.updateVersion(value, newVersion = newVersion)
     val toStore = versionUpdater.updateVersion(value, newVersion = newVersion)
-    underlying.put(toStore).map { _ => toStore }
+    underlying.put(toStore).map { _ =>
+      toStore
+    }
   }
 }

@@ -47,10 +47,11 @@ trait ObjectStore[T] {
   )(t: T): Either[CannotCloseStreamError, Unit] =
     t match {
       case _: InputStream => Right(())
-      case _ => Try(stream.close()) match {
-        case Success(_) => Right(())
-        case Failure(err) => Left(CannotCloseStreamError(err))
-      }
+      case _ =>
+        Try(stream.close()) match {
+          case Success(_)   => Right(())
+          case Failure(err) => Left(CannotCloseStreamError(err))
+        }
     }
 
   def get(objectLocation: ObjectLocation): Either[ReadError, T] =

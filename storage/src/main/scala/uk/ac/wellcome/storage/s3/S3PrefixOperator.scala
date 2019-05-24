@@ -18,7 +18,8 @@ class S3PrefixOperator(
   batchSize: Int = 1000
 ) extends Logging {
   def run(prefix: ObjectLocation)(
-    f: ObjectLocation => Either[StorageError, Unit]): Either[StorageError, S3PrefixCopierResult] =
+    f: ObjectLocation => Either[StorageError, Unit])
+    : Either[StorageError, S3PrefixCopierResult] =
     Try {
 
       // Implementation note: this means we're single-threaded.  We're working
@@ -49,12 +50,12 @@ class S3PrefixOperator(
       val fileCount = locations.foldLeft(0)((count, location) => {
         f(location) match {
           case Left(err) => throw err.e
-          case Right(_) => count + 1
+          case Right(_)  => count + 1
         }
       })
       S3PrefixCopierResult(fileCount)
     } match {
-      case Failure(err) => Left(BackendWriteError(err))
+      case Failure(err)    => Left(BackendWriteError(err))
       case Success(result) => Right(result)
     }
 }

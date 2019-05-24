@@ -10,9 +10,11 @@ class MemoryDao[Ident, T](implicit val idGetter: IdGetter[T])
   override def get(id: Ident): GetResult =
     entries.get(id.toString) match {
       case Some(t) => Right(t)
-      case None => Left(DoesNotExistError(
-        new Throwable(s"No such entry: $id")
-      ))
+      case None =>
+        Left(
+          DoesNotExistError(
+            new Throwable(s"No such entry: $id")
+          ))
     }
 
   override def put(t: T): PutResult = {

@@ -6,9 +6,7 @@ import io.circe
 import io.circe.Json
 import uk.ac.wellcome.storage.{DecoderError, EncoderError}
 
-trait Codec[T]
-  extends Encoder[T]
-    with Decoder[T]
+trait Codec[T] extends Encoder[T] with Decoder[T]
 
 object CodecInstances {
   import EncoderInstances._
@@ -17,7 +15,8 @@ object CodecInstances {
   implicit def stringCodec(
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Codec[String] = new Codec[String] {
-    override def fromStream(inputStream: InputStream): Either[DecoderError, String] =
+    override def fromStream(
+      inputStream: InputStream): Either[DecoderError, String] =
       stringDecoder.fromStream(inputStream)
 
     override def toStream(t: String): Either[EncoderError, InputStream] =
@@ -25,7 +24,8 @@ object CodecInstances {
   }
 
   implicit def jsonCodec: Codec[Json] = new Codec[Json] {
-    override def fromStream(inputStream: InputStream): Either[DecoderError, Json] =
+    override def fromStream(
+      inputStream: InputStream): Either[DecoderError, Json] =
       jsonDecoder.fromStream(inputStream)
 
     override def toStream(t: Json): Either[EncoderError, InputStream] =
@@ -45,7 +45,8 @@ object CodecInstances {
   }
 
   implicit val streamCodec: Codec[InputStream] = new Codec[InputStream] {
-    override def fromStream(inputStream: InputStream): Either[DecoderError, InputStream] =
+    override def fromStream(
+      inputStream: InputStream): Either[DecoderError, InputStream] =
       streamDecoder.fromStream(inputStream)
 
     override def toStream(t: InputStream): Either[EncoderError, InputStream] =

@@ -71,7 +71,9 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
       )
     } yield newRow
 
-  private def putNewObject(id: Ident, t: T, metadata: Metadata): Either[WriteError, VHSEntry] =
+  private def putNewObject(id: Ident,
+                           t: T,
+                           metadata: Metadata): Either[WriteError, VHSEntry] =
     for {
       location <- objectStore.put(namespace)(
         t,

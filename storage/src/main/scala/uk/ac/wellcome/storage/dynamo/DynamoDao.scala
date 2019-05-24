@@ -43,7 +43,9 @@ class DynamoDao[Ident, T](
             .getOrElse(
               throw new Throwable("Could not build update expression!"))
         )
-    ).map { _ => () }
+    ).map { _ =>
+      ()
+    }
 
   def get(id: Ident): GetResult =
     executeReadOps(
@@ -51,7 +53,8 @@ class DynamoDao[Ident, T](
       ops = table.get(buildGetKeyExpression(id))
     )
 
-  def executeReadOps[A](id: Ident, ops: ScanamoOps[Option[Either[A, T]]]): GetResult =
+  def executeReadOps[A](id: Ident,
+                        ops: ScanamoOps[Option[Either[A, T]]]): GetResult =
     Try {
       Scanamo.exec(dynamoClient)(ops)
     } match {
@@ -71,19 +74,23 @@ class DynamoDao[Ident, T](
 
       case Success(None) =>
         debug(s"No Dynamo record found for id: $id")
-        Left(DoesNotExistError(
-          new Throwable(s"No Dynamo record found for id: $id")
-        ))
+        Left(
+          DoesNotExistError(
+            new Throwable(s"No Dynamo record found for id: $id")
+          ))
     }
 
-  def executeWriteOps[A, B](id: String, ops: ScanamoOps[Either[A, B]]): Either[WriteError with DaoError, B] =
+  def executeWriteOps[A, B](
+    id: String,
+    ops: ScanamoOps[Either[A, B]]): Either[WriteError with DaoError, B] =
     Try {
       Scanamo.exec(dynamoClient)(ops)
     } match {
       case Failure(exc) =>
         Left(DaoWriteError(exc))
 
-      case Success(Left(ConditionNotMet(exc: ConditionalCheckFailedException))) =>
+      case Success(
+          Left(ConditionNotMet(exc: ConditionalCheckFailedException))) =>
         warn(s"Failed a conditional check updating $id", exc)
         Left(ConditionalWriteError(exc))
       case Success(Left(scanamoError)) =>

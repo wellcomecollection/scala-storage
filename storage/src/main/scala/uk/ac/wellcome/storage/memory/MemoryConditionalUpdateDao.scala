@@ -23,7 +23,8 @@ class MemoryConditionalUpdateDao[Ident, T](
       underlying.put(t)
     } else {
       Left(
-        ConditionalWriteError(new Throwable("Rejected! Version is going backwards."))
+        ConditionalWriteError(
+          new Throwable("Rejected! Version is going backwards."))
       )
     }
   }
