@@ -6,6 +6,7 @@ sealed trait StorageError {
 
 sealed trait DaoError
 sealed trait ObjectStoreError
+sealed trait BackendError
 
 sealed trait WriteError extends StorageError
 sealed trait EncoderError extends WriteError
@@ -17,6 +18,10 @@ case class DaoWriteError(e: Throwable)
 case class ConditionalWriteError(e: Throwable)
   extends WriteError
   with DaoError
+
+case class BackendWriteError(e: Throwable)
+  extends WriteError
+  with BackendError
 
 case class JsonEncodingError(e: Throwable)
   extends EncoderError
@@ -31,6 +36,11 @@ case class DaoReadError(e: Throwable)
 case class DoesNotExistError(e: Throwable)
   extends ReadError
   with DaoError
+  with BackendError
+
+case class BackendReadError(e: Throwable)
+  extends ReadError
+  with BackendError
 
 case class CannotCloseStreamError(e: Throwable)
   extends ReadError

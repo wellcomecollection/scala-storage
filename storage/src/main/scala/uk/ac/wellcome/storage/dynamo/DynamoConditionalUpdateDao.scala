@@ -16,9 +16,9 @@ class DynamoConditionalUpdateDao[Ident, T](
   idGetter: IdGetter[T],
   versionGetter: VersionGetter[T]
 ) extends ConditionalUpdateDao[Ident, T] {
-  override def get(id: Ident): Either[ReadError with DaoError, T] = underlying.get(id)
+  override def get(id: Ident): DaoGetResult = underlying.get(id)
 
-  override def put(t: T): Either[WriteError with DaoError, Unit] = underlying.executeWriteOps(
+  override def put(t: T): DaoPutResult = underlying.executeWriteOps(
     id = idGetter.id(t),
     ops = buildConditionalUpdate(t)
   ).map { _ => () }

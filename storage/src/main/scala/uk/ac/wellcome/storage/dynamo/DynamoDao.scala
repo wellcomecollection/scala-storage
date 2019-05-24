@@ -33,7 +33,7 @@ class DynamoDao[Ident, T](
   protected def buildGetKeyExpression(ident: Ident): UniqueKey[_] =
     'id -> ident.toString
 
-  def put(t: T): Either[WriteError with DaoError, Unit] =
+  def put(t: T): DaoPutResult =
     executeWriteOps(
       id = idGetter.id(t),
       ops = Table[T](dynamoConfig.table)
@@ -45,13 +45,13 @@ class DynamoDao[Ident, T](
         )
     ).map { _ => () }
 
-  def get(id: Ident): Either[ReadError with DaoError, T] =
+  def get(id: Ident): DaoGetResult =
     executeReadOps(
       id = id,
       ops = table.get(buildGetKeyExpression(id))
     )
 
-  def executeReadOps[A](id: Ident, ops: ScanamoOps[Option[Either[A, T]]]): Either[ReadError with DaoError, T] =
+  def executeReadOps[A](id: Ident, ops: ScanamoOps[Option[Either[A, T]]]): DaoGetResult =
     Try {
       Scanamo.exec(dynamoClient)(ops)
     } match {

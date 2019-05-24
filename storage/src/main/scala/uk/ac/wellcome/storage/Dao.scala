@@ -1,6 +1,9 @@
 package uk.ac.wellcome.storage
 
 trait Dao[Ident, T] {
-  def get(id: Ident): Either[ReadError with DaoError, T]
-  def put(t: T): Either[WriteError with DaoError, Unit]
+  type DaoGetResult = Either[ReadError with DaoError, T]
+  type DaoPutResult = Either[WriteError with DaoError, Unit]
+
+  def get(id: Ident): DaoGetResult
+  def put(t: T): DaoPutResult
 }

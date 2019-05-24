@@ -6,13 +6,12 @@ import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import com.amazonaws.util.IOUtils
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.{ObjectLocation, StorageBackend}
+import uk.ac.wellcome.storage.{BackendReadError, BackendWriteError, ObjectLocation, StorageBackend}
 
 import scala.collection.JavaConverters._
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 class S3StorageBackend(s3Client: AmazonS3) extends StorageBackend with Logging {
-
   private def generateMetadata(
     userMetadata: Map[String, String],
     contentLength: Int
@@ -25,7 +24,7 @@ class S3StorageBackend(s3Client: AmazonS3) extends StorageBackend with Logging {
 
   def put(location: ObjectLocation,
           input: InputStream,
-          metadata: Map[String, String] = Map.empty): Try[Unit] = Try {
+          metadata: Map[String, String] = Map.empty): PutResult = {
 
     // Yes, it's moderately daft that we get an InputStream which we
     // immediately load into a ByteArray, then turn it into a different
@@ -60,22 +59,32 @@ class S3StorageBackend(s3Client: AmazonS3) extends StorageBackend with Logging {
     )
 
     debug(s"Attempt: PUT object to s3://$bucketName/$key")
-    s3Client.putObject(putObjectRequest)
-
-    debug(s"Success: PUT object to s3://$bucketName/$key")
-    ObjectLocation(bucketName, key)
+    Try {
+      s3Client.putObject(putObjectRequest)
+    } match {
+      case Success(_) =>
+        debug(s"Success: PUT object to s3://$bucketName/$key")
+        Right(ObjectLocation(bucketName, key))
+      case Failure(err) =>
+        error(s"Failure: PUT object to s3://$bucketName/$key", err)
+        Left(BackendWriteError(err))
+    }
   }
 
-  def get(location: ObjectLocation): Try[InputStream] = Try {
+  def get(location: ObjectLocation): GetResult = {
     val bucketName = location.namespace
     val key = location.key
 
     debug(s"Attempt: GET object from s3://$bucketName/$key")
 
-    val inputStream = s3Client.getObject(bucketName, key).getObjectContent
-
-    debug(s"Success: GET object from s3://$bucketName/$key")
-
-    inputStream
+    Try {
+      s3Client.getObject(bucketName, key).getObjectContent
+    } match {
+      case Success(inputStream) =>
+        debug(s"Success: GET object from s3://$bucketName/$key")
+        Right(inputStream)
+      case Failure(err) =>
+        Left(BackendReadError(err))
+    }
   }
 }
