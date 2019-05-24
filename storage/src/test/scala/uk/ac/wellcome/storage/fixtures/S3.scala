@@ -1,6 +1,8 @@
 package uk.ac.wellcome.storage.fixtures
 
 import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.iterable.S3Objects
+import com.amazonaws.services.s3.model.S3ObjectSummary
 import grizzled.slf4j.Logging
 import io.circe.{Decoder, Json}
 import io.circe.parser.parse
@@ -111,18 +113,20 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
 
   /** Returns a list of keys in an S3 bucket.
     *
-    * Note: this only makes a single call to the ListObjects API, so it
-    * gets a single page of results.
-    *
     * @param bucket The instance of S3.Bucket to list.
     * @return A list of object keys.
     */
   def listKeysInBucket(bucket: Bucket): List[String] =
-    s3Client
-      .listObjects(bucket.name)
-      .getObjectSummaries
+    S3Objects
+      .inBucket(s3Client, bucket.name)
+      .withBatchSize(1000)
+      .iterator()
       .asScala
-      .map { _.getKey }
+      .toList
+      .par
+      .map { objectSummary: S3ObjectSummary =>
+        objectSummary.getKey
+      }
       .toList
 
   /** Returns a map (key -> contents) for all objects in an S3 bucket.
