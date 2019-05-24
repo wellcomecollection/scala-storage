@@ -1,7 +1,7 @@
 package uk.ac.wellcome.storage.vhs
 
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.{KeyPrefix, ObjectStore, VersionedDao}
+import uk.ac.wellcome.storage._
 
 import scala.util.{Failure, Success, Try}
 
@@ -19,7 +19,7 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
     ifNotExisting: => (T, Metadata)
   )(
     ifExisting: (T, Metadata) => (T, Metadata)
-  ): Try[VHSEntry] =
+  ): Either[StorageError, VHSEntry] =
     getObject(id).flatMap {
       case Some((storedObject, storedRow)) =>
         debug(s"Found existing object for $id")
@@ -50,7 +50,7 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
       case None         => None
     }
 
-  private def getObject(id: Ident): Try[Option[(T, VHSEntry)]] = {
+  private def getObject(id: Ident): Either[ReadError, (T, VHSEntry)] = {
     val maybeRow = versionedDao.get(id)
 
     maybeRow match {
