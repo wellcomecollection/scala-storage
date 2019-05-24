@@ -23,7 +23,7 @@ class S3StorageBackend(s3Client: AmazonS3) extends StorageBackend with Logging {
   }
 
   def put(location: ObjectLocation,
-          input: InputStream,
+          inputStream: InputStream,
           metadata: Map[String, String] = Map.empty): PutResult = {
 
     // Yes, it's moderately daft that we get an InputStream which we
@@ -40,7 +40,7 @@ class S3StorageBackend(s3Client: AmazonS3) extends StorageBackend with Logging {
     // When we have bigger strings than fit in memory, we'll need to
     // revisit this code anyway -- it'll be time for multipart uploads.
     //
-    val bytes = IOUtils.toByteArray(input)
+    val bytes = IOUtils.toByteArray(inputStream)
     val byteArrayInputStream = new ByteArrayInputStream(bytes)
 
     val generatedMetadata = generateMetadata(

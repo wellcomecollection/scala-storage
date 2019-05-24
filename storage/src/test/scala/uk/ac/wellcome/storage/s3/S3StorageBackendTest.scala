@@ -2,12 +2,12 @@ package uk.ac.wellcome.storage.s3
 
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import org.scalatest.{FunSpec, Matchers}
-import uk.ac.wellcome.storage.fixtures.{S3, StreamHelpers}
+import uk.ac.wellcome.storage.fixtures.S3
+import uk.ac.wellcome.storage.streaming.CodecInstances._
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Success}
 
-class S3StorageBackendTest extends FunSpec with Matchers with S3 with StreamHelpers {
+class S3StorageBackendTest extends FunSpec with Matchers with S3 {
   val backend = new S3StorageBackend(s3Client)
 
   it("stores an object in S3") {
@@ -15,13 +15,16 @@ class S3StorageBackendTest extends FunSpec with Matchers with S3 with StreamHelp
       val location = createObjectLocationWith(bucket)
       val content = "hello world"
 
-      backend.put(location, input = toStream(content), metadata = Map.empty) shouldBe Success(())
+      backend.put(
+        location,
+        inputStream = stringCodec.toStream(content).right.value,
+        metadata = Map.empty) shouldBe Right(())
 
-      fromStream(
+      stringCodec.fromStream(
         s3Client
           .getObject(location.namespace, location.key)
           .getObjectContent
-      ) shouldBe content
+      ).right.value shouldBe content
     }
   }
 
@@ -33,8 +36,7 @@ class S3StorageBackendTest extends FunSpec with Matchers with S3 with StreamHelp
       s3Client.putObject(location.namespace, location.key, content)
 
       val result = backend.get(location)
-      result shouldBe a[Success[_]]
-      fromStream(result.get) shouldBe content
+      stringCodec.fromStream(result.right.value).right.value shouldBe content
     }
   }
 
@@ -48,7 +50,10 @@ class S3StorageBackendTest extends FunSpec with Matchers with S3 with StreamHelp
         "translation" -> "Hello!"
       )
 
-      backend.put(location, input = toStream(content), metadata = metadata) shouldBe Success(())
+      backend.put(
+        location,
+        inputStream = stringCodec.toStream(content).right.value,
+        metadata = metadata) shouldBe Right(())
 
       val storedMetadata =
         s3Client
@@ -64,18 +69,18 @@ class S3StorageBackendTest extends FunSpec with Matchers with S3 with StreamHelp
   it("fails if asked to fetch from a non-existent bucket") {
     val result = backend.get(createObjectLocation)
 
-    result shouldBe a[Failure[_]]
-    result.failed.get shouldBe a[AmazonS3Exception]
-    result.failed.get.getMessage should startWith("The specified bucket does not exist")
+    val err = result.left.value.e
+    err shouldBe a[AmazonS3Exception]
+    err.getMessage should startWith("The specified bucket does not exist")
   }
 
   it("fails if asked to fetch a non-existent object") {
     withLocalS3Bucket { bucket =>
       val result = backend.get(createObjectLocationWith(bucket))
 
-      result shouldBe a[Failure[_]]
-      result.failed.get shouldBe a[AmazonS3Exception]
-      result.failed.get.getMessage should startWith("The specified key does not exist")
+      val err = result.left.value.e
+      err shouldBe a[AmazonS3Exception]
+      err.getMessage should startWith("The specified key does not exist")
     }
   }
 }

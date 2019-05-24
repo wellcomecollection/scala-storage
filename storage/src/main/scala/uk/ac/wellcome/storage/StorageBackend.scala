@@ -7,7 +7,7 @@ trait StorageBackend {
   type GetResult = Either[BackendError with ReadError, InputStream]
 
   def put(location: ObjectLocation,
-          input: InputStream,
+          inputStream: InputStream,
           metadata: Map[String, String]): PutResult
   def get(location: ObjectLocation): GetResult
 }

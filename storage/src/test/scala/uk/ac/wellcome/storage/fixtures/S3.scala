@@ -4,12 +4,13 @@ import com.amazonaws.services.s3.AmazonS3
 import grizzled.slf4j.Logging
 import io.circe.{Decoder, Json}
 import io.circe.parser.parse
-import org.scalatest.{Assertion, Matchers}
+import org.scalatest.{Assertion, EitherValues, Matchers}
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.fixtures._
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config, S3StorageBackend}
+import uk.ac.wellcome.storage.streaming.CodecInstances._
 
 import scala.collection.JavaConverters._
 import scala.util.Random
@@ -24,7 +25,7 @@ object S3 {
   }
 }
 
-trait S3 extends Logging with Eventually with IntegrationPatience with Matchers with StreamHelpers {
+trait S3 extends Logging with Eventually with IntegrationPatience with Matchers with EitherValues {
 
   import S3._
 
@@ -41,7 +42,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
     secretKey = secretKey
   )
 
-  implicit val storageBackend: S3StorageBackend =
+  implicit val s3StorageBackend: S3StorageBackend =
     new S3StorageBackend(s3Client)
 
   def withLocalS3Bucket[R]: Fixture[Bucket, R] =
@@ -66,7 +67,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
     )
 
   def getContentFromS3(location: ObjectLocation): String =
-    fromStream(storageBackend.get(location).get)
+    s3StorageBackend.get(location).flatMap { stringCodec.fromStream }.right.value
 
   def getJsonFromS3(location: ObjectLocation): Json =
     parse(getContentFromS3(location)).right.get
@@ -98,7 +99,12 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
 
   def createObject(location: ObjectLocation,
                    content: String = randomAlphanumeric): Unit =
-    storageBackend.put(location = location, input = toStream(content)).right.v
+    stringCodec
+      .toStream(content)
+      .flatMap { inputStream =>
+        s3StorageBackend.put(location = location, inputStream = inputStream)
+      }
+      .right.value
 
   def assertEqualObjects(x: ObjectLocation, y: ObjectLocation): Assertion =
     getContentFromS3(x) shouldBe getContentFromS3(y)
