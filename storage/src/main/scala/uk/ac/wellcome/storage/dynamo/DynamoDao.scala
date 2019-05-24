@@ -72,7 +72,7 @@ class DynamoDao[Ident, T](
       case Success(None) =>
         debug(s"No Dynamo record found for id: $id")
         Left(DoesNotExistError(
-          new Throwable("No Dynamo record found for id: $id")
+          new Throwable(s"No Dynamo record found for id: $id")
         ))
     }
 

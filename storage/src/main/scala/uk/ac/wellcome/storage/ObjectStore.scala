@@ -5,7 +5,7 @@ import java.util.UUID
 
 import uk.ac.wellcome.storage.streaming.Codec
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 case class KeyPrefix(value: String) extends AnyVal
 case class KeySuffix(value: String) extends AnyVal
@@ -14,7 +14,7 @@ trait ObjectStore[T] {
   implicit val codec: Codec[T]
   implicit val storageBackend: StorageBackend
 
-  protected def createStorageKey =
+  protected def createStorageKey: String =
     UUID.randomUUID().toString
 
   def put(namespace: String)(
@@ -22,7 +22,7 @@ trait ObjectStore[T] {
     keyPrefix: KeyPrefix = KeyPrefix(""),
     keySuffix: KeySuffix = KeySuffix(""),
     userMetadata: Map[String, String] = Map.empty
-  ): Either[WriteError, Unit] = {
+  ): Either[WriteError, ObjectLocation] = {
     val prefix = normalizePathFragment(keyPrefix.value)
     val suffix = normalizePathFragment(keySuffix.value)
 
@@ -39,19 +39,21 @@ trait ObjectStore[T] {
         input = inputStream,
         metadata = userMetadata
       )
-    } yield result
+    } yield location
   }
 
   private def ensureStreamClosed(
-                                  stream: InputStream
-                                )(t: T) = {
+    stream: InputStream
+  )(t: T): Either[CannotCloseStreamError, Unit] =
     t match {
       case _: InputStream => Right(())
-      case _ => Try(stream.close()).toEither
+      case _ => Try(stream.close()) match {
+        case Success(_) => Right(())
+        case Failure(err) => Left(CannotCloseStreamError(err))
+      }
     }
-  }
 
-  def get(objectLocation: ObjectLocation) =
+  def get(objectLocation: ObjectLocation): Either[ReadError, T] =
     for {
       inputStream <- storageBackend.get(objectLocation)
       t <- codec.fromStream(inputStream)
