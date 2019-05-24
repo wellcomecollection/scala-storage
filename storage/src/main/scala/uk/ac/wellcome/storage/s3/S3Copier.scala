@@ -6,9 +6,9 @@ import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import grizzled.slf4j.Logging
 import org.apache.commons.io.IOUtils
-import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
+import uk.ac.wellcome.storage.{BackendWriteError, ObjectCopier, ObjectLocation, StorageError}
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
   private val transferManager = TransferManagerBuilder.standard
@@ -17,15 +17,15 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
 
   private val backend = new S3StorageBackend(s3Client)
 
-  def copy(src: ObjectLocation, dst: ObjectLocation): Unit = {
+  def copy(src: ObjectLocation, dst: ObjectLocation): Either[StorageError, Unit] = {
     debug(s"Copying ${S3Urls.encode(src)} -> ${S3Urls.encode(dst)}")
 
     backend.get(dst) match {
       // If the destination object exists and is the same as the source
       // object, we can skip the copy operation.
-      case Success(dstStream) =>
+      case Right(dstStream) =>
         backend.get(src) match {
-          case Success(srcStream) =>
+          case Right(srcStream) =>
             compare(srcStream, dstStream)
 
             // Remember to close the streams afterwards, or we might get
@@ -39,14 +39,14 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
             //
             srcStream.close()
             dstStream.close()
+            Right(())
 
-          case Failure(err) => {
+          case Left(err) =>
             dstStream.close()
-            throw err
-          }
+            Left(err)
         }
 
-      case Failure(_) => transferFile(src, dst)
+      case _ => transferFile(src, dst)
     }
 
     def compare(srcStream: InputStream, dstStream: InputStream): Unit = {
@@ -60,7 +60,7 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
     }
   }
 
-  private def transferFile(src: ObjectLocation, dst: ObjectLocation): Unit = {
+  private def transferFile(src: ObjectLocation, dst: ObjectLocation): Either[BackendWriteError, Unit] = {
     val copyTransfer = transferManager.copy(
       src.namespace,
       src.key,
@@ -68,6 +68,11 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
       dst.key
     )
 
-    copyTransfer.waitForCopyResult()
+    Try {
+      copyTransfer.waitForCopyResult()
+    } match {
+      case Success(_) => Right(())
+      case Failure(err) => Left(BackendWriteError(err))
+    }
   }
 }

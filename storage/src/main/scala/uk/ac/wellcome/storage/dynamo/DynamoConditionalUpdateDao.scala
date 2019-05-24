@@ -6,8 +6,8 @@ import com.gu.scanamo.error.ScanamoError
 import com.gu.scanamo.ops.ScanamoOps
 import com.gu.scanamo.query.{KeyEquals, UniqueKey}
 import com.gu.scanamo.syntax._
+import uk.ac.wellcome.storage.ConditionalUpdateDao
 import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter}
-import uk.ac.wellcome.storage.{ConditionalUpdateDao, DaoError, ReadError, WriteError}
 
 class DynamoConditionalUpdateDao[Ident, T](
   underlying: DynamoDao[Ident, T]
@@ -16,9 +16,9 @@ class DynamoConditionalUpdateDao[Ident, T](
   idGetter: IdGetter[T],
   versionGetter: VersionGetter[T]
 ) extends ConditionalUpdateDao[Ident, T] {
-  override def get(id: Ident): DaoGetResult = underlying.get(id)
+  override def get(id: Ident): GetResult = underlying.get(id)
 
-  override def put(t: T): DaoPutResult = underlying.executeWriteOps(
+  override def put(t: T): PutResult = underlying.executeWriteOps(
     id = idGetter.id(t),
     ops = buildConditionalUpdate(t)
   ).map { _ => () }

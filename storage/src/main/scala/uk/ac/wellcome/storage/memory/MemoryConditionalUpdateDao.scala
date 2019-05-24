@@ -8,9 +8,9 @@ class MemoryConditionalUpdateDao[Ident, T](
 )(
   implicit versionGetter: VersionGetter[T]
 ) extends ConditionalUpdateDao[Ident, T] {
-  override def get(id: Ident): DaoGetResult = underlying.get(id)
+  override def get(id: Ident): GetResult = underlying.get(id)
 
-  override def put(t: T): DaoPutResult = {
+  override def put(t: T): PutResult = {
     val id = underlying.idGetter.id(t)
 
     val shouldUpdate = underlying.entries.get(id) match {
