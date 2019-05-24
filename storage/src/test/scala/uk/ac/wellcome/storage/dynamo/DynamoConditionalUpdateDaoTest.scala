@@ -1,12 +1,13 @@
 package uk.ac.wellcome.storage.dynamo
 
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
-import org.scalatest.{Assertion, FunSpec, Matchers}
+import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
+import uk.ac.wellcome.storage.DoesNotExistError
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDbVersioned
 
-import scala.util.{Failure, Random, Success}
+import scala.util.Random
 
-class DynamoConditionalUpdateDaoTest extends FunSpec with Matchers with LocalDynamoDbVersioned {
+class DynamoConditionalUpdateDaoTest extends FunSpec with Matchers with LocalDynamoDbVersioned with EitherValues {
   case class VersionedRecord(
     id: String,
     data: String,
@@ -16,16 +17,16 @@ class DynamoConditionalUpdateDaoTest extends FunSpec with Matchers with LocalDyn
   it("behaves as a dao") {
     withLocalDynamoDbTable { table =>
       withDynamoConditionalUpdateDao[VersionedRecord, Assertion](table) { dao =>
-        dao.get(id = "1") shouldBe Success(None)
-        dao.get(id = "2") shouldBe Success(None)
+        dao.get(id = "1").left.value shouldBe a[DoesNotExistError]
+        dao.get(id = "2").left.value shouldBe a[DoesNotExistError]
 
         val r1 = VersionedRecord(id = "1", data = "hello world", version = 1)
-        dao.put(r1) shouldBe Success(r1)
-        dao.get(id = "1") shouldBe Success(Some(r1))
+        dao.put(r1) shouldBe Right(())
+        dao.get(id = "1") shouldBe Right(r1)
 
         val r2 = VersionedRecord(id = "2", data = "howdy friends", version = 2)
-        dao.put(r2) shouldBe Success(r2)
-        dao.get(id = "2") shouldBe Success(Some(r2))
+        dao.put(r2) shouldBe Right(())
+        dao.get(id = "2") shouldBe Right(r2)
       }
     }
   }
@@ -40,8 +41,8 @@ class DynamoConditionalUpdateDaoTest extends FunSpec with Matchers with LocalDyn
             version = version
           )
 
-          dao.put(record) shouldBe Success(record)
-          dao.get(id = "x") shouldBe Success(Some(record))
+          dao.put(record) shouldBe Right(record)
+          dao.get(id = "x") shouldBe Right(record)
         }
       }
     }
@@ -61,8 +62,7 @@ class DynamoConditionalUpdateDaoTest extends FunSpec with Matchers with LocalDyn
         val v2 = v5.copy(version = 2)
         val result = dao.put(v2)
 
-        result shouldBe a[Failure[_]]
-        val err = result.failed.get
+        val err = result.left.value.e
         err shouldBe a[ConditionalCheckFailedException]
         err.getMessage should startWith("The conditional request failed")
       }
@@ -82,8 +82,7 @@ class DynamoConditionalUpdateDaoTest extends FunSpec with Matchers with LocalDyn
 
         val result = dao.put(record)
 
-        result shouldBe a[Failure[_]]
-        val err = result.failed.get
+        val err = result.left.value.e
         err shouldBe a[ConditionalCheckFailedException]
         err.getMessage should startWith("The conditional request failed")
       }

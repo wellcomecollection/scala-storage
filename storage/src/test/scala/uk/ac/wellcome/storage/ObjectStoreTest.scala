@@ -9,11 +9,8 @@ import org.scalatest.prop.PropertyChecks
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.fixtures.{MemoryBuilders, S3}
-import uk.ac.wellcome.storage.memory.MemoryObjectStore
 import uk.ac.wellcome.storage.streaming.Codec
 import uk.ac.wellcome.storage.streaming.CodecInstances._
-
-import scala.util.Success
 
 class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with PropertyChecks with S3 with MemoryBuilders with EitherValues {
 

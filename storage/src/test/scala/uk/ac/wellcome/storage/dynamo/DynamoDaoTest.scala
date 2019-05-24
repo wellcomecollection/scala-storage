@@ -103,8 +103,7 @@ class DynamoDaoTest extends FunSpec with Matchers with LocalDynamoDb with Either
       withDynamoDao[Record, Assertion](table) { dao =>
         val result = dao.get(id = "1")
 
-        result shouldBe a[Failure[_]]
-        val err = result.failed.get
+        val err = result.left.value.e
         err shouldBe a[RuntimeException]
         err.getMessage should startWith("InvalidPropertiesError")
       }
