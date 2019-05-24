@@ -32,7 +32,8 @@ object S3Builder extends AWSClientConfigBuilder {
     )
   }
 
-  def buildObjectStore[T](config: Config)(implicit codec: Codec[T]): ObjectStore[T] = {
+  def buildObjectStore[T](config: Config)(
+    implicit codec: Codec[T]): ObjectStore[T] = {
     implicit val storageBackend: S3StorageBackend = new S3StorageBackend(
       s3Client = buildS3Client(config)
     )
