@@ -20,13 +20,26 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
   def copy(src: ObjectLocation, dst: ObjectLocation): Either[StorageError, Unit] = {
     debug(s"Copying ${S3Urls.encode(src)} -> ${S3Urls.encode(dst)}")
 
+    def compare(srcStream: InputStream, dstStream: InputStream): Either[StorageError, Unit] = {
+      if (IOUtils.contentEquals(srcStream, dstStream)) {
+        debug(s"No-op copy: ${S3Urls.encode(src)} == ${S3Urls.encode(dst)}")
+        Right(())
+      } else {
+        Left(
+          BackendWriteError(
+            new Throwable(s"Destination object $dst exists and is different from $src!")
+          )
+        )
+      }
+    }
+
     backend.get(dst) match {
       // If the destination object exists and is the same as the source
       // object, we can skip the copy operation.
       case Right(dstStream) =>
         backend.get(src) match {
           case Right(srcStream) =>
-            compare(srcStream, dstStream)
+            val result = compare(srcStream, dstStream)
 
             // Remember to close the streams afterwards, or we might get
             // errors like
@@ -39,7 +52,7 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
             //
             srcStream.close()
             dstStream.close()
-            Right(())
+            result
 
           case Left(err) =>
             dstStream.close()
@@ -47,16 +60,6 @@ class S3Copier(s3Client: AmazonS3) extends Logging with ObjectCopier {
         }
 
       case _ => transferFile(src, dst)
-    }
-
-    def compare(srcStream: InputStream, dstStream: InputStream): Unit = {
-      if (IOUtils.contentEquals(srcStream, dstStream)) {
-        debug(s"No-op copy: ${S3Urls.encode(src)} == ${S3Urls.encode(dst)}")
-      } else {
-        throw new RuntimeException(
-          s"Destination object $dst exists and is different from $src!"
-        )
-      }
     }
   }
 
