@@ -7,12 +7,10 @@ import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import org.scalatest.mockito.MockitoSugar
-import shapeless._
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.{DaoReadError, DoesNotExistError}
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDbVersioned
-
-import scala.util.{Failure, Success}
 
 case class Record(
   id: String,
@@ -55,19 +53,18 @@ class DynamoVersionedDaoTest
           Scanamo.put(dynamoDbClient)(table.name)(record)
 
           val result = versionedDao.get(record.id)
-          result shouldBe Success(Some(record))
+          result shouldBe Right(record)
       }
     }
 
     it("returns None if the record isn't in Dynamo") {
-      withFixtures {
-        case (_, versionedDao) =>
-          val result = versionedDao.get("testSource/b88888")
-          result shouldBe Success(None)
+      withFixtures { case (_, versionedDao) =>
+        val result = versionedDao.get("testSource/b88888")
+        result.left.value shouldBe a[DoesNotExistError]
       }
     }
 
-    it("returns a failed future with exception if dynamo read fails") {
+    it("fails if reading from DynamoDB fails") {
       withLocalDynamoDbTable { table =>
         val mockDynamoDbClient = mock[AmazonDynamoDB]
         val expectedException = new RuntimeException("AAAAAARGH!")
@@ -77,7 +74,7 @@ class DynamoVersionedDaoTest
         val failingDao = createDaoWith(mockDynamoDbClient, table)
 
         val result = failingDao.get("testSource/b88888")
-        result shouldBe Failure(expectedException)
+        result.left.value shouldBe DaoReadError(expectedException)
       }
     }
   }
@@ -181,13 +178,13 @@ class DynamoVersionedDaoTest
           Scanamo.put(dynamoDbClient)(table.name)(extendedRecord)
 
           val result = versionedDao.get(extendedRecord.id)
-          result shouldBe Success(Some(
+          result shouldBe Right(
             Record(
               id = extendedRecord.id,
               data = extendedRecord.data,
               version = extendedRecord.version
             )
-          ))
+          )
 
           val updatedRecord = result.right.value.copy(
             version = 5

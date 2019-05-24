@@ -41,7 +41,7 @@ class DynamoConditionalUpdateDaoTest extends FunSpec with Matchers with LocalDyn
             version = version
           )
 
-          dao.put(record) shouldBe Right(record)
+          dao.put(record) shouldBe Right(())
           dao.get(id = "x") shouldBe Right(record)
         }
       }

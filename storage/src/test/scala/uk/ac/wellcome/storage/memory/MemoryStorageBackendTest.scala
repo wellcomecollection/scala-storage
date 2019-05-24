@@ -2,7 +2,7 @@ package uk.ac.wellcome.storage.memory
 
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.streaming.CodecInstances._
-import uk.ac.wellcome.storage.{BackendReadError, EncoderError, ObjectLocation, ReadError}
+import uk.ac.wellcome.storage._
 
 class MemoryStorageBackendTest extends FunSpec with Matchers with EitherValues {
   it("behaves correctly") {
@@ -29,8 +29,8 @@ class MemoryStorageBackendTest extends FunSpec with Matchers with EitherValues {
   private def get(backend: MemoryStorageBackend, location: ObjectLocation): Either[ReadError, String] =
     backend.get(location).flatMap { stringCodec.fromStream }
 
-  private def put(backend: MemoryStorageBackend, location: ObjectLocation, s: String): Either[EncoderError, backend.PutResult] =
-    stringCodec.toStream(s).map { inputStream =>
+  private def put(backend: MemoryStorageBackend, location: ObjectLocation, s: String): Either[WriteError, Unit] =
+    stringCodec.toStream(s).flatMap { inputStream =>
       backend.put(
         location = location,
         inputStream = inputStream,

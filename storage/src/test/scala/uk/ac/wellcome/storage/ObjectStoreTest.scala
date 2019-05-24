@@ -27,18 +27,7 @@ class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with Prope
     objectStore.get(location).right.value shouldBe record
   }
 
-  it("writes the same object to the same key") {
-    forAll { data: String =>
-      val objectStore = createObjectStore[String]
-
-      val location1 = objectStore.put(namespace)(data).right.value
-      val location2 = objectStore.put(namespace)(data).right.value
-
-      location1 shouldBe location2
-    }
-  }
-
-  it("writes different objects to different keys") {
+  it("writes objects to different keys") {
     forAll { (str1: String, str2: String) =>
       val objectStore = createObjectStore[String]
 
