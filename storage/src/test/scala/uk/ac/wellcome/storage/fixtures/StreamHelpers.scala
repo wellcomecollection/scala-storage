@@ -6,6 +6,7 @@ import org.apache.commons.io.IOUtils
 
 import scala.io.Source
 
+
 trait StreamHelpers {
   def toStream(s: String): InputStream =
     IOUtils.toInputStream(s, "UTF-8")

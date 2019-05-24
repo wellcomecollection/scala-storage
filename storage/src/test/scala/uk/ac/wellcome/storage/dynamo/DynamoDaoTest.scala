@@ -2,13 +2,13 @@ package uk.ac.wellcome.storage.dynamo
 
 import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
-import org.scalatest.{Assertion, FunSpec, Matchers}
+import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 
 import scala.util.{Failure, Success}
 
-class DynamoDaoTest extends FunSpec with Matchers with LocalDynamoDb {
+class DynamoDaoTest extends FunSpec with Matchers with LocalDynamoDb with EitherValues {
   override def createTable(table: LocalDynamoDb.Table): LocalDynamoDb.Table = {
     dynamoDbClient.createTable(
       new CreateTableRequest()
@@ -73,7 +73,7 @@ class DynamoDaoTest extends FunSpec with Matchers with LocalDynamoDb {
       val result = dao.get(id = "1")
 
       result shouldBe a[Failure[_]]
-      val err = result.failed.get
+      val err = result.left.value.e
       err shouldBe a[AmazonDynamoDBException]
       err.getMessage should startWith("Cannot do operations on a non-existent table")
     }
@@ -85,7 +85,7 @@ class DynamoDaoTest extends FunSpec with Matchers with LocalDynamoDb {
       val result = dao.put(r)
 
       result shouldBe a[Failure[_]]
-      val err = result.failed.get
+      val err = result.left.value.e
       err shouldBe a[AmazonDynamoDBException]
       err.getMessage should startWith("Cannot do operations on a non-existent table")
     }

@@ -65,24 +65,11 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
       }
     )
 
-  @deprecated("Use getContentFromS3(objectLocation) instead", since = "2019-05-10")
-  def getContentFromS3(bucket: Bucket, key: String): String =
-    getContentFromS3(createObjectLocationWith(bucket, key))
-
   def getContentFromS3(location: ObjectLocation): String =
     fromStream(storageBackend.get(location).get)
 
-  @deprecated("Use getJsonFromS3(objectLocation) instead", since = "2019-05-10")
-  def getJsonFromS3(bucket: Bucket, key: String): Json =
-    getJsonFromS3(createObjectLocationWith(bucket, key))
-
   def getJsonFromS3(location: ObjectLocation): Json =
     parse(getContentFromS3(location)).right.get
-
-  @deprecated("Use getObjectFromS3(objectLocation) instead", since = "2019-05-10")
-  def getObjectFromS3[T](bucket: Bucket, key: String)(
-    implicit decoder: Decoder[T]): T =
-    getObjectFromS3[T](createObjectLocationWith(bucket, key))
 
   def getObjectFromS3[T](location: ObjectLocation)(implicit decoder: Decoder[T]): T =
     fromJson[T](getContentFromS3(location)).get
@@ -111,7 +98,7 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
 
   def createObject(location: ObjectLocation,
                    content: String = randomAlphanumeric): Unit =
-    storageBackend.put(location = location, input = toStream(content)).get
+    storageBackend.put(location = location, input = toStream(content)).right.v
 
   def assertEqualObjects(x: ObjectLocation, y: ObjectLocation): Assertion =
     getContentFromS3(x) shouldBe getContentFromS3(y)
