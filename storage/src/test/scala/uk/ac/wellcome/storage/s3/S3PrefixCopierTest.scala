@@ -7,7 +7,7 @@ import com.amazonaws.services.s3.model._
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.storage.fixtures.S3
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
-import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation}
+import uk.ac.wellcome.storage.{BackendWriteError, ObjectCopier, ObjectLocation, StorageError}
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
@@ -201,9 +201,11 @@ class S3PrefixCopierTest
     val exception = new RuntimeException("Nope, that's not going to work")
 
     val brokenCopier = new ObjectCopier {
-      def copy(src: ObjectLocation, dst: ObjectLocation): Unit =
+      override def copy(src: ObjectLocation, dst: ObjectLocation): Either[StorageError, Unit] =
         if (src.key.endsWith("5.txt"))
-          throw exception
+          Left(BackendWriteError(exception))
+        else
+          Right(())
     }
 
     val brokenPrefixCopier = new S3PrefixCopier(

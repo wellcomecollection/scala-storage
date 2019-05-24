@@ -17,8 +17,8 @@ trait MemoryBuilders {
   ): MemoryVersionedDao[String, T] = MemoryVersionedDao[String, T]()
 
   def createVhs[T, Metadata](
-    store: MemoryObjectStore[T] = createObjectStore[T],
-    dao: MemoryVersionedDao[String, Entry[String, Metadata]] = createVersionedDao[Entry[String, Metadata]],
+    store: MemoryObjectStore[T],
+    dao: MemoryVersionedDao[String, Entry[String, Metadata]],
     testNamespace: String = "testing"
   ): VersionedHybridStore[String, T, Metadata] =
     new VersionedHybridStore[String, T, Metadata] {

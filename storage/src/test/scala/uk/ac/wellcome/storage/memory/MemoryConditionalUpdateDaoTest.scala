@@ -3,7 +3,7 @@ package uk.ac.wellcome.storage.memory
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.DoesNotExistError
 
-import scala.util.{Failure, Random, Success}
+import scala.util.Random
 
 class MemoryConditionalUpdateDaoTest extends FunSpec with Matchers with EitherValues {
   case class VersionedRecord(

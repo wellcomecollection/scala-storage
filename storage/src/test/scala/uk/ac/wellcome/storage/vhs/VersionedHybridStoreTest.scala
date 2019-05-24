@@ -28,7 +28,11 @@ class VersionedHybridStoreTest extends FunSpec with Matchers with EitherValues w
     dao: ShapeDao = createVersionedDao[ShapeEntry],
     testNamespace: String = "testing"
   ): ShapeVHS =
-    createVhs[Shape, ShapeMetadata](store, dao, testNamespace)
+    createVhs[Shape, ShapeMetadata](
+      store = createObjectStore[Shape],
+      dao = createVersionedDao[ShapeEntry],
+      testNamespace = testNamespace
+    )
 
   val triangle = Shape(name = "triangle", sides = 3)
   val rectangle = Shape(name = "rectangle", sides = 4)
