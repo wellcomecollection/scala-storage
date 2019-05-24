@@ -29,8 +29,8 @@ class VersionedHybridStoreTest extends FunSpec with Matchers with EitherValues w
     testNamespace: String = "testing"
   ): ShapeVHS =
     createVhs[Shape, ShapeMetadata](
-      store = createObjectStore[Shape],
-      dao = createVersionedDao[ShapeEntry],
+      store = store,
+      dao = dao,
       testNamespace = testNamespace
     )
 
@@ -58,7 +58,7 @@ class VersionedHybridStoreTest extends FunSpec with Matchers with EitherValues w
     val expected = Shape(name = "TRIANGLE", sides = 3)
     vhs.update(id = "shape1")(ifNotExisting = (triangle, metadataRed))(
       ifExisting = (t, m) => (t.copy(name = t.name.toUpperCase()), m)
-    ) shouldBe Right(())
+    ) shouldBe a[Right[_, _]]
 
     vhs.get(id = "shape1") shouldBe Right(expected)
   }
@@ -126,7 +126,7 @@ class VersionedHybridStoreTest extends FunSpec with Matchers with EitherValues w
       storeNew(vhs, shape = triangle, metadata = metadataRed)
 
       val storedRecord = storeUpdate(vhs, newMetadata = metadataBlue)
-      storedRecord.right.value shouldBe a[Shape]
+      storedRecord.right.value shouldBe a[ShapeEntry]
 
       dao.get(id = "shape1") shouldBe storedRecord
     }
@@ -232,14 +232,16 @@ class VersionedHybridStoreTest extends FunSpec with Matchers with EitherValues w
       val result = vhs.get(id = "myShape")
 
       val err = result.left.value.e
-      err shouldBe a[RuntimeException]
-      err.getMessage should startWith("Dao entry for myShape points to a location that can't be fetched from the object store")
+      err shouldBe a[Throwable]
+      err.getMessage should startWith("Nothing at testing/doesnotexist")
     }
 
     it("fails if the object store has an error") {
+      val exception = new Throwable("Go away, nothing here!")
+
       val privateStore: ShapeStore = new MemoryObjectStore[Shape]() {
         override def get(objectLocation: ObjectLocation): Either[ReadError, Shape] =
-          Left(BackendReadError(new Throwable("Go away, nothing here!")))
+          Left(BackendReadError(exception))
       }
 
       val vhs = createShapeVhs(store = privateStore)
@@ -248,25 +250,22 @@ class VersionedHybridStoreTest extends FunSpec with Matchers with EitherValues w
 
       val result = vhs.get(id = "myShape")
 
-      val err = result.left.value.e
-      err shouldBe a[RuntimeException]
-      err.getMessage should startWith("Dao entry for myShape points to a location that can't be fetched from the object store")
+      result.left.value.e shouldBe exception
     }
 
     it("fails if the dao has an error") {
+      val exception = new Throwable("Go away, nothing here!")
+
       val privateDao: ShapeDao = new MemoryVersionedDao[String, ShapeEntry](
         MemoryConditionalUpdateDao[String, ShapeEntry]()
       ) {
-        override def get(id: String): Either[ReadError, ShapeEntry] = Left(DaoReadError(new Throwable("Go away, nothing here!")))
+        override def get(id: String): Either[ReadError, ShapeEntry] = Left(DaoReadError(exception))
       }
 
       val vhs = createShapeVhs(dao = privateDao)
 
       val result = vhs.get(id = "myShape")
-
-      val err = result.left.value.e
-      err shouldBe a[Throwable]
-      err.getMessage should startWith("Cannot read record myShape from dao")
+      result.left.value.e shouldBe exception
     }
   }
 }

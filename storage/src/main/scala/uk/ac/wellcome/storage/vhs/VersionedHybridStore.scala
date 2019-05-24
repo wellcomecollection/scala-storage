@@ -77,6 +77,7 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
         t,
         keyPrefix = KeyPrefix(id.toString)
       )
+      _ = debug(s"New location = $location")
       row <- versionedDao.put(
         Entry[Ident, Metadata](
           id = id,

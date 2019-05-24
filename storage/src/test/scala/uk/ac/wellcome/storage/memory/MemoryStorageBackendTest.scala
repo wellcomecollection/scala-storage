@@ -20,7 +20,7 @@ class MemoryStorageBackendTest extends FunSpec with Matchers with EitherValues {
     get(backend, loc2) shouldBe Right(doc2)
 
     val loc3 = ObjectLocation("documents", "3.txt")
-    get(backend, loc3).left.value shouldBe a[BackendReadError]
+    get(backend, loc3).left.value shouldBe a[DoesNotExistError]
 
     put(backend, location = loc1, s = doc2)
     get(backend, loc1) shouldBe Right(doc2)

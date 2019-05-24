@@ -3,11 +3,12 @@ package uk.ac.wellcome.storage.memory
 import java.io.InputStream
 
 import uk.ac.wellcome.storage.{DoesNotExistError, ObjectLocation, StorageBackend}
+import uk.ac.wellcome.storage.streaming.CodecInstances._
 
 class MemoryStorageBackend() extends StorageBackend {
 
   case class StoredStream(
-    inputStream: InputStream,
+    s: String,
     metadata: Map[String, String]
   )
 
@@ -18,7 +19,7 @@ class MemoryStorageBackend() extends StorageBackend {
                    metadata: Map[String, String]): PutResult = {
     storage = storage ++ Map(
       location -> StoredStream(
-        inputStream = inputStream,
+        s = stringCodec.fromStream(inputStream).right.get,
         metadata = metadata
       ))
     Right(())
@@ -26,7 +27,7 @@ class MemoryStorageBackend() extends StorageBackend {
 
   override def get(location: ObjectLocation): GetResult =
     storage.get(location) match {
-      case Some(storedStream) => Right(storedStream.inputStream)
+      case Some(storedStream) => Right(stringCodec.toStream(storedStream.s).right.get)
       case None => Left(DoesNotExistError(
         new Throwable(s"Nothing at $location")
       ))
