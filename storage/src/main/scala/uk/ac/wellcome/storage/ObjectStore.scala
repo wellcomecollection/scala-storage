@@ -34,9 +34,9 @@ trait ObjectStore[T] {
     for {
       inputStream <- codec.toStream(input)
 
-      result <- storageBackend.put(
+      _ <- storageBackend.put(
         location = location,
-        input = inputStream,
+        inputStream = inputStream,
         metadata = userMetadata
       )
     } yield location
