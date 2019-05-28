@@ -25,7 +25,7 @@ class MemoryStorageBackendTest extends FunSpec with Matchers with EitherValues {
     put(backend, location = loc1, s = doc2)
     get(backend, loc1) shouldBe Right(doc2)
 
-    backend.delete(loc1) shouldBe Unit
+    backend.delete(loc1)
     get(backend, loc1).left.value shouldBe a[DoesNotExistError]
   }
 
