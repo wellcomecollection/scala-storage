@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v6.0.1 - 2019-05-28
+
+*   In the VersionedHybridStore, when updating, don't write to the ObjectStore unless the underlying object has actually changed.
+
+*   Make it easier to access underlying entries in MemoryVersionedDao
+
+*   Add a way to delete objects from MemoryObjectStore
+
 ## v6.0.0 - 2019-05-28
 
 This release modifies most of the data store methods to return `Either[Error, T]` instead of `Try[Option[T]]`, so we can more easily distinguish between the error cases "doesn't exist" and "other error".
