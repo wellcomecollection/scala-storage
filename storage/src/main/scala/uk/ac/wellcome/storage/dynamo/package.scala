@@ -18,7 +18,7 @@ package object dynamo {
 
   // DynamoFormat for tagged HLists
   implicit def hlistDynamoFormat[T <: HList](
-    implicit formatR: Lazy[DynamoFormat.ValidConstructedDynamoFormat[T]]) =
+    implicit formatR: Lazy[DynamoFormat.ValidConstructedDynamoFormat[T]]): DynamoFormat[T] =
     new DynamoFormat[T] {
       def read(av: AttributeValue): Either[DynamoReadError, T] =
         formatR.value.read(av).toEither

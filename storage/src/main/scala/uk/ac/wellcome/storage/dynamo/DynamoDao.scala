@@ -36,16 +36,14 @@ class DynamoDao[Ident, T](
   def put(t: T): PutResult =
     executeWriteOps(
       id = idGetter.id(t),
-      ops = Table[T](dynamoConfig.table)
+      ops = table
         .update(
           buildPutKeyExpression(t),
           buildUpdate(t)
             .getOrElse(
               throw new Throwable("Could not build update expression!"))
         )
-    ).map { _ =>
-      ()
-    }
+    ).map { _ => () }
 
   def get(id: Ident): GetResult =
     executeReadOps(

@@ -8,7 +8,6 @@ import uk.ac.wellcome.storage.memory.{MemoryConditionalUpdateDao, MemoryObjectSt
 import uk.ac.wellcome.storage.streaming.CodecInstances._
 
 class VersionedHybridStoreTest extends FunSpec with Matchers with EitherValues with MemoryBuilders {
-
   case class Shape(
     name: String,
     sides: Int
