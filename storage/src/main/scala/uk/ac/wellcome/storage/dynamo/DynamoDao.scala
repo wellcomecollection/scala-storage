@@ -43,7 +43,9 @@ class DynamoDao[Ident, T](
             .getOrElse(
               throw new Throwable("Could not build update expression!"))
         )
-    ).map { _ => () }
+    ).map { _ =>
+      ()
+    }
 
   def get(id: Ident): GetResult =
     executeReadOps(
