@@ -1,10 +1,9 @@
 package uk.ac.wellcome.storage.memory
 
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.{EitherValues, FunSpec, Matchers}
+import uk.ac.wellcome.storage.DoesNotExistError
 
-import scala.util.Success
-
-class MemoryDaoTest extends FunSpec with Matchers {
+class MemoryDaoTest extends FunSpec with Matchers with EitherValues {
   case class Record(
     id: String,
     data: String
@@ -13,19 +12,19 @@ class MemoryDaoTest extends FunSpec with Matchers {
   it("behaves as a dao") {
     val dao = new MemoryDao[String, Record]()
 
-    dao.get(id = "1") shouldBe Success(None)
-    dao.get(id = "2") shouldBe Success(None)
+    dao.get(id = "1").left.value shouldBe a[DoesNotExistError]
+    dao.get(id = "2").left.value shouldBe a[DoesNotExistError]
 
     val r1 = Record(id = "1", data = "hello world")
-    dao.put(r1) shouldBe Success(r1)
-    dao.get(id = "1") shouldBe Success(Some(r1))
+    dao.put(r1) shouldBe Right(())
+    dao.get(id = "1") shouldBe Right(r1)
 
     val r2 = Record(id = "2", data = "howdy friends")
-    dao.put(r2) shouldBe Success(r2)
-    dao.get(id = "2") shouldBe Success(Some(r2))
+    dao.put(r2) shouldBe Right(())
+    dao.get(id = "2") shouldBe Right(r2)
 
     val r1Update = r1.copy(data = "what's up, folks?")
-    dao.put(r1Update) shouldBe Success(r1Update)
-    dao.get(id = "1") shouldBe Success(Some(r1Update))
+    dao.put(r1Update) shouldBe Right(())
+    dao.get(id = "1") shouldBe Right(r1Update)
   }
 }

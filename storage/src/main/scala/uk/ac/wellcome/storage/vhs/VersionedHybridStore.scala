@@ -1,9 +1,7 @@
 package uk.ac.wellcome.storage.vhs
 
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.{KeyPrefix, ObjectStore, VersionedDao}
-
-import scala.util.{Failure, Success, Try}
+import uk.ac.wellcome.storage._
 
 trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
   type VHSEntry = Entry[Ident, Metadata]
@@ -19,9 +17,9 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
     ifNotExisting: => (T, Metadata)
   )(
     ifExisting: (T, Metadata) => (T, Metadata)
-  ): Try[VHSEntry] =
-    getObject(id).flatMap {
-      case Some((storedObject, storedRow)) =>
+  ): Either[StorageError, VHSEntry] =
+    getObject(id) match {
+      case Right((storedObject, storedRow)) =>
         debug(s"Found existing object for $id")
         val (newObject, newMetadata) =
           ifExisting(storedObject, storedRow.metadata)
@@ -36,48 +34,30 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
           )
         } else {
           debug(s"Existing object for $id unchanged, not updating")
-          Success(storedRow)
+          Right(storedRow)
         }
-      case None =>
+
+      case Left(DoesNotExistError(_)) =>
         debug(s"There's no existing object for $id")
         val (newObject, newMetadata) = ifNotExisting
         putNewObject(id = id, newObject, newMetadata)
+
+      case Left(err) => Left(err)
     }
 
-  def get(id: Ident): Try[Option[T]] =
-    getObject(id).map {
-      case Some((t, _)) => Some(t)
-      case None         => None
-    }
+  def get(id: Ident): Either[ReadError, T] =
+    getObject(id).map { case (t, _) => t }
 
-  private def getObject(id: Ident): Try[Option[(T, VHSEntry)]] = {
-    val maybeRow = versionedDao.get(id)
-
-    maybeRow match {
-      case Success(Some(row)) =>
-        objectStore
-          .get(row.location)
-          .map { t: T =>
-            Some((t, row))
-          }
-          .recover {
-            case t: Throwable =>
-              throw new RuntimeException(
-                s"Dao entry for $id points to a location that can't be fetched from the object store: $t"
-              )
-          }
-      case Success(None) => Success(None)
-      case Failure(err) =>
-        Failure(
-          new RuntimeException(s"Cannot read record $id from dao: $err")
-        )
-    }
-  }
+  private def getObject(id: Ident): Either[ReadError, (T, VHSEntry)] =
+    for {
+      storedRow <- versionedDao.get(id)
+      storedObject <- objectStore.get(storedRow.location)
+    } yield (storedObject, storedRow)
 
   private def putObject(id: Ident,
                         existingRow: VHSEntry,
                         newObject: T,
-                        newMetadata: Metadata): Try[VHSEntry] =
+                        newMetadata: Metadata): Either[WriteError, VHSEntry] =
     for {
       newLocation <- objectStore.put(namespace)(
         newObject,
@@ -91,12 +71,15 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
       )
     } yield newRow
 
-  private def putNewObject(id: Ident, t: T, metadata: Metadata): Try[VHSEntry] =
+  private def putNewObject(id: Ident,
+                           t: T,
+                           metadata: Metadata): Either[WriteError, VHSEntry] =
     for {
       location <- objectStore.put(namespace)(
         t,
         keyPrefix = KeyPrefix(id.toString)
       )
+      _ = debug(s"New location = $location")
       row <- versionedDao.put(
         Entry[Ident, Metadata](
           id = id,

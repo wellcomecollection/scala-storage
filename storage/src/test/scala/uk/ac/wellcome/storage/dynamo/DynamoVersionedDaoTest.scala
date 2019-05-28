@@ -1,24 +1,16 @@
 package uk.ac.wellcome.storage.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.model.{
-  ConditionalCheckFailedException,
-  GetItemRequest,
-  ProvisionedThroughputExceededException,
-  UpdateItemRequest
-}
+import com.amazonaws.services.dynamodbv2.model.{ConditionalCheckFailedException, GetItemRequest, ProvisionedThroughputExceededException, UpdateItemRequest}
 import com.gu.scanamo.Scanamo
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
-import org.scalatest.Assertion
+import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{FunSpec, Matchers}
-import shapeless._
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.{DaoReadError, DoesNotExistError}
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDbVersioned
-
-import scala.util.{Failure, Success}
 
 case class Record(
   id: String,
@@ -37,7 +29,8 @@ class DynamoVersionedDaoTest
     extends FunSpec
     with LocalDynamoDbVersioned
     with MockitoSugar
-    with Matchers {
+    with Matchers
+    with EitherValues {
 
   def withFixtures[R](testWith: TestWith[(Table, DynamoVersionedDao[String, Record]), R]): R = {
     withLocalDynamoDbTable[R] { table =>
@@ -60,19 +53,18 @@ class DynamoVersionedDaoTest
           Scanamo.put(dynamoDbClient)(table.name)(record)
 
           val result = versionedDao.get(record.id)
-          result shouldBe Success(Some(record))
+          result shouldBe Right(record)
       }
     }
 
     it("returns None if the record isn't in Dynamo") {
-      withFixtures {
-        case (_, versionedDao) =>
-          val result = versionedDao.get("testSource/b88888")
-          result shouldBe Success(None)
+      withFixtures { case (_, versionedDao) =>
+        val result = versionedDao.get("testSource/b88888")
+        result.left.value shouldBe a[DoesNotExistError]
       }
     }
 
-    it("returns a failed future with exception if dynamo read fails") {
+    it("fails if reading from DynamoDB fails") {
       withLocalDynamoDbTable { table =>
         val mockDynamoDbClient = mock[AmazonDynamoDB]
         val expectedException = new RuntimeException("AAAAAARGH!")
@@ -82,7 +74,7 @@ class DynamoVersionedDaoTest
         val failingDao = createDaoWith(mockDynamoDbClient, table)
 
         val result = failingDao.get("testSource/b88888")
-        result shouldBe Failure(expectedException)
+        result.left.value shouldBe DaoReadError(expectedException)
       }
     }
   }
@@ -161,9 +153,9 @@ class DynamoVersionedDaoTest
           Scanamo.put(dynamoDbClient)(table.name)(existingRecord)
 
           val result = versionedDao.put(updateRecord)
-          result.isFailure shouldBe true
-          result.failed.get shouldBe a[ConditionalCheckFailedException]
-          result.failed.get.getMessage should startWith("The conditional request failed")
+          val err = result.left.value.e
+          err shouldBe a[ConditionalCheckFailedException]
+          err.getMessage should startWith("The conditional request failed")
 
           assertTableHasItem(id = updateRecord.id, existingRecord, table)
       }
@@ -186,15 +178,15 @@ class DynamoVersionedDaoTest
           Scanamo.put(dynamoDbClient)(table.name)(extendedRecord)
 
           val result = versionedDao.get(extendedRecord.id)
-          result shouldBe Success(Some(
+          result shouldBe Right(
             Record(
               id = extendedRecord.id,
               data = extendedRecord.data,
               version = extendedRecord.version
             )
-          ))
+          )
 
-          val updatedRecord = result.get.get.copy(
+          val updatedRecord = result.right.value.copy(
             version = 5
           )
 
@@ -249,9 +241,8 @@ class DynamoVersionedDaoTest
             val failingDao = createDaoWith(mockDynamoDbClient, table)
 
             val result = failingDao.get(id = "123")
-
-            result.isFailure shouldBe true
-            result.failed.get shouldBe exceptionThrownByGetItem
+            val err = result.left.value.e
+            err shouldBe exceptionThrownByGetItem
           }
         }
 
@@ -271,9 +262,8 @@ class DynamoVersionedDaoTest
           val failingDao = createDaoWith(mockDynamoDbClient, table)
 
           val result = failingDao.put(record)
-
-          result.isFailure shouldBe true
-          result.failed.get shouldBe exceptionThrownByUpdateItem
+          val err = result.left.value.e
+          err shouldBe exceptionThrownByUpdateItem
         }
       }
     }

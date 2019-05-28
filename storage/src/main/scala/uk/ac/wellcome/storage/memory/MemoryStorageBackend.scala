@@ -2,13 +2,15 @@ package uk.ac.wellcome.storage.memory
 
 import java.io.InputStream
 
-import org.apache.commons.io.IOUtils
-import uk.ac.wellcome.storage.{ObjectLocation, StorageBackend}
-
-import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import uk.ac.wellcome.storage.{
+  DoesNotExistError,
+  ObjectLocation,
+  StorageBackend
+}
+import uk.ac.wellcome.storage.streaming.CodecInstances._
 
 class MemoryStorageBackend() extends StorageBackend {
+
   case class StoredStream(
     s: String,
     metadata: Map[String, String]
@@ -17,19 +19,24 @@ class MemoryStorageBackend() extends StorageBackend {
   var storage: Map[ObjectLocation, StoredStream] = Map.empty
 
   override def put(location: ObjectLocation,
-                   input: InputStream,
-                   metadata: Map[String, String]): Try[Unit] = Try {
+                   inputStream: InputStream,
+                   metadata: Map[String, String]): PutResult = {
     storage = storage ++ Map(
       location -> StoredStream(
-        s = Source.fromInputStream(input).mkString,
+        s = stringCodec.fromStream(inputStream).right.get,
         metadata = metadata
       ))
+    Right(())
   }
 
-  override def get(location: ObjectLocation): Try[InputStream] =
+  override def get(location: ObjectLocation): GetResult =
     storage.get(location) match {
       case Some(storedStream) =>
-        Success(IOUtils.toInputStream(storedStream.s, "UTF-8"))
-      case None => Failure(new Throwable(s"Nothing at $location"))
+        Right(stringCodec.toStream(storedStream.s).right.get)
+      case None =>
+        Left(
+          DoesNotExistError(
+            new Throwable(s"Nothing at $location")
+          ))
     }
 }

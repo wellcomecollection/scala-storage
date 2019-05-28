@@ -4,6 +4,7 @@ import com.gu.scanamo.DynamoFormat
 import com.typesafe.config.Config
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.dynamo.UpdateExpressionGenerator
+import uk.ac.wellcome.storage.streaming.Codec
 import uk.ac.wellcome.storage.type_classes.{
   IdGetter,
   VersionGetter,
@@ -18,7 +19,7 @@ object VHSBuilder {
     implicit
     evidence: DynamoFormat[Entry[Ident, Metadata]],
     idGetter: IdGetter[Entry[Ident, Metadata]],
-    serialisationStrategy: SerialisationStrategy[T],
+    codec: Codec[T],
     versionGetter: VersionGetter[Entry[Ident, Metadata]],
     versionUpdater: VersionUpdater[Entry[Ident, Metadata]],
     updateExpressionGenerator: UpdateExpressionGenerator[Entry[Ident, Metadata]]

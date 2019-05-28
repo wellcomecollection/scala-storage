@@ -88,9 +88,7 @@ class S3CopierTest extends FunSpec with Matchers with S3 {
       createObject(src, content = "hello")
       createObject(dst, content = "different")
 
-      intercept[RuntimeException] {
-        s3Copier.copy(src, dst)
-      }
+      s3Copier.copy(src, dst).left.value.e shouldBe a[Throwable]
     }
   }
 }

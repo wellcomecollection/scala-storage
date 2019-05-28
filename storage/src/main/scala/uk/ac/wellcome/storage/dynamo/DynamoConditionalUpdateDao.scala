@@ -9,8 +9,6 @@ import com.gu.scanamo.syntax._
 import uk.ac.wellcome.storage.ConditionalUpdateDao
 import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter}
 
-import scala.util.Try
-
 class DynamoConditionalUpdateDao[Ident, T](
   underlying: DynamoDao[Ident, T]
 )(
@@ -18,12 +16,17 @@ class DynamoConditionalUpdateDao[Ident, T](
   idGetter: IdGetter[T],
   versionGetter: VersionGetter[T]
 ) extends ConditionalUpdateDao[Ident, T] {
-  override def get(id: Ident): Try[Option[T]] = underlying.get(id)
+  override def get(id: Ident): GetResult = underlying.get(id)
 
-  override def put(t: T): Try[T] = underlying.executeOps(
-    id = idGetter.id(t),
-    ops = buildConditionalUpdate(t)
-  )
+  override def put(t: T): PutResult =
+    underlying
+      .executeWriteOps(
+        id = idGetter.id(t),
+        ops = buildConditionalUpdate(t)
+      )
+      .map { _ =>
+        ()
+      }
 
   private def buildConditionalUpdate(
     t: T): ScanamoOps[Either[ScanamoError, T]] =
