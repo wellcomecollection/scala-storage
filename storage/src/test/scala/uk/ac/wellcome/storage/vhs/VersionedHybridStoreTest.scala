@@ -152,13 +152,13 @@ class VersionedHybridStoreTest extends FunSpec with Matchers with EitherValues w
       var putCount: Int = 0
 
       val store = new MemoryObjectStore[Shape]() {
-        override def put(namespace: String)(input: Shape, keyPrefix: KeyPrefix, keySuffix: KeySuffix, userMetadata: Map[String, String]): Try[ObjectLocation] = {
+        override def put(namespace: String)(input: Shape, keyPrefix: KeyPrefix, keySuffix: KeySuffix, userMetadata: Map[String, String]): Either[WriteError, ObjectLocation] = {
           putCount += 1
           super.put(namespace)(input, keyPrefix, keySuffix, userMetadata)
         }
       }
 
-      val vhs = createVhs(store = store)
+      val vhs = createShapeVhs(store = store)
 
       putCount shouldBe 0
       storeNew(vhs, shape = triangle, metadata = metadataRed)
