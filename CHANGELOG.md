@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v6.0.0 - 2019-05-28
+
+This release modifies most of the data store methods to return `Either[Error, T]` instead of `Try[Option[T]]`, so we can more easily distinguish between the error cases "doesn't exist" and "other error".
+
 ## v5.0.0 - 2019-05-20
 
 This release adds a bunch of new type classes for database access, which should make mocking instances of VersionedDao easier in tests.
