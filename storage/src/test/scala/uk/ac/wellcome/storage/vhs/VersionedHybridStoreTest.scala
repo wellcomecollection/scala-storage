@@ -149,6 +149,25 @@ class VersionedHybridStoreTest extends FunSpec with Matchers with EitherValues w
       result1 should not be result2
     }
 
+    it("skips writing to the store if only the metadata has changed") {
+      var putCount: Int = 0
+
+      val store = new MemoryObjectStore[Shape]() {
+        override def put(namespace: String)(input: Shape, keyPrefix: KeyPrefix, keySuffix: KeySuffix, userMetadata: Map[String, String]): Try[ObjectLocation] = {
+          putCount += 1
+          super.put(namespace)(input, keyPrefix, keySuffix, userMetadata)
+        }
+      }
+
+      val vhs = createVhs(store = store)
+
+      putCount shouldBe 0
+      storeNew(vhs, shape = triangle, metadata = metadataRed)
+      putCount shouldBe 1
+      storeUpdate(vhs, newShape = triangle, newMetadata = metadataBlue)
+      putCount shouldBe 1
+    }
+
     it("skips the update if nothing has changed") {
       val vhs = createShapeVhs()
 

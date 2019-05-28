@@ -28,7 +28,8 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
           debug(s"Object for $id changed, updating")
           putObject(
             id = id,
-            existingRow = storedRow,
+            storedObject = storedObject,
+            storedRow = storedRow,
             newObject = newObject,
             newMetadata = newMetadata
           )
@@ -55,17 +56,22 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
     } yield (storedObject, storedRow)
 
   private def putObject(id: Ident,
-                        existingRow: VHSEntry,
+                        storedObject: T,
+                        storedRow: VHSEntry,
                         newObject: T,
                         newMetadata: Metadata): Either[WriteError, VHSEntry] =
     for {
-      newLocation <- objectStore.put(namespace)(
-        newObject,
-        keyPrefix = KeyPrefix(id.toString)
-      )
+      location <- if (storedObject != newObject) {
+        objectStore.put(namespace)(
+          newObject,
+          keyPrefix = KeyPrefix(id.toString)
+        )
+      } else {
+        Success(storedRow.location)
+      }
       newRow <- versionedDao.put(
-        existingRow.copy(
-          location = newLocation,
+        storedRow.copy(
+          location = location,
           metadata = newMetadata
         )
       )
