@@ -13,7 +13,9 @@ class MemoryVersionedDao[Ident, T](
   implicit
   val versionGetter: VersionGetter[T],
   val versionUpdater: VersionUpdater[T]
-) extends VersionedDao[Ident, T]
+) extends VersionedDao[Ident, T] {
+  def entries: Map[String, T] = underlying.entries
+}
 
 object MemoryVersionedDao {
   def apply[Ident, T]()(

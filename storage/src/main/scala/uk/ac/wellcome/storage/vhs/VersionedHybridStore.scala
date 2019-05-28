@@ -3,8 +3,6 @@ package uk.ac.wellcome.storage.vhs
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage._
 
-import scala.util.Success
-
 trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
   type VHSEntry = Entry[Ident, Metadata]
 
@@ -69,7 +67,7 @@ trait VersionedHybridStore[Ident, T, Metadata] extends Logging {
           keyPrefix = KeyPrefix(id.toString)
         )
       } else {
-        Success(storedRow.location)
+        Right(storedRow.location)
       }
       newRow <- versionedDao.put(
         storedRow.copy(

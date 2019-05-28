@@ -39,4 +39,9 @@ class MemoryStorageBackend() extends StorageBackend {
             new Throwable(s"Nothing at $location")
           ))
     }
+
+  def delete(location: ObjectLocation): Unit =
+    storage = storage.filter {
+      case (loc, _) => loc != location
+    }
 }

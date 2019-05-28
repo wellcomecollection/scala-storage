@@ -28,6 +28,8 @@ class MemoryConditionalUpdateDao[Ident, T](
       )
     }
   }
+
+  def entries: Map[String, T] = underlying.entries
 }
 
 object MemoryConditionalUpdateDao {
