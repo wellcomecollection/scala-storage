@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## v6.1.0 - 2019-05-29
+
+A bunch of fixes that came from integrating the new library into the storage-service repo:
+
+*   Add an S3-agnostic generator for random instances of `ObjectLocation`
+*   Add an underlying trait `PrefixCopier` that has two implementations: `S3PrefixCopier` and `MemoryPrefixCopier`.
+    The latter is suitable for use in tests.
+*   Make it easier to define DynamoDB tables with the `LocalDynamoDB` fixture.
+
 ## v6.0.1 - 2019-05-28
 
 *   In the VersionedHybridStore, when updating, don't write to the ObjectStore unless the underlying object has actually changed.
