@@ -3,9 +3,9 @@ package uk.ac.wellcome.storage.s3
 import java.nio.file.Paths
 
 import com.amazonaws.services.s3.AmazonS3
-import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation, StorageError}
+import uk.ac.wellcome.storage._
 
-class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
+class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) extends PrefixCopier {
 
   /** Copy all the objects from under ObjectLocation into another ObjectLocation,
     * preserving the relative path from the source in the destination.
@@ -22,7 +22,7 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
   def copyObjects(
     srcLocationPrefix: ObjectLocation,
     dstLocationPrefix: ObjectLocation
-  ): Either[StorageError, S3PrefixCopierResult] =
+  ): Either[StorageError, PrefixCopierResult] =
     s3PrefixOperator.run(prefix = srcLocationPrefix) {
       srcLocation: ObjectLocation =>
         val relativeKey = srcLocation.key
@@ -39,6 +39,8 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
         )
 
         copier.copy(srcLocation, dstLocation)
+    }.map { operatorResult =>
+      PrefixCopierResult(fileCount = operatorResult.fileCount)
     }
 }
 
