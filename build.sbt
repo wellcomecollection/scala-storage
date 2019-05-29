@@ -53,6 +53,7 @@ lazy val lib_typesafe =
     .dependsOn(lib % "compile->compile;test->test")
 
 lazy val root = (project in file("."))
+  .withId("scala-storage")
   .aggregate(lib, lib_typesafe)
   .settings(Seq(
     // We don't want to publish the aggregate project, just the sub projects.
