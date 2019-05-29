@@ -11,11 +11,11 @@ import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.fixtures._
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.ObjectLocation
+import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config, S3StorageBackend}
 import uk.ac.wellcome.storage.streaming.CodecInstances._
 
 import scala.collection.JavaConverters._
-import scala.util.Random
 
 object S3 {
   class Bucket(val name: String) extends AnyVal {
@@ -27,7 +27,7 @@ object S3 {
   }
 }
 
-trait S3 extends Logging with Eventually with IntegrationPatience with Matchers with EitherValues {
+trait S3 extends Logging with Eventually with IntegrationPatience with Matchers with EitherValues with ObjectLocationGenerators {
 
   import S3._
 
@@ -89,15 +89,21 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
     Bucket(createBucketName)
 
   def createObjectLocationWith(
-    bucket: Bucket = createBucket,
-    key: String = randomAlphanumeric
+    bucket: Bucket
+  ): ObjectLocation =
+    ObjectLocation(
+      namespace = bucket.name,
+      key = randomAlphanumeric
+    )
+
+  def createObjectLocationWith(
+    bucket: Bucket,
+    key: String
   ): ObjectLocation =
     ObjectLocation(
       namespace = bucket.name,
       key = key
     )
-
-  def createObjectLocation: ObjectLocation = createObjectLocationWith()
 
   def createObject(location: ObjectLocation,
                    content: String = randomAlphanumeric): Unit =
@@ -141,7 +147,4 @@ trait S3 extends Logging with Eventually with IntegrationPatience with Matchers 
 
   def createS3ConfigWith(bucket: Bucket): S3Config =
     S3Config(bucketName = bucket.name)
-
-  private def randomAlphanumeric: String =
-    Random.alphanumeric take 8 mkString
 }

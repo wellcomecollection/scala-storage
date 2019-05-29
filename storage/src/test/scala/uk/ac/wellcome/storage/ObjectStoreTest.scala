@@ -8,11 +8,12 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
-import uk.ac.wellcome.storage.fixtures.{MemoryBuilders, S3}
+import uk.ac.wellcome.storage.fixtures.MemoryBuilders
+import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
 import uk.ac.wellcome.storage.streaming.Codec
 import uk.ac.wellcome.storage.streaming.CodecInstances._
 
-class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with PropertyChecks with S3 with MemoryBuilders with EitherValues {
+class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with PropertyChecks with MemoryBuilders with EitherValues with ObjectLocationGenerators {
 
   case class ObjectRecord(data: String)
 

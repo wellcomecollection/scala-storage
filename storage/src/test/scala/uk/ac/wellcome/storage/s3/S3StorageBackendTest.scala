@@ -67,7 +67,7 @@ class S3StorageBackendTest extends FunSpec with Matchers with S3 {
   }
 
   it("fails if asked to fetch from a non-existent bucket") {
-    val result = backend.get(createObjectLocation)
+    val result = backend.get(createObjectLocationWith(namespace = createBucketName))
 
     val err = result.left.value.e
     err shouldBe a[AmazonS3Exception]
