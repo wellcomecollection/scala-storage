@@ -145,7 +145,11 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
     table
   }
 
-  def createTableWithHashKey(table: Table, keyName: String, keyType: String = "S"): Table =
+  def createTableWithHashKey(
+    table: Table,
+    keyName: String,
+    keyType: ScalarAttributeType = ScalarAttributeType.S
+  ): Table =
     createTableFromRequest(
       table = table,
       new CreateTableRequest()
@@ -157,6 +161,35 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
           new AttributeDefinition()
             .withAttributeName(keyName)
             .withAttributeType(keyType)
+        )
+        .withProvisionedThroughput(new ProvisionedThroughput()
+          .withReadCapacityUnits(1L)
+          .withWriteCapacityUnits(1L))
+    )
+
+  def createTableWithHashRangeKey(
+    table: Table,
+    hashKeyName: String,
+    hashKeyType: ScalarAttributeType = ScalarAttributeType.S,
+    rangeKeyName: String,
+    rangeKeyType: ScalarAttributeType = ScalarAttributeType.S): Table =
+    createTableFromRequest(
+      table = table,
+      new CreateTableRequest()
+        .withTableName(table.name)
+        .withKeySchema(new KeySchemaElement()
+          .withAttributeName(hashKeyName)
+          .withKeyType(KeyType.HASH))
+        .withKeySchema(new KeySchemaElement()
+          .withAttributeName(rangeKeyName)
+          .withKeyType(KeyType.RANGE))
+        .withAttributeDefinitions(
+          new AttributeDefinition()
+            .withAttributeName(hashKeyName)
+            .withAttributeType(hashKeyType),
+          new AttributeDefinition()
+            .withAttributeName(rangeKeyName)
+            .withAttributeType(rangeKeyType)
         )
         .withProvisionedThroughput(new ProvisionedThroughput()
           .withReadCapacityUnits(1L)
