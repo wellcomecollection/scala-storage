@@ -1,7 +1,5 @@
 package uk.ac.wellcome.storage.s3
 
-import java.nio.file.Paths
-
 import com.amazonaws.services.s3.AmazonS3
 import uk.ac.wellcome.storage._
 
@@ -25,17 +23,10 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) e
   ): Either[StorageError, PrefixCopierResult] =
     s3PrefixOperator.run(prefix = srcLocationPrefix) {
       srcLocation: ObjectLocation =>
-        val relativeKey = srcLocation.key
-          .stripPrefix(srcLocationPrefix.key)
-
-        val dstKey = Paths
-          .get(dstLocationPrefix.key, relativeKey)
-          .normalize()
-          .toString
-
-        val dstLocation = ObjectLocation(
-          namespace = dstLocationPrefix.namespace,
-          key = dstKey
+        val dstLocation = buildDstLocation(
+          srcLocationPrefix = srcLocationPrefix,
+          dstLocationPrefix = dstLocationPrefix,
+          srcLocation = srcLocation
         )
 
         copier.copy(srcLocation, dstLocation)
