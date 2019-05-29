@@ -1,6 +1,8 @@
 package uk.ac.wellcome.storage.fixtures
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
+import com.amazonaws.services.dynamodbv2.model._
+import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
 import com.gu.scanamo.error.DynamoReadError
 import com.gu.scanamo.syntax._
 import com.gu.scanamo.{DynamoFormat, Scanamo}
@@ -133,4 +135,31 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
 
       testWith(dao)
     }
+
+  def createTableFromRequest(table: Table, request: CreateTableRequest): Table = {
+    dynamoDbClient.createTable(request)
+
+    eventually {
+      waitUntilActive(dynamoDbClient, table.name)
+    }
+    table
+  }
+
+  def createTableWithHashKey(table: Table, keyName: String, keyType: String = "S"): Table =
+    createTableFromRequest(
+      table = table,
+      new CreateTableRequest()
+        .withTableName(table.name)
+        .withKeySchema(new KeySchemaElement()
+          .withAttributeName(keyName)
+          .withKeyType(KeyType.HASH))
+        .withAttributeDefinitions(
+          new AttributeDefinition()
+            .withAttributeName(keyName)
+            .withAttributeType(keyType)
+        )
+        .withProvisionedThroughput(new ProvisionedThroughput()
+          .withReadCapacityUnits(1L)
+          .withWriteCapacityUnits(1L))
+    )
 }

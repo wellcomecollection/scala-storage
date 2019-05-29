@@ -5,13 +5,17 @@ import com.gu.scanamo.syntax._
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.dynamo._
-import uk.ac.wellcome.storage.{ObjectStore, StorageBackend, VersionedDao}
-import uk.ac.wellcome.storage.fixtures.{LocalDynamoDbVersioned, S3}
+import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
+import uk.ac.wellcome.storage.fixtures.{LocalDynamoDb, S3}
 import uk.ac.wellcome.storage.streaming.Codec
 import uk.ac.wellcome.storage.streaming.CodecInstances._
+import uk.ac.wellcome.storage.{ObjectStore, StorageBackend, VersionedDao}
 
-class VHSEntryFormatTest extends FunSpec with Matchers with LocalDynamoDbVersioned with S3 {
+class VHSEntryFormatTest extends FunSpec with Matchers with LocalDynamoDb with S3 {
   case class Container(shape: String, volume: Int)
+
+  def createTable(table: Table): Table =
+    createTableWithHashKey(table, keyName = "id")
 
   it("allows storing VHS entries with EmptyMetadata in DynamoDB") {
     val store = new ObjectStore[Container] {

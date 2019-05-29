@@ -4,15 +4,19 @@ import java.net.URI
 import java.time.Instant
 import java.util.UUID
 
-import com.gu.scanamo.{DynamoFormat, Scanamo}
 import com.gu.scanamo.syntax._
+import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.{Assertion, FunSpec, Matchers}
-import uk.ac.wellcome.storage.fixtures.LocalDynamoDbVersioned
+import uk.ac.wellcome.storage.fixtures.LocalDynamoDb
+import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 
-class DynamoFormatTest extends FunSpec with LocalDynamoDbVersioned with Matchers {
+class DynamoFormatTest extends FunSpec with Matchers with LocalDynamoDb {
   trait Identifiable {
     val id: String
   }
+
+  def createTable(table: Table): Table =
+    createTableWithHashKey(table, keyName = "id")
 
   it("allows storing and retrieving an instance of Instant") {
     case class Timestamp(id: String, datetime: Instant) extends Identifiable
