@@ -5,12 +5,12 @@ import com.amazonaws.services.dynamodbv2.model.{ConditionalCheckFailedException,
 import com.gu.scanamo.Scanamo
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
-import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.{DaoReadError, DoesNotExistError}
+import uk.ac.wellcome.storage.fixtures.LocalDynamoDb
 import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
-import uk.ac.wellcome.storage.fixtures.LocalDynamoDbVersioned
+import uk.ac.wellcome.storage.{DaoReadError, DoesNotExistError}
 
 case class Record(
   id: String,
@@ -27,10 +27,13 @@ case class ExtendedRecord(
 
 class DynamoVersionedDaoTest
     extends FunSpec
-    with LocalDynamoDbVersioned
+    with LocalDynamoDb
     with MockitoSugar
     with Matchers
     with EitherValues {
+
+  def createTable(table: Table): Table =
+    createTableWithHashKey(table, keyName = "id")
 
   def withFixtures[R](testWith: TestWith[(Table, DynamoVersionedDao[String, Record]), R]): R = {
     withLocalDynamoDbTable[R] { table =>

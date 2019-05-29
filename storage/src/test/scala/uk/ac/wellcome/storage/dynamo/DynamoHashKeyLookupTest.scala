@@ -1,7 +1,6 @@
 package uk.ac.wellcome.storage.dynamo
 
 import com.amazonaws.services.dynamodbv2.model._
-import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
 import com.gu.scanamo.Scanamo
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
@@ -11,7 +10,6 @@ import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 import scala.util.{Failure, Success}
 
 class DynamoHashKeyLookupTest extends FunSpec with Matchers with LocalDynamoDb {
-
   case class Payload(
     id: String,
     version: Int,
@@ -20,37 +18,14 @@ class DynamoHashKeyLookupTest extends FunSpec with Matchers with LocalDynamoDb {
 
   type DynamoHashKeyLookupStub = DynamoHashKeyLookup[Payload, String]
 
-  def createTable(table: Table): Table = {
-    dynamoDbClient.createTable(
-      new CreateTableRequest()
-        .withTableName(table.name)
-        .withKeySchema(
-          new KeySchemaElement()
-            .withAttributeName("id")
-            .withKeyType(KeyType.HASH)
-        )
-        .withKeySchema(
-          new KeySchemaElement()
-            .withAttributeName("version")
-            .withKeyType(KeyType.RANGE)
-        )
-        .withAttributeDefinitions(
-          new AttributeDefinition()
-            .withAttributeName("id")
-            .withAttributeType("S"),
-          new AttributeDefinition()
-            .withAttributeName("version")
-            .withAttributeType("N")
-        )
-        .withProvisionedThroughput(new ProvisionedThroughput()
-          .withReadCapacityUnits(1L)
-          .withWriteCapacityUnits(1L))
+  def createTable(table: Table): Table =
+    createTableWithHashRangeKey(
+      table = table,
+      hashKeyName = "id",
+      hashKeyType = ScalarAttributeType.S,
+      rangeKeyName = "version",
+      rangeKeyType = ScalarAttributeType.N
     )
-    eventually {
-      waitUntilActive(dynamoDbClient, table.name)
-    }
-    table
-  }
 
   def withDynamoLookup[R](table: Table, hashKeyName: String = "id")(testWith: TestWith[DynamoHashKeyLookupStub, R]): R = {
     val lookup = new DynamoHashKeyLookup[Payload, String](

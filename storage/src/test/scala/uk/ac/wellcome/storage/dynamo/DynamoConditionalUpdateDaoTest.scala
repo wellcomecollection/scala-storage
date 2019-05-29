@@ -3,16 +3,20 @@ package uk.ac.wellcome.storage.dynamo
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.DoesNotExistError
-import uk.ac.wellcome.storage.fixtures.LocalDynamoDbVersioned
+import uk.ac.wellcome.storage.fixtures.LocalDynamoDb
+import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
 
 import scala.util.Random
 
-class DynamoConditionalUpdateDaoTest extends FunSpec with Matchers with LocalDynamoDbVersioned with EitherValues {
+class DynamoConditionalUpdateDaoTest extends FunSpec with Matchers with EitherValues with LocalDynamoDb {
   case class VersionedRecord(
     id: String,
     data: String,
     version: Int
   )
+
+  def createTable(table: Table): Table =
+    createTableWithHashKey(table, keyName = "id")
 
   it("behaves as a dao") {
     withLocalDynamoDbTable { table =>

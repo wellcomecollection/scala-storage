@@ -9,6 +9,8 @@ import uk.ac.wellcome.storage.{BackendWriteError, ObjectLocation, StorageError}
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
+case class PrefixOperatorResult(fileCount: Int)
+
 /** Given an S3 ObjectLocation prefix and a function (ObjectLocation => Unit),
   * apply that function to every object under the prefix.
   *
@@ -19,7 +21,7 @@ class S3PrefixOperator(
 ) extends Logging {
   def run(prefix: ObjectLocation)(
     f: ObjectLocation => Either[StorageError, Unit])
-    : Either[StorageError, S3PrefixCopierResult] =
+    : Either[StorageError, PrefixOperatorResult] =
     Try {
 
       // Implementation note: this means we're single-threaded.  We're working
@@ -53,7 +55,7 @@ class S3PrefixOperator(
           case Right(_)  => count + 1
         }
       })
-      S3PrefixCopierResult(fileCount)
+      PrefixOperatorResult(fileCount)
     } match {
       case Failure(err)    => Left(BackendWriteError(err))
       case Success(result) => Right(result)

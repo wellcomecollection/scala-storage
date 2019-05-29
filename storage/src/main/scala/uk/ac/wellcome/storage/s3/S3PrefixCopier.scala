@@ -1,11 +1,10 @@
 package uk.ac.wellcome.storage.s3
 
-import java.nio.file.Paths
-
 import com.amazonaws.services.s3.AmazonS3
-import uk.ac.wellcome.storage.{ObjectCopier, ObjectLocation, StorageError}
+import uk.ac.wellcome.storage._
 
-class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
+class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier)
+    extends PrefixCopier {
 
   /** Copy all the objects from under ObjectLocation into another ObjectLocation,
     * preserving the relative path from the source in the destination.
@@ -22,24 +21,20 @@ class S3PrefixCopier(s3PrefixOperator: S3PrefixOperator, copier: ObjectCopier) {
   def copyObjects(
     srcLocationPrefix: ObjectLocation,
     dstLocationPrefix: ObjectLocation
-  ): Either[StorageError, S3PrefixCopierResult] =
-    s3PrefixOperator.run(prefix = srcLocationPrefix) {
-      srcLocation: ObjectLocation =>
-        val relativeKey = srcLocation.key
-          .stripPrefix(srcLocationPrefix.key)
-
-        val dstKey = Paths
-          .get(dstLocationPrefix.key, relativeKey)
-          .normalize()
-          .toString
-
-        val dstLocation = ObjectLocation(
-          namespace = dstLocationPrefix.namespace,
-          key = dstKey
+  ): Either[StorageError, PrefixCopierResult] =
+    s3PrefixOperator
+      .run(prefix = srcLocationPrefix) { srcLocation: ObjectLocation =>
+        val dstLocation = buildDstLocation(
+          srcLocationPrefix = srcLocationPrefix,
+          dstLocationPrefix = dstLocationPrefix,
+          srcLocation = srcLocation
         )
 
         copier.copy(srcLocation, dstLocation)
-    }
+      }
+      .map { operatorResult =>
+        PrefixCopierResult(fileCount = operatorResult.fileCount)
+      }
 }
 
 object S3PrefixCopier {

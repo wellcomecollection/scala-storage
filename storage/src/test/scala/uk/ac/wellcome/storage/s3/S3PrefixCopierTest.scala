@@ -6,7 +6,7 @@ import com.amazonaws.services.s3.model._
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.fixtures.S3
 import uk.ac.wellcome.storage.fixtures.S3.Bucket
-import uk.ac.wellcome.storage.{BackendWriteError, ObjectCopier, ObjectLocation, StorageError}
+import uk.ac.wellcome.storage._
 
 class S3PrefixCopierTest
   extends FunSpec
@@ -47,12 +47,10 @@ class S3PrefixCopierTest
             val dst = dstPrefix.copy(key = Paths.get(dstPrefix.key,"foo.txt").toString)
 
             val result = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
-            result shouldBe a[Right[_, _]]
+            result.right.value shouldBe PrefixCopierResult(fileCount = 1)
 
             listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
             assertEqualObjects(src, dst)
-
-            result.right.value.fileCount shouldBe 1
           }
         }
       }
@@ -60,10 +58,8 @@ class S3PrefixCopierTest
 
     describe("to a key NOT ending in /") {
       it("copies that file") {
-
         withLocalS3Bucket { dstBucket =>
           withLocalS3Bucket { srcBucket =>
-
             val srcPrefix = createObjectLocationWith(srcBucket, key = "src")
             val src = srcPrefix.copy(key = Paths.get(srcPrefix.key,"foo.txt").toString)
 
@@ -73,12 +69,10 @@ class S3PrefixCopierTest
             val dst = dstPrefix.copy(key = Paths.get(dstPrefix.key,"foo.txt").toString)
 
             val result = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
-            result shouldBe a[Right[_, _]]
+            result.right.value shouldBe PrefixCopierResult(fileCount = 1)
 
             listKeysInBucket(dstBucket) shouldBe List("dst/foo.txt")
             assertEqualObjects(src, dst)
-
-            result.right.value.fileCount shouldBe 1
           }
         }
       }
@@ -106,7 +100,7 @@ class S3PrefixCopierTest
         }
 
         val result = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
-        result shouldBe a[Right[_, _]]
+        result.right.value shouldBe PrefixCopierResult(fileCount = 5)
 
         listKeysInBucket(dstBucket) shouldBe dstLocations.map {
           _.key
@@ -116,8 +110,6 @@ class S3PrefixCopierTest
           case (src, dst) =>
             assertEqualObjects(src, dst)
         }
-
-        result.right.value.fileCount shouldBe 5
       }
     }
   }
@@ -173,7 +165,7 @@ class S3PrefixCopierTest
         }
 
         val result = s3PrefixCopier.copyObjects(srcPrefix, dstPrefix)
-        result shouldBe a[Right[_, _]]
+        result.right.value shouldBe PrefixCopierResult(fileCount = 10)
 
         val actualKeys = listKeysInBucket(dstBucket)
         val expectedKeys = dstLocations.map {
@@ -186,8 +178,6 @@ class S3PrefixCopierTest
           case (src, dst) =>
             assertEqualObjects(src, dst)
         }
-
-        result.right.value.fileCount shouldBe 10
       }
     }
   }
