@@ -7,7 +7,7 @@ class MemoryConditionalUpdateDao[Ident, T](
   underlying: MemoryDao[Ident, T]
 )(
   implicit versionGetter: VersionGetter[T]
-) extends ConditionalUpdateDao[Ident, T] {
+) extends Dao[Ident, T] {
   override def get(id: Ident): GetResult = underlying.get(id)
 
   override def put(t: T): PutResult = {
