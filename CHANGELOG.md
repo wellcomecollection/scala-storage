@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v6.1.1 - 2019-05-31
+
+Make it clear to the type system that the backend of a
+MemoryObjectStore is a MemoryStorageBackend.
+
 ## v6.1.0 - 2019-05-29
 
 A bunch of fixes that came from integrating the new library into the storage-service repo:
