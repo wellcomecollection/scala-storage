@@ -6,7 +6,7 @@ trait VersionedDao[Ident, T] {
   implicit val versionGetter: VersionGetter[T]
   implicit val versionUpdater: VersionUpdater[T]
 
-  implicit val underlying: ConditionalUpdateDao[Ident, T]
+  implicit val underlying: Dao[Ident, T]
 
   def get(id: Ident): Either[ReadError, T] = underlying.get(id)
 
