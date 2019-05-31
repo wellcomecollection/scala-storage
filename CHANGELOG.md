@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v6.1.2 - 2019-05-31
+
+Remove internal ConditionalUpdateDao
+
 ## v6.1.1 - 2019-05-31
 
 Make it clear to the type system that the backend of a
