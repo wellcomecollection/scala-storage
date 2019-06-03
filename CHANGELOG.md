@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v6.1.3 - 2019-06-03
+
+Remove an unused dependency on scala-monitoring.
+
 ## v6.1.2 - 2019-05-31
 
 Remove internal ConditionalUpdateDao
