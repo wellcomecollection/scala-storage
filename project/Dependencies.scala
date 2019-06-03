@@ -2,10 +2,9 @@ import sbt._
 
 object WellcomeDependencies {
   private lazy val versions = new {
-    val fixtures   = "1.0.0"
-    val json       = "1.1.1"
-    val monitoring = "2.2.0"
-    val typesafe   = "1.0.0"
+    val fixtures = "1.0.0"
+    val json     = "1.1.1"
+    val typesafe = "1.0.0"
   }
 
   val fixturesLibrary: Seq[ModuleID] = Seq(
@@ -16,11 +15,6 @@ object WellcomeDependencies {
   val jsonLibrary: Seq[ModuleID] = Seq(
     "uk.ac.wellcome" % "json_2.12" % versions.json,
     "uk.ac.wellcome" % "json_2.12" % versions.json % "test" classifier "tests"
-  )
-
-  val monitoringLibrary = Seq[ModuleID](
-    "uk.ac.wellcome" % "monitoring_2.12" % versions.monitoring,
-    "uk.ac.wellcome" % "monitoring_2.12" % versions.monitoring % "test" classifier "tests"
   )
 
   val typesafeLibrary = Seq[ModuleID](
@@ -79,6 +73,5 @@ object Dependencies {
     apacheCommons ++
     WellcomeDependencies.jsonLibrary ++
     WellcomeDependencies.fixturesLibrary ++
-    WellcomeDependencies.monitoringLibrary ++
     WellcomeDependencies.typesafeLibrary
 }
