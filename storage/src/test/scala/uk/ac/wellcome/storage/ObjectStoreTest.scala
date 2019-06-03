@@ -3,17 +3,22 @@ package uk.ac.wellcome.storage
 import java.io.{File, IOException}
 
 import org.apache.commons.io.FileUtils
-import org.mockito.Mockito
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.fixtures.MemoryBuilders
 import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
+import uk.ac.wellcome.storage.memory.MemoryStorageBackend
 import uk.ac.wellcome.storage.streaming.Codec
 import uk.ac.wellcome.storage.streaming.CodecInstances._
 
-class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with PropertyChecks with MemoryBuilders with EitherValues with ObjectLocationGenerators {
+class ObjectStoreTest
+    extends FunSpec
+    with Matchers
+    with PropertyChecks
+    with MemoryBuilders
+    with EitherValues
+    with ObjectLocationGenerators {
 
   case class ObjectRecord(data: String)
 
@@ -40,20 +45,21 @@ class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with Prope
   }
 
   it("if it's retrieving something that isn't a raw input stream, it closes the underlying input stream") {
-    val mockBackend = mock[StorageBackend]
-
-    val objectStore = new ObjectStore[String] {
-      override implicit val codec: Codec[String] = stringCodec
-      override implicit val storageBackend: StorageBackend = mockBackend
-    }
-
-    val location = createObjectLocation
-
     val string = "bah buh bih"
     val file = File.createTempFile("stream-test", ".txt")
     FileUtils.writeStringToFile(file, string, "UTF-8")
     val stream = FileUtils.openInputStream(file)
-    Mockito.when(mockBackend.get(location)).thenReturn(Right(stream))
+
+    val backend = new MemoryStorageBackend() {
+      override def get(location: ObjectLocation): GetResult = Right(stream)
+    }
+
+    val objectStore = new ObjectStore[String] {
+      override implicit val codec: Codec[String] = stringCodec
+      override implicit val storageBackend: StorageBackend = backend
+    }
+
+    val location = createObjectLocation
 
     objectStore.get(location).right.value shouldBe string
 
@@ -63,20 +69,21 @@ class ObjectStoreTest extends FunSpec with Matchers with MockitoSugar with Prope
   }
 
   it("if it's retrieving a raw input stream, it doesn't close it") {
-    val mockBackend = mock[StorageBackend]
-
-    val objectStore = new ObjectStore[String] {
-      override implicit val codec: Codec[String] = stringCodec
-      override implicit val storageBackend: StorageBackend = mockBackend
-    }
-
-    val location = createObjectLocation
-
     val string = "bah buh bih"
     val file = File.createTempFile("stream-test", ".txt")
     FileUtils.writeStringToFile(file, string, "UTF-8")
     val stream = FileUtils.openInputStream(file)
-    Mockito.when(mockBackend.get(location)).thenReturn(Right(stream))
+
+    val backend = new MemoryStorageBackend() {
+      override def get(location: ObjectLocation): GetResult = Right(stream)
+    }
+
+    val objectStore = new ObjectStore[String] {
+      override implicit val codec: Codec[String] = stringCodec
+      override implicit val storageBackend: StorageBackend = backend
+    }
+
+    val location = createObjectLocation
 
     objectStore.get(location).right.value shouldBe string
 
