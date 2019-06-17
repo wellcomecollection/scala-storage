@@ -20,9 +20,9 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
     testWith: TestWith[MaximaStub, R]): R = {
     val dynamoEntries = initialEntries
       .map { case (id, record) => DynamoHashRangeEntry(id.id, id.version, record) }
-      .toSet
+      .toSeq
 
-    scanamo.exec(ScanamoTable[Entry](table.name).putAll(dynamoEntries))
+    putTableItems(dynamoEntries, table)
 
     class DynamoMaxima(dynamoTable: Table)(
       implicit val formatHashKey: DynamoFormat[IdentityKey],
@@ -46,7 +46,12 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
     }
 
   def createTable(table: Table): Table =
-    createTableWithHashRangeKey(table, hashKeyName = "hashKey", rangeKeyName = "rangeKey")
+    createTableWithHashRangeKey(
+      table,
+      hashKeyName = "hashKey",
+      rangeKeyName = "rangeKey",
+      rangeKeyType = ScalarAttributeType.N
+    )
 
   it("fails if DynamoDB has an error") {
     withMaxima(nonExistentTable) { maxima =>
@@ -93,7 +98,12 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
 
     it("when the range key name is wrong") {
       def createWrongTable(table: Table): Table =
-        createTableWithHashRangeKey(table, hashKeyName = "hashKey", rangeKeyName = "wrong")
+        createTableWithHashRangeKey(
+          table,
+          hashKeyName = "hashKey",
+          rangeKeyName = "wrong",
+          rangeKeyType = ScalarAttributeType.N
+        )
 
       case class WrongEntry(hashKey: IdentityKey, wrong: Int, record: Record)
 

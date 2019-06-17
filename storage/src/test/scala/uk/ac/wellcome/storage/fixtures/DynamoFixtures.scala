@@ -75,6 +75,11 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
       ScanamoTable[T](table.name).put(item)
     )
 
+  def putTableItems[T: DynamoFormat](items: Seq[T], table: Table): List[BatchWriteItemResult] =
+    scanamo.exec(
+      ScanamoTable[T](table.name).putAll(items.toSet)
+    )
+
   def getTableItem[T: DynamoFormat](id: String, table: Table): Option[Either[DynamoReadError, T]] =
     scanamo.exec(
       ScanamoTable[T](table.name).get('id -> id)
@@ -134,7 +139,7 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
     hashKeyName: String,
     hashKeyType: ScalarAttributeType = ScalarAttributeType.S,
     rangeKeyName: String,
-    rangeKeyType: ScalarAttributeType = ScalarAttributeType.S): Table =
+    rangeKeyType: ScalarAttributeType): Table =
     createTableFromRequest(
       table = table,
       new CreateTableRequest()
