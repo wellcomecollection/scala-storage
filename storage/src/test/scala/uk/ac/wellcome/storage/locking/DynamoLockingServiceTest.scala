@@ -1,13 +1,12 @@
 package uk.ac.wellcome.storage.locking
 
 import cats.implicits._
-import com.gu.scanamo.Scanamo
-import com.gu.scanamo.error.DynamoReadError
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.FunSpec
-import uk.ac.wellcome.storage.dynamo._
+import org.scanamo.auto._
+import org.scanamo.time.JavaTimeFormats._
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
-import uk.ac.wellcome.storage.fixtures.{DynamoLockingFixtures, DynamoFixtures}
+import uk.ac.wellcome.storage.fixtures.{DynamoFixtures, DynamoLockingFixtures}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -45,10 +44,11 @@ class DynamoLockingServiceTest
   private def assertDynamoHasLockIds(
     expectedIds: Set[String],
     lockTable: DynamoFixtures.Table): Any = {
-    val locks: Seq[Either[DynamoReadError, ExpiringLock]] =
-      Scanamo.scan[ExpiringLock](dynamoClient)(lockTable.name)
+    val storedIds =
+      scanTable[ExpiringLock](lockTable)
+        .map { lock => lock.right.value }
+        .toSet
 
-    val actualIds = locks.map(lock => lock.right.get.id).toSet
-    actualIds shouldBe expectedIds
+    storedIds shouldBe expectedIds
   }
 }

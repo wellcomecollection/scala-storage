@@ -1,4 +1,5 @@
 package uk.ac.wellcome.storage.streaming
+
 import java.io.InputStream
 import java.nio.charset.{Charset, StandardCharsets}
 

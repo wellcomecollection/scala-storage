@@ -6,11 +6,10 @@ import cats.data.EitherT
 import cats.implicits._
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.{DeleteItemResult, PutItemResult}
-import com.gu.scanamo.DynamoFormat._
-import com.gu.scanamo.query.Condition
-import com.gu.scanamo.syntax._
-import com.gu.scanamo.{DynamoFormat, Table}
 import grizzled.slf4j.Logging
+import org.scanamo.query.Condition
+import org.scanamo.{DynamoFormat, Table => ScanamoTable}
+import org.scanamo.syntax._
 import uk.ac.wellcome.storage.{LockDao, LockFailure, UnlockFailure}
 
 import scala.concurrent.ExecutionContext
@@ -26,8 +25,9 @@ class DynamoLockDao(
     with Logging
     with ScanamoHelpers[ExpiringLock] {
 
-  override val table: Table[ExpiringLock] =
-    Table[ExpiringLock](config.dynamoConfig.tableName)
+  override val table: ScanamoTable[ExpiringLock] =
+    ScanamoTable[ExpiringLock](config.dynamoConfig.tableName)
+
   override val index: String = config.dynamoConfig.indexName
 
   // Lock
@@ -96,7 +96,12 @@ class DynamoLockDao(
   private def deleteLocks(
     rowLocks: List[ExpiringLock]): Either[Error, List[DeleteItemResult]] = {
     val deleteT = EitherT(
-      rowLocks.map(rowLock => toEither(delete('id -> rowLock.id))))
+      rowLocks.map {
+        rowLock => toEither(
+          scanamo.exec(table.delete('id -> rowLock.id))
+        )
+      }
+    )
 
     val deleteErrors = deleteT.swap.collectRight
     val deletions = deleteT.collectRight
@@ -109,7 +114,9 @@ class DynamoLockDao(
   }
 
   private def queryLocks(contextId: ContextId) = Try {
-    val queryT = EitherT(queryIndex('contextId -> contextId))
+    val queryT = EitherT(
+      scanamo.exec(table.index(index).query('contextId -> contextId))
+    )
 
     val readErrors = queryT.swap.collectRight
     val rowLocks = queryT.collectRight
