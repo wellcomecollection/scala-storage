@@ -39,7 +39,7 @@ sealed trait DecoderError extends ReadError
 
 case class DaoReadError(e: Throwable) extends ReadError with DaoError
 
-case class DoesNotExistError(e: Throwable)
+case class DoesNotExistError(e: Throwable = new Error())
     extends ReadError
     with DaoError
     with BackendError
