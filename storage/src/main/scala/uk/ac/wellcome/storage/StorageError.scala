@@ -19,17 +19,20 @@ case class ConditionalWriteError(e: Throwable) extends WriteError with DaoError
 case class BackendWriteError(e: Throwable) extends WriteError with BackendError
 
 case class IncorrectStreamLengthError(e: Throwable = new Error())
-  extends DecoderError
+    extends DecoderError
 
 case class JsonEncodingError(e: Throwable) extends EncoderError
 
-case class CharsetEncodingError(e: Throwable = new Error()) extends CodecError with EncoderError
+case class CharsetEncodingError(e: Throwable = new Error())
+    extends CodecError
+    with EncoderError
 
 case class LossyEncodingDetected(
   startingString: String,
   decodedString: String,
   e: Throwable = new Error()
-) extends CodecError with WriteError
+) extends CodecError
+    with WriteError
 
 sealed trait ReadError extends StorageError
 sealed trait DecoderError extends ReadError
@@ -48,7 +51,8 @@ case class CannotCloseStreamError(e: Throwable)
     with ObjectStoreError
 
 case class CharsetDecodingError(e: Throwable = new Error())
-  extends CodecError with DecoderError
+    extends CodecError
+    with DecoderError
 
 case class StringDecodingError(e: Throwable) extends DecoderError
 
