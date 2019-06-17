@@ -4,49 +4,73 @@ import java.net.URI
 import java.time.Instant
 import java.util.UUID
 
-import org.scalatest.{Assertion, FunSpec, Matchers}
-import org.scanamo.auto._
-import org.scanamo.time.JavaTimeFormats._
+import org.scanamo.syntax._
 import org.scanamo.DynamoFormat
+import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
+import org.scanamo.auto._
+import org.scanamo.error.InvalidPropertiesError
+import org.scanamo.{Table => ScanamoTable}
+import org.scanamo.time.JavaTimeFormats._
 
-class DynamoFormatTest extends FunSpec with Matchers with DynamoFixtures {
-  trait Identifiable {
-    val id: String
-  }
-
+trait DynamoFormatTestCases[T] extends FunSpec with Matchers with DynamoFixtures with EitherValues {
   def createTable(table: Table): Table =
     createTableWithHashKey(table, keyName = "id")
 
-  it("allows storing and retrieving an instance of Instant") {
-    case class Timestamp(id: String, datetime: Instant) extends Identifiable
+  def createT: T
+  def createBadT: String
 
-    val record = Timestamp(id = "1", datetime = Instant.now)
+  implicit val dynamoFormat: DynamoFormat[T]
 
-    assertCanStoreAndRetrieve[Timestamp](t = record)
-  }
+  case class RecordT(id: String, t: T)
 
-  it("allows storing and retrieving an instance of URI") {
-    case class Webpage(id: String, uri: URI) extends Identifiable
+  it("allows storing and retrieving an instance of T") {
+    val record = RecordT(id = "1", t = createT)
 
-    val record = Webpage(id = "1", uri = new URI("https://example.org/"))
-
-    assertCanStoreAndRetrieve[Webpage](t = record)
-  }
-
-  it("allows storing and retrieving an instance of UUID") {
-    case class UniqueID(id: String, uuid: UUID) extends Identifiable
-
-    val record = UniqueID(id = "1", uuid = UUID.randomUUID())
-
-    assertCanStoreAndRetrieve[UniqueID](t = record)
-  }
-
-  private def assertCanStoreAndRetrieve[T <: Identifiable](t: T)(
-    implicit format: DynamoFormat[T]): Assertion =
     withLocalDynamoDbTable { table =>
-      putTableItem[T](t, table)
-      getExistingTableItem[T](id = t.id, table) shouldBe t
+      val scanamoTable = ScanamoTable[RecordT](table.name)
+
+      scanamo.exec(scanamoTable.put(record))
+      scanamo.exec(scanamoTable.get('id -> record.id)).get.right.value shouldBe record
     }
+  }
+
+  it("errors if the field is the wrong type") {
+    case class BadRecord(id: String, t: String)
+
+    val record = BadRecord(id = "1", t = createBadT)
+
+    withLocalDynamoDbTable { table =>
+      scanamo.exec(ScanamoTable[BadRecord](table.name).put(record))
+
+      val scanamoTable = ScanamoTable[RecordT](table.name)
+      val err = scanamo.exec(scanamoTable.get('id -> record.id)).get.left.value
+      err shouldBe a[InvalidPropertiesError]
+    }
+  }
+}
+
+class DynamoInstantFormatTest extends DynamoFormatTestCases[Instant] {
+  def createT: Instant = Instant.now()
+
+  def createBadT: String = "not a valid datetime"
+
+  implicit val dynamoFormat: DynamoFormat[Instant] = instantAsLongFormat
+}
+
+class DynamoURIFormatTest extends DynamoFormatTestCases[URI] {
+  def createT: URI = new URI("https://example.org")
+
+  def createBadT: String = "not a valid URI"
+
+  implicit val dynamoFormat: DynamoFormat[URI] = uriDynamoFormat
+}
+
+class DynamoUUIDFormatTest extends DynamoFormatTestCases[UUID] {
+  def createT: UUID = UUID.randomUUID()
+
+  def createBadT: String = "not a valid UUID"
+
+  implicit val dynamoFormat: DynamoFormat[UUID] = DynamoFormat.uuidFormat
 }
