@@ -36,6 +36,12 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
 
   val scanamo = Scanamo(dynamoClient)
 
+  def nonExistentTable: Table =
+    Table(
+      name = Random.alphanumeric.take(10).mkString,
+      index = Random.alphanumeric.take(10).mkString,
+    )
+
   def withSpecifiedLocalDynamoDbTable[R](
     createTable: AmazonDynamoDB => Table): Fixture[Table, R] =
     fixture[Table, R](
@@ -45,17 +51,22 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
       }
     )
 
-  def withLocalDynamoDbTable[R]: Fixture[Table, R] = fixture[Table, R](
+  def withSpecifiedTable[R](tableDefinition: Table => Table): Fixture[Table, R] = fixture[Table, R](
     create = {
       val tableName = Random.alphanumeric.take(10).mkString
       val indexName = Random.alphanumeric.take(10).mkString
 
-      createTable(Table(tableName, indexName))
+      tableDefinition(Table(tableName, indexName))
     },
     destroy = { table =>
       dynamoClient.deleteTable(table.name)
     }
   )
+
+  def withLocalDynamoDbTable[R](testWith: TestWith[Table, R]): R =
+    withSpecifiedTable(createTable) { table =>
+      testWith(table)
+    }
 
   def createTable(table: DynamoFixtures.Table): Table
 
