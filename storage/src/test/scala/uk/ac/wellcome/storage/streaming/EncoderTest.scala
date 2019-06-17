@@ -1,10 +1,14 @@
 package uk.ac.wellcome.storage.streaming
 
+import java.io.ByteArrayInputStream
+
 import io.circe
 import io.circe.Json
+import org.apache.commons.io.IOUtils
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil.{toJson, _}
 import uk.ac.wellcome.storage.JsonEncodingError
+import uk.ac.wellcome.storage.generators.RandomThings
 
 import scala.util.Random
 
@@ -12,11 +16,19 @@ class EncoderTest
   extends FunSpec
     with EitherValues
     with Matchers
+    with RandomThings
     with StreamAssertions {
 
   import EncoderInstances._
 
   describe("successfully encodes") {
+    it("a byte array") {
+      val bytes = randomBytes()
+      val stream = bytesEncoder.toStream(bytes)
+
+      IOUtils.contentEquals(stream.right.value, new ByteArrayInputStream(bytes)) shouldBe true
+    }
+
     it("a string") {
       val randomString = Random.nextString(8)
       val stream = stringEncoder.toStream(randomString)

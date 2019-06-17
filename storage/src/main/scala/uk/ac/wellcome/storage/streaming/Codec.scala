@@ -45,6 +45,15 @@ object Codec {
       }
     } yield result
 
+  implicit val bytesCodec: Codec[Array[Byte]] = new Codec[Array[Byte]] {
+    override def fromStream(
+      inputStream: FiniteInputStream): DecoderResult[Array[Byte]] =
+      bytesDecoder.fromStream(inputStream)
+
+    override def toStream(bytes: Array[Byte]): EncoderResult =
+      bytesEncoder.toStream(bytes)
+  }
+
   implicit def stringCodec(
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Codec[String] = new Codec[String] {

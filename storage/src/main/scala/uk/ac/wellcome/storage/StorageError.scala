@@ -54,6 +54,8 @@ case class CharsetDecodingError(e: Throwable = new Error())
     extends CodecError
     with DecoderError
 
+case class ByteDecodingError(e: Throwable) extends DecoderError
+
 case class StringDecodingError(e: Throwable) extends DecoderError
 
 case class JsonDecodingError(e: Throwable) extends DecoderError

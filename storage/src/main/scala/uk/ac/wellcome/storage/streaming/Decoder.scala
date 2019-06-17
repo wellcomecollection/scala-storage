@@ -6,12 +6,7 @@ import io.circe
 import io.circe.Json
 import org.apache.commons.io.IOUtils
 import uk.ac.wellcome.json.JsonUtil.fromJson
-import uk.ac.wellcome.storage.{
-  DecoderError,
-  IncorrectStreamLengthError,
-  JsonDecodingError,
-  StringDecodingError
-}
+import uk.ac.wellcome.storage._
 
 import scala.util.{Failure, Success, Try}
 
@@ -26,21 +21,36 @@ object DecoderInstances {
 
   type ParseJson[T] = String => Either[JsonDecodingError, T]
 
+  implicit val bytesDecoder: Decoder[Array[Byte]] =
+    (inputStream: FiniteInputStream) =>
+      Try {
+        IOUtils.toByteArray(inputStream)
+      } match {
+        case Success(bytes) if bytes.length == inputStream.length =>
+          Right(bytes)
+        case Success(bytes) =>
+          Left(
+            IncorrectStreamLengthError(
+              new Throwable(
+                s"Expected length ${inputStream.length}, actually had length ${bytes.length}")
+            ))
+        case Failure(err) => Left(ByteDecodingError(err))
+    }
+
   implicit def stringDecoder(
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Decoder[String] =
     (inputStream: FiniteInputStream) =>
-      Try {
-        IOUtils.toString(inputStream, charset)
-      } match {
-        case Success(string) if string.getBytes.length == inputStream.length =>
-          Right(string)
-        case Success(string) =>
-          Left(IncorrectStreamLengthError(
-            new Throwable(
-              s"Expected length ${inputStream.length}, actually had length ${string.getBytes.length}")
-          ))
-        case Failure(err) => Left(StringDecodingError(err))
+      bytesDecoder.fromStream(inputStream).flatMap { bytes =>
+        // TODO: We don't have a test for this String construction failing, because
+        // we can't find a sequence of bugs that triggers an exception!
+        //
+        // We should either satisfy ourselves that this code can't throw, or add
+        // a test for this case.
+        Try { new String(bytes, charset) } match {
+          case Success(string) => Right(string)
+          case Failure(err)    => Left(StringDecodingError(err))
+        }
     }
 
   implicit val jsonDecoder: Decoder[Json] =

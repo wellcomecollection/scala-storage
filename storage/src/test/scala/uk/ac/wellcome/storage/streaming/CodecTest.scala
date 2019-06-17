@@ -17,6 +17,13 @@ class CodecTest extends FunSpec with Matchers with EitherValues with RandomThing
   describe("Codec") {
     describe("instances") {
       describe("it is consistent for") {
+        it("a byte array") {
+          val bytes = randomBytes()
+
+          val stream = bytesCodec.toStream(bytes).right.value
+          bytesCodec.fromStream(stream).right.value shouldBe bytes
+        }
+
         it("a string") {
           val randomString = Random.nextString(8)
 
