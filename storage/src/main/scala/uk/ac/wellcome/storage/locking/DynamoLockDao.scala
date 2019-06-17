@@ -27,8 +27,8 @@ class DynamoLockDao(
     with ScanamoHelpers[ExpiringLock] {
 
   override val table: Table[ExpiringLock] =
-    Table[ExpiringLock](config.dynamoConfig.table)
-  override val index: String = config.dynamoConfig.index
+    Table[ExpiringLock](config.dynamoConfig.tableName)
+  override val index: String = config.dynamoConfig.indexName
 
   // Lock
 

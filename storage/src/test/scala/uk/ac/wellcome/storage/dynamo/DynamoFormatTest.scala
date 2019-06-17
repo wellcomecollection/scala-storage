@@ -7,10 +7,10 @@ import java.util.UUID
 import com.gu.scanamo.syntax._
 import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.{Assertion, FunSpec, Matchers}
-import uk.ac.wellcome.storage.fixtures.LocalDynamoDb
-import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
+import uk.ac.wellcome.storage.fixtures.DynamoFixtures
+import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 
-class DynamoFormatTest extends FunSpec with Matchers with LocalDynamoDb {
+class DynamoFormatTest extends FunSpec with Matchers with DynamoFixtures {
   trait Identifiable {
     val id: String
   }
@@ -45,9 +45,9 @@ class DynamoFormatTest extends FunSpec with Matchers with LocalDynamoDb {
   private def assertCanStoreAndRetrieve[T <: Identifiable](record: T)(
     implicit format: DynamoFormat[T]): Assertion =
     withLocalDynamoDbTable { table =>
-      Scanamo.put(dynamoDbClient)(table.name)(record)
+      Scanamo.put(dynamoClient)(table.name)(record)
       Scanamo
-        .get[T](dynamoDbClient)(table.name)('id -> record.id)
+        .get[T](dynamoClient)(table.name)('id -> record.id)
         .get shouldBe Right(record)
     }
 }

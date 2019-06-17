@@ -9,17 +9,16 @@ import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import uk.ac.wellcome.fixtures._
-import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConditionalUpdateDao, DynamoConfig, DynamoDao, DynamoVersionedDao, UpdateExpressionGenerator}
-import uk.ac.wellcome.storage.type_classes.{IdGetter, VersionGetter, VersionUpdater}
+import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig}
 
 import scala.util.Random
 
-object LocalDynamoDb {
+object DynamoFixtures {
   case class Table(name: String, index: String)
 }
 
-trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
-  import LocalDynamoDb._
+trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
+  import DynamoFixtures._
 
   private val port = 45678
   private val dynamoDBEndPoint = "http://localhost:" + port
@@ -27,7 +26,7 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
   private val accessKey = "access"
   private val secretKey = "secret"
 
-  val dynamoDbClient: AmazonDynamoDB = DynamoClientFactory.create(
+  val dynamoClient: AmazonDynamoDB = DynamoClientFactory.create(
     region = regionName,
     endpoint = dynamoDBEndPoint,
     accessKey = accessKey,
@@ -37,9 +36,9 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
   def withSpecifiedLocalDynamoDbTable[R](
     createTable: AmazonDynamoDB => Table): Fixture[Table, R] =
     fixture[Table, R](
-      create = createTable(dynamoDbClient),
+      create = createTable(dynamoClient),
       destroy = { table =>
-        dynamoDbClient.deleteTable(table.name)
+        dynamoClient.deleteTable(table.name)
       }
     )
 
@@ -51,43 +50,29 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
       createTable(Table(tableName, indexName))
     },
     destroy = { table =>
-      dynamoDbClient.deleteTable(table.name)
+      dynamoClient.deleteTable(table.name)
     }
   )
 
-  def withVersionedDao[T, R](table: Table)(
-    testWith: TestWith[DynamoVersionedDao[String, T], R])(
-    implicit
-    evidence: DynamoFormat[T],
-    versionUpdater: VersionUpdater[T],
-    idGetter: IdGetter[T],
-    versionGetter: VersionGetter[T],
-    updateExpressionGenerator: UpdateExpressionGenerator[T]): R =
-    withDynamoConditionalUpdateDao[T, R](table) { conditionalUpdateDao =>
-      val dao = new DynamoVersionedDao[String, T](conditionalUpdateDao)
-
-      testWith(dao)
-    }
-
-  def createTable(table: LocalDynamoDb.Table): Table
+  def createTable(table: DynamoFixtures.Table): Table
 
   def givenTableHasItem[T: DynamoFormat](item: T, table: Table) = {
-    Scanamo.put(dynamoDbClient)(table.name)(item)
+    Scanamo.put(dynamoClient)(table.name)(item)
   }
 
   def getTableItem[T: DynamoFormat](id: String, table: Table) = {
-    Scanamo.get[T](dynamoDbClient)(table.name)('id -> id)
+    Scanamo.get[T](dynamoClient)(table.name)('id -> id)
   }
 
   def getExistingTableItem[T: DynamoFormat](id: String, table: Table) = {
-    val record = Scanamo.get[T](dynamoDbClient)(table.name)('id -> id)
+    val record = Scanamo.get[T](dynamoClient)(table.name)('id -> id)
     record shouldBe 'defined
     record.get shouldBe 'right
     record.get.right.get
   }
 
   def assertTableEmpty[T: DynamoFormat](table: Table) = {
-    val records = Scanamo.scan[T](dynamoDbClient)(table.name)
+    val records = Scanamo.scan[T](dynamoClient)(table.name)
     records.size shouldBe 0
   }
 
@@ -97,50 +82,25 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
   }
 
   def assertTableOnlyHasItem[T: DynamoFormat](item: T, table: Table) = {
-    val records = Scanamo.scan[T](dynamoDbClient)(table.name)
+    val records = Scanamo.scan[T](dynamoClient)(table.name)
     records.size shouldBe 1
     records.head shouldBe Right(item)
   }
 
   def listTableItems[T: DynamoFormat](table: Table): List[Either[DynamoReadError, Any]] =
-    Scanamo.scan[T](dynamoDbClient)(table.name)
+    Scanamo.scan[T](dynamoClient)(table.name)
 
   def createDynamoConfigWith(table: Table): DynamoConfig =
     DynamoConfig(
-      table = table.name,
-      maybeIndex = Some(table.index)
+      tableName = table.name,
+      maybeIndexName = Some(table.index)
     )
-
-  def withDynamoDao[T, R](table: Table)(testWith: TestWith[DynamoDao[String, T], R])(
-    implicit
-    evidence: DynamoFormat[T],
-    idGetter: IdGetter[T],
-    updateExpressionGenerator: UpdateExpressionGenerator[T]): R = {
-    val dao = new DynamoDao[String, T](
-      dynamoClient = dynamoDbClient,
-      dynamoConfig = createDynamoConfigWith(table)
-    )
-
-    testWith(dao)
-  }
-
-  def withDynamoConditionalUpdateDao[T, R](table: Table)(testWith: TestWith[DynamoConditionalUpdateDao[String, T], R])(
-    implicit
-    evidence: DynamoFormat[T],
-    idGetter: IdGetter[T],
-    versionGetter: VersionGetter[T],
-    updateExpressionGenerator: UpdateExpressionGenerator[T]): R =
-    withDynamoDao[T, R](table) { underlying =>
-      val dao = new DynamoConditionalUpdateDao[String, T](underlying)
-
-      testWith(dao)
-    }
 
   def createTableFromRequest(table: Table, request: CreateTableRequest): Table = {
-    dynamoDbClient.createTable(request)
+    dynamoClient.createTable(request)
 
     eventually {
-      waitUntilActive(dynamoDbClient, table.name)
+      waitUntilActive(dynamoClient, table.name)
     }
     table
   }

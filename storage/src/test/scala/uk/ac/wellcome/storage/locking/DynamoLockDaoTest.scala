@@ -10,7 +10,7 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.{LockFailure, UnlockFailure}
-import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
+import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.fixtures.DynamoLockingFixtures
 
 import scala.concurrent.ExecutionContext.Implicits.global
