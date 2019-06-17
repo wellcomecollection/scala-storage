@@ -12,7 +12,7 @@ trait MemoryLockDaoFixtures extends LockDaoFixtures[String, UUID, Unit] with Ran
 
   override def withLockDao[R](context: Unit)(testWith: TestWith[LockDao[String, UUID], R]): R =
     testWith(
-      new MemoryLockDao[String, UUID] {}
+      new MemoryLockDao[String, UUID]()
     )
 
   override def createIdent: String = randomAlphanumeric
