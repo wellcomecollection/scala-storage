@@ -12,7 +12,7 @@ import scala.util.Random
 
 class CodecTest extends FunSpec with Matchers with EitherValues with RandomThings {
 
-  import CodecInstances._
+  import Codec._
 
   describe("Codec") {
     describe("instances") {

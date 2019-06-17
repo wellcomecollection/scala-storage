@@ -20,7 +20,7 @@ case class BackendWriteError(e: Throwable) extends WriteError with BackendError
 
 case class JsonEncodingError(e: Throwable) extends EncoderError
 
-case class CharsetEncodingError(e: Throwable = new Error()) extends EncoderError
+case class CharsetEncodingError(e: Throwable = new Error()) extends CodecError with EncoderError
 
 case class LossyEncodingDetected(
   startingString: String,
@@ -43,6 +43,9 @@ case class BackendReadError(e: Throwable) extends ReadError with BackendError
 case class CannotCloseStreamError(e: Throwable)
     extends ReadError
     with ObjectStoreError
+
+case class CharsetDecodingError(e: Throwable = new Error())
+  extends CodecError with DecoderError
 
 case class StringDecodingError(e: Throwable) extends DecoderError
 
