@@ -17,7 +17,7 @@ import uk.ac.wellcome.storage.streaming.CodecInstances._
 
 import scala.collection.JavaConverters._
 
-object S3 {
+object S3Fixtures {
   class Bucket(val name: String) extends AnyVal {
     override def toString = s"S3.Bucket($name)"
   }
@@ -27,9 +27,9 @@ object S3 {
   }
 }
 
-trait S3 extends Logging with Eventually with IntegrationPatience with Matchers with EitherValues with ObjectLocationGenerators {
+trait S3Fixtures extends Logging with Eventually with IntegrationPatience with Matchers with EitherValues with ObjectLocationGenerators {
 
-  import S3._
+  import S3Fixtures._
 
   protected val localS3EndpointUrl = "http://localhost:33333"
   private val regionName = "localhost"

@@ -11,23 +11,23 @@ import com.gu.scanamo.syntax._
 import org.scalatest.{Assertion, EitherValues, OptionValues}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.dynamo._
-import uk.ac.wellcome.storage.fixtures.LocalDynamoDb.Table
+import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.locking.{DynamoLockDao, DynamoLockDaoConfig, DynamoLockingService, ExpiringLock}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Random
 
-trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionValues {
+trait DynamoLockingFixtures extends DynamoFixtures with EitherValues with OptionValues {
   def getDynamo(lockTable: Table)(id: String): ExpiringLock =
     Scanamo.get[ExpiringLock](
-      dynamoDbClient
+      dynamoClient
     )(
       lockTable.name
     )('id -> id).get.right.value
 
   def assertNoLocks(lockTable: Table): Assertion =
-    Scanamo.scan[ExpiringLock](dynamoDbClient)(lockTable.name) shouldBe empty
+    Scanamo.scan[ExpiringLock](dynamoClient)(lockTable.name) shouldBe empty
 
   def createRandomContextId: UUID = UUID.randomUUID()
   def createRandomId: String = Random.nextString(32)
@@ -52,7 +52,7 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
 
   def withLockDao[R](lockTable: Table)(
     testWith: TestWith[DynamoLockDao, R]): R =
-    withLockDao(dynamoDbClient, lockTable = lockTable) { lockDao =>
+    withLockDao(dynamoClient, lockTable = lockTable) { lockDao =>
       testWith(lockDao)
     }
 
@@ -66,20 +66,20 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
 
   def withLockDao[R](lockTable: Table, seconds: Int)(
     testWith: TestWith[DynamoLockDao, R]): R =
-    withLockDao(dynamoDbClient, lockTable = lockTable, seconds = seconds) { lockDao =>
+    withLockDao(dynamoClient, lockTable = lockTable, seconds = seconds) { lockDao =>
       testWith(lockDao)
     }
 
   def withLockDao[R](
     testWith: TestWith[DynamoLockDao, R]): R =
     withLocalDynamoDbTable { lockTable =>
-      withLockDao(dynamoDbClient, lockTable = lockTable) { lockDao =>
+      withLockDao(dynamoClient, lockTable = lockTable) { lockDao =>
         testWith(lockDao)
       }
     }
 
   def createLockTable(table: Table): Table = {
-    dynamoDbClient.createTable(
+    dynamoClient.createTable(
       new CreateTableRequest()
         .withTableName(table.name)
         .withKeySchema(new KeySchemaElement()
@@ -110,7 +110,7 @@ trait DynamoLockingFixtures extends LocalDynamoDb with EitherValues with OptionV
               .withReadCapacityUnits(1L)
               .withWriteCapacityUnits(1L))))
     eventually {
-      waitUntilActive(dynamoDbClient, table.name)
+      waitUntilActive(dynamoClient, table.name)
     }
     table
   }
