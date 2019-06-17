@@ -6,11 +6,11 @@ import cats.data.EitherT
 import cats.implicits._
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.{DeleteItemResult, PutItemResult}
-import com.gu.scanamo.DynamoFormat._
-import com.gu.scanamo.query.Condition
-import com.gu.scanamo.syntax._
-import com.gu.scanamo.{DynamoFormat, Table}
 import grizzled.slf4j.Logging
+import org.scanamo.query.Condition
+import org.scanamo.{DynamoFormat, Table => ScanamoTable}
+import org.scanamo.syntax._
+import org.scanamo.time.JavaTimeFormats._
 import uk.ac.wellcome.storage.{LockDao, LockFailure, UnlockFailure}
 
 import scala.concurrent.ExecutionContext
@@ -26,8 +26,9 @@ class DynamoLockDao(
     with Logging
     with ScanamoHelpers[ExpiringLock] {
 
-  override val table: Table[ExpiringLock] =
-    Table[ExpiringLock](config.dynamoConfig.tableName)
+  override val table: ScanamoTable[ExpiringLock] =
+    ScanamoTable[ExpiringLock](config.dynamoConfig.tableName)
+
   override val index: String = config.dynamoConfig.indexName
 
   // Lock
@@ -39,15 +40,15 @@ class DynamoLockDao(
       duration = config.expiryTime
     )
 
-    debug(s"Locking $rowLock: START")
+    debug(s"Locking $id/$contextId: START")
 
     lockOp(rowLock).fold(
       e => {
-        debug(s"Locking $rowLock: FAILED ($e)")
+        debug(s"Locking $id/$contextId: FAILURE ($e)")
         Left(LockFailure(id, e))
       },
       result => {
-        debug(s"Locking $rowLock: SUCCESS ($result)")
+        debug(s"Locking $id/$contextId: SUCCESS ($result)")
         Right(rowLock)
       }
     )
@@ -57,7 +58,7 @@ class DynamoLockDao(
     val lockFound = attributeExists(symbol = 'id)
     val lockNotFound = not(lockFound)
 
-    val isExpired = Condition('expires < lock.created.toString)
+    val isExpired = Condition('expires < lock.created)
 
     val lockHasExpired = Condition(lockFound and isExpired)
 
@@ -76,7 +77,7 @@ class DynamoLockDao(
 
     queryAndDelete(contextId).fold(
       e => {
-        warn(s"Unlocking $contextId: FAILED ($e)")
+        warn(s"Unlocking $contextId: FAILURE ($e)")
         Left(UnlockFailure(contextId, e))
       },
       result => {
@@ -96,7 +97,12 @@ class DynamoLockDao(
   private def deleteLocks(
     rowLocks: List[ExpiringLock]): Either[Error, List[DeleteItemResult]] = {
     val deleteT = EitherT(
-      rowLocks.map(rowLock => toEither(delete('id -> rowLock.id))))
+      rowLocks.map { rowLock =>
+        toEither(
+          scanamo.exec(table.delete('id -> rowLock.id))
+        )
+      }
+    )
 
     val deleteErrors = deleteT.swap.collectRight
     val deletions = deleteT.collectRight
@@ -109,7 +115,9 @@ class DynamoLockDao(
   }
 
   private def queryLocks(contextId: ContextId) = Try {
-    val queryT = EitherT(queryIndex('contextId -> contextId))
+    val queryT = EitherT(
+      scanamo.exec(table.index(index).query('contextId -> contextId))
+    )
 
     val readErrors = queryT.swap.collectRight
     val rowLocks = queryT.collectRight

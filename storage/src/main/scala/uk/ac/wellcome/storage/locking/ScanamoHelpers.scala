@@ -5,13 +5,12 @@ import com.amazonaws.services.dynamodbv2.model.{
   ConditionalCheckFailedException,
   PutItemResult
 }
-import com.gu.scanamo.{DynamoFormat, Scanamo, Table}
-import com.gu.scanamo.ops.ScanamoOps
+import org.scanamo.ops.ScanamoOps
+import org.scanamo.{DynamoFormat, Scanamo, Table => ScanamoTable}
 
 import scala.util.Try
 
 trait ScanamoHelpers[T] {
-
   type ScanamoPutItemResult =
     Either[ConditionalCheckFailedException, PutItemResult]
   type ScanamoPut =
@@ -22,16 +21,14 @@ trait ScanamoHelpers[T] {
   implicit val df: DynamoFormat[T]
 
   protected val client: AmazonDynamoDB
-  protected val table: Table[T]
-  protected val index: String
+  val scanamo = Scanamo(client)
 
-  protected val delete = Scanamo.delete(client)(table.name) _
-  protected val queryIndex =
-    Scanamo.queryIndex[T](client)(table.name, index) _
+  protected val table: ScanamoTable[T]
+  protected val index: String
 
   protected def safePutItem(ops: ScanamoPut): SafeEither[PutItemResult] =
     for {
-      either <- toEither(Scanamo.exec(client)(ops))
+      either <- toEither(scanamo.exec(ops))
       result <- either
     } yield result
 

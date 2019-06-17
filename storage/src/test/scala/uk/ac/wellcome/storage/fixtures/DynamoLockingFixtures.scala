@@ -6,11 +6,10 @@ import java.util.UUID
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
-import com.gu.scanamo.Scanamo
-import com.gu.scanamo.syntax._
 import org.scalatest.{Assertion, EitherValues, OptionValues}
+import org.scanamo.auto._
+import org.scanamo.time.JavaTimeFormats._
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.dynamo._
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.locking.{DynamoLockDao, DynamoLockDaoConfig, DynamoLockingService, ExpiringLock}
 
@@ -19,15 +18,8 @@ import scala.concurrent.Future
 import scala.util.Random
 
 trait DynamoLockingFixtures extends DynamoFixtures with EitherValues with OptionValues {
-  def getDynamo(lockTable: Table)(id: String): ExpiringLock =
-    Scanamo.get[ExpiringLock](
-      dynamoClient
-    )(
-      lockTable.name
-    )('id -> id).get.right.value
-
   def assertNoLocks(lockTable: Table): Assertion =
-    Scanamo.scan[ExpiringLock](dynamoClient)(lockTable.name) shouldBe empty
+    scanTable[ExpiringLock](lockTable) shouldBe empty
 
   def createRandomContextId: UUID = UUID.randomUUID()
   def createRandomId: String = Random.nextString(32)

@@ -3,14 +3,15 @@ package uk.ac.wellcome.storage.fixtures
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
-import com.gu.scanamo.error.DynamoReadError
-import com.gu.scanamo.syntax._
-import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
+import org.scanamo.error.DynamoReadError
+import org.scanamo.syntax._
+import org.scanamo.{DynamoFormat, Scanamo, Table => ScanamoTable}
 import uk.ac.wellcome.fixtures._
 import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig}
 
+import scala.collection.immutable
 import scala.util.Random
 
 object DynamoFixtures {
@@ -32,6 +33,8 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
     accessKey = accessKey,
     secretKey = secretKey
   )
+
+  val scanamo = Scanamo(dynamoClient)
 
   def withSpecifiedLocalDynamoDbTable[R](
     createTable: AmazonDynamoDB => Table): Fixture[Table, R] =
@@ -56,39 +59,27 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
 
   def createTable(table: DynamoFixtures.Table): Table
 
-  def givenTableHasItem[T: DynamoFormat](item: T, table: Table) = {
-    Scanamo.put(dynamoClient)(table.name)(item)
-  }
+  def putTableItem[T: DynamoFormat](item: T, table: Table): Option[Either[DynamoReadError, T]] =
+    scanamo.exec(
+      ScanamoTable[T](table.name).put(item)
+    )
 
-  def getTableItem[T: DynamoFormat](id: String, table: Table) = {
-    Scanamo.get[T](dynamoClient)(table.name)('id -> id)
-  }
+  def getTableItem[T: DynamoFormat](id: String, table: Table): Option[Either[DynamoReadError, T]] =
+    scanamo.exec(
+      ScanamoTable[T](table.name).get('id -> id)
+    )
 
-  def getExistingTableItem[T: DynamoFormat](id: String, table: Table) = {
-    val record = Scanamo.get[T](dynamoClient)(table.name)('id -> id)
+  def getExistingTableItem[T: DynamoFormat](id: String, table: Table): T = {
+    val record = getTableItem[T](id, table)
     record shouldBe 'defined
     record.get shouldBe 'right
     record.get.right.get
   }
 
-  def assertTableEmpty[T: DynamoFormat](table: Table) = {
-    val records = Scanamo.scan[T](dynamoClient)(table.name)
-    records.size shouldBe 0
-  }
-
-  def assertTableHasItem[T: DynamoFormat](id: String, item: T, table: Table) = {
-    val actualRecord = getTableItem(id, table)
-    actualRecord shouldBe Some(Right(item))
-  }
-
-  def assertTableOnlyHasItem[T: DynamoFormat](item: T, table: Table) = {
-    val records = Scanamo.scan[T](dynamoClient)(table.name)
-    records.size shouldBe 1
-    records.head shouldBe Right(item)
-  }
-
-  def listTableItems[T: DynamoFormat](table: Table): List[Either[DynamoReadError, Any]] =
-    Scanamo.scan[T](dynamoClient)(table.name)
+  def scanTable[T: DynamoFormat](table: Table): immutable.Seq[Either[DynamoReadError, Any]] =
+    scanamo.exec(
+      ScanamoTable[T](table.name).scan()
+    )
 
   def createDynamoConfigWith(table: Table): DynamoConfig =
     DynamoConfig(

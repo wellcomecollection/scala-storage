@@ -6,12 +6,14 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model._
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
+import org.scalatest.FunSpec
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{EitherValues, FunSpec, Matchers}
-import uk.ac.wellcome.storage.{LockFailure, UnlockFailure}
+import org.scanamo.auto._
+import org.scanamo.time.JavaTimeFormats._
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.fixtures.DynamoLockingFixtures
+import uk.ac.wellcome.storage.{LockFailure, UnlockFailure}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -19,11 +21,9 @@ import scala.runtime.BoxedUnit
 
 class DynamoLockDaoTest
   extends FunSpec
-    with Matchers
     with MockitoSugar
     with ScalaFutures
     with DynamoLockingFixtures
-    with EitherValues
     with IntegrationPatience {
 
   private val staticId = createRandomId
@@ -68,8 +68,7 @@ class DynamoLockDaoTest
         lockDao.lock(staticId, staticContextId)
           .right.value.id shouldBe staticId
 
-        getDynamo(lockTable)(staticId)
-          .id shouldBe staticId
+        getExistingTableItem[ExpiringLock](staticId, table = lockTable).id shouldBe staticId
       }
     }
   }
@@ -93,8 +92,7 @@ class DynamoLockDaoTest
         lockDao.lock(staticId, staticContextId)
           .right.value.id shouldBe staticId
 
-        val expiry =
-          getDynamo(lockTable)(staticId).expires
+        val expiry = getExistingTableItem[ExpiringLock](staticId, table = lockTable).expires
 
         // Wait at least 1 second
         Thread.sleep(1000)
@@ -103,7 +101,7 @@ class DynamoLockDaoTest
           .right.value.id shouldBe staticId
 
         val updatedExpiry =
-          getDynamo(lockTable)(staticId).expires
+          getExistingTableItem[ExpiringLock](staticId, table = lockTable).expires
 
         expiry.isBefore(updatedExpiry) shouldBe true
       }

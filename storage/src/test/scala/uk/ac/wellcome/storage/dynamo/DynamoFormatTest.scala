@@ -4,9 +4,10 @@ import java.net.URI
 import java.time.Instant
 import java.util.UUID
 
-import com.gu.scanamo.syntax._
-import com.gu.scanamo.{DynamoFormat, Scanamo}
 import org.scalatest.{Assertion, FunSpec, Matchers}
+import org.scanamo.auto._
+import org.scanamo.time.JavaTimeFormats._
+import org.scanamo.DynamoFormat
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 
@@ -23,7 +24,7 @@ class DynamoFormatTest extends FunSpec with Matchers with DynamoFixtures {
 
     val record = Timestamp(id = "1", datetime = Instant.now)
 
-    assertCanStoreAndRetrieve[Timestamp](record = record)
+    assertCanStoreAndRetrieve[Timestamp](t = record)
   }
 
   it("allows storing and retrieving an instance of URI") {
@@ -31,7 +32,7 @@ class DynamoFormatTest extends FunSpec with Matchers with DynamoFixtures {
 
     val record = Webpage(id = "1", uri = new URI("https://example.org/"))
 
-    assertCanStoreAndRetrieve[Webpage](record = record)
+    assertCanStoreAndRetrieve[Webpage](t = record)
   }
 
   it("allows storing and retrieving an instance of UUID") {
@@ -39,15 +40,13 @@ class DynamoFormatTest extends FunSpec with Matchers with DynamoFixtures {
 
     val record = UniqueID(id = "1", uuid = UUID.randomUUID())
 
-    assertCanStoreAndRetrieve[UniqueID](record = record)
+    assertCanStoreAndRetrieve[UniqueID](t = record)
   }
 
-  private def assertCanStoreAndRetrieve[T <: Identifiable](record: T)(
+  private def assertCanStoreAndRetrieve[T <: Identifiable](t: T)(
     implicit format: DynamoFormat[T]): Assertion =
     withLocalDynamoDbTable { table =>
-      Scanamo.put(dynamoClient)(table.name)(record)
-      Scanamo
-        .get[T](dynamoClient)(table.name)('id -> record.id)
-        .get shouldBe Right(record)
+      putTableItem[T](t, table)
+      getExistingTableItem[T](id = t.id, table) shouldBe t
     }
 }

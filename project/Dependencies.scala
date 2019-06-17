@@ -26,28 +26,19 @@ object WellcomeDependencies {
 object Dependencies {
 
   lazy val versions = new {
-    val aws = "1.11.225"
-    val circe = "0.9.0"
+    // Chosen to match the version used by Scanamo
+    val aws = "1.11.504"
+
     val logback = "1.1.8"
     val mockito = "1.9.5"
-    val scalaCheck = "1.13.4"
     val scalatest = "3.0.1"
-    val scanamo = "1.0.0-M5"
+    val scanamo = "1.0.0-M10"
     val apacheCommons = "2.6"
   }
 
-  val circeDependencies = Seq(
-    "io.circe" %% "circe-core" % versions.circe,
-    "io.circe" %% "circe-parser"% versions.circe,
-  )
-
   val testDependencies = Seq(
     "org.scalatest" %% "scalatest" % versions.scalatest % Test,
-    "org.mockito" % "mockito-core" % versions.mockito % Test,
-  )
-
-  val scalacheckDependencies = Seq(
-    "org.scalacheck" %% "scalacheck" % versions.scalaCheck % "test"
+    "org.mockito" % "mockito-core" % versions.mockito % Test
   )
 
   val loggingDependencies = Seq(
@@ -61,14 +52,17 @@ object Dependencies {
     "commons-io" % "commons-io" % versions.apacheCommons % "test"
   )
 
+  val scanamoDependencies = Seq(
+    "org.scanamo" %% "scanamo" % versions.scanamo,
+    "org.scanamo" %% "scanamo-time" % versions.scanamo
+  )
+
   val libraryDependencies: Seq[ModuleID] = Seq(
     "com.amazonaws" % "aws-java-sdk-dynamodb" % versions.aws,
-    "com.amazonaws" % "aws-java-sdk-s3" % versions.aws,
-    "com.gu" %% "scanamo" % versions.scanamo,
+    "com.amazonaws" % "aws-java-sdk-s3" % versions.aws
   ) ++
-    circeDependencies ++
     loggingDependencies ++
-    scalacheckDependencies ++
+    scanamoDependencies ++
     testDependencies ++
     apacheCommons ++
     WellcomeDependencies.jsonLibrary ++
