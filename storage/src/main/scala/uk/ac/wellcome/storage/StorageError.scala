@@ -57,3 +57,8 @@ case class CharsetDecodingError(e: Throwable = new Error())
 case class StringDecodingError(e: Throwable) extends DecoderError
 
 case class JsonDecodingError(e: Throwable) extends DecoderError
+
+sealed trait MaximaError extends ReadError with BackendError
+
+case class MaximaReadError(e: Throwable = new Error()) extends MaximaError with StorageError
+case class NoMaximaValueError(e: Throwable = new Error()) extends MaximaError with StorageError
