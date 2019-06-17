@@ -10,6 +10,7 @@ import grizzled.slf4j.Logging
 import org.scanamo.query.Condition
 import org.scanamo.{DynamoFormat, Table => ScanamoTable}
 import org.scanamo.syntax._
+import org.scanamo.time.JavaTimeFormats._
 import uk.ac.wellcome.storage.{LockDao, LockFailure, UnlockFailure}
 
 import scala.concurrent.ExecutionContext
@@ -39,15 +40,15 @@ class DynamoLockDao(
       duration = config.expiryTime
     )
 
-    debug(s"Locking $rowLock: START")
+    debug(s"Locking $id/$contextId: START")
 
     lockOp(rowLock).fold(
       e => {
-        debug(s"Locking $rowLock: FAILED ($e)")
+        debug(s"Locking $id/$contextId: FAILURE ($e)")
         Left(LockFailure(id, e))
       },
       result => {
-        debug(s"Locking $rowLock: SUCCESS ($result)")
+        debug(s"Locking $id/$contextId: SUCCESS ($result)")
         Right(rowLock)
       }
     )
@@ -57,7 +58,7 @@ class DynamoLockDao(
     val lockFound = attributeExists(symbol = 'id)
     val lockNotFound = not(lockFound)
 
-    val isExpired = Condition('expires < lock.created.toString)
+    val isExpired = Condition('expires < lock.created)
 
     val lockHasExpired = Condition(lockFound and isExpired)
 
@@ -76,7 +77,7 @@ class DynamoLockDao(
 
     queryAndDelete(contextId).fold(
       e => {
-        warn(s"Unlocking $contextId: FAILED ($e)")
+        warn(s"Unlocking $contextId: FAILURE ($e)")
         Left(UnlockFailure(contextId, e))
       },
       result => {
