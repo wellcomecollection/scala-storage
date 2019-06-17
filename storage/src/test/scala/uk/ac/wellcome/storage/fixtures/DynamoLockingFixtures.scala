@@ -25,7 +25,7 @@ trait DynamoLockingFixtures extends DynamoFixtures with EitherValues with Option
   def createRandomId: String = Random.nextString(32)
 
   def withLockDao[R](
-    dynamoDbClient: AmazonDynamoDB,
+    dynamoClient: AmazonDynamoDB,
     lockTable: Table,
     seconds: Int = 180)(
     testWith: TestWith[DynamoLockDao, R]): R = {
@@ -35,18 +35,12 @@ trait DynamoLockingFixtures extends DynamoFixtures with EitherValues with Option
     )
 
     val dynamoLockDao = new DynamoLockDao(
-      client = dynamoDbClient,
+      client = dynamoClient,
       config = rowLockDaoConfig
     )
 
     testWith(dynamoLockDao)
   }
-
-  def withLockDao[R](lockTable: Table)(
-    testWith: TestWith[DynamoLockDao, R]): R =
-    withLockDao(dynamoClient, lockTable = lockTable) { lockDao =>
-      testWith(lockDao)
-    }
 
   def withLockDao[R](dynamoDbClient: AmazonDynamoDB)(
     testWith: TestWith[DynamoLockDao, R]): R =
@@ -117,7 +111,7 @@ trait DynamoLockingFixtures extends DynamoFixtures with EitherValues with Option
 
   def withDynamoLockingService[R](table: Table)(
     testWith: TestWith[DynamoLockingServiceStub, R]): R =
-    withLockDao(table) { implicit lockDao =>
+    withLockDao(dynamoClient, table) { implicit lockDao =>
       withDynamoLockingService { lockingService =>
         testWith(lockingService)
       }
