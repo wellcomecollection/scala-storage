@@ -21,11 +21,9 @@ case object IdentityKey {
     )
 }
 
-case class Identified[Id, T](id: Id, identifiedT: T)
-  extends Identifiable[Id]
+case class Identified[Id, T](id: Id, identifiedT: T) extends Identifiable[Id]
 
-case class Version[Id, V](id: Id, version: V)
-  extends Identifiable[Id] {
+case class Version[Id, V](id: Id, version: V) extends Identifiable[Id] {
 
   override def asKey: IdentityKey = IdentityKey(s"$id/$version")
 }

@@ -9,8 +9,9 @@ import uk.ac.wellcome.storage.{MaximaError, MaximaReadError, NoMaximaValueError}
 
 import scala.util.{Failure, Success, Try}
 
-trait DynamoHashRangeMaxima[HashKey, RangeKey, Row <: DynamoHashRangeKeyPair[HashKey, RangeKey]]
-  extends Maxima[HashKey, RangeKey] {
+trait DynamoHashRangeMaxima[
+  HashKey, RangeKey, Row <: DynamoHashRangeKeyPair[HashKey, RangeKey]]
+    extends Maxima[HashKey, RangeKey] {
 
   implicit protected val formatHashKey: DynamoFormat[HashKey]
   implicit protected val formatRangeKey: DynamoFormat[RangeKey]
@@ -20,8 +21,7 @@ trait DynamoHashRangeMaxima[HashKey, RangeKey, Row <: DynamoHashRangeKeyPair[Has
   protected val table: Table[Row]
 
   override def max(hashKey: HashKey): Either[MaximaError, RangeKey] = {
-    val ops = table
-      .descending
+    val ops = table.descending
       .limit(1)
       .query('hashKey -> hashKey)
 

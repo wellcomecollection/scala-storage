@@ -4,7 +4,9 @@ import uk.ac.wellcome.storage.{NoMaximaValueError, Version}
 import uk.ac.wellcome.storage.maxima.Maxima
 import uk.ac.wellcome.storage.store.memory.MemoryStoreBase
 
-trait MemoryMaxima[Id, T] extends Maxima[Id, Int] with MemoryStoreBase[Version[Id, Int], T] {
+trait MemoryMaxima[Id, T]
+    extends Maxima[Id, Int]
+    with MemoryStoreBase[Version[Id, Int], T] {
   def max(id: Id): Either[NoMaximaValueError, Int] = {
     val matchingEntries =
       entries

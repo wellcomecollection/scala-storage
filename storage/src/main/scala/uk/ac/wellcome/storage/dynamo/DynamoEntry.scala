@@ -14,7 +14,8 @@ case class DynamoHashRangeEntry[HashKey, RangeKey, T](
   hashKey: HashKey,
   rangeKey: RangeKey,
   payload: T
-) extends DynamoEntry[HashKey, T] with DynamoHashRangeKeyPair[HashKey, RangeKey]
+) extends DynamoEntry[HashKey, T]
+    with DynamoHashRangeKeyPair[HashKey, RangeKey]
 
 case class DynamoHashEntry[HashKey, V, T](
   hashKey: HashKey,
