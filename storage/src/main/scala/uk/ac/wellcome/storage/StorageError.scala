@@ -4,6 +4,7 @@ sealed trait StorageError {
   val e: Throwable
 }
 
+sealed trait CodecError
 sealed trait DaoError
 sealed trait ObjectStoreError
 sealed trait BackendError
@@ -18,6 +19,14 @@ case class ConditionalWriteError(e: Throwable) extends WriteError with DaoError
 case class BackendWriteError(e: Throwable) extends WriteError with BackendError
 
 case class JsonEncodingError(e: Throwable) extends EncoderError
+
+case class CharsetEncodingError(e: Throwable = new Error()) extends EncoderError
+
+case class LossyEncodingDetected(
+  startingString: String,
+  decodedString: String,
+  e: Throwable = new Error()
+) extends CodecError with WriteError
 
 sealed trait ReadError extends StorageError
 sealed trait DecoderError extends ReadError

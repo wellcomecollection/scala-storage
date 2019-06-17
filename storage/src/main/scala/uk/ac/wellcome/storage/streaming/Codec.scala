@@ -5,7 +5,6 @@ import java.nio.charset.{Charset, StandardCharsets}
 
 import io.circe
 import io.circe.Json
-import uk.ac.wellcome.storage.{DecoderError, EncoderError}
 
 trait Codec[T] extends Encoder[T] with Decoder[T]
 
