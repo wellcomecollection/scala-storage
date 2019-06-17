@@ -15,11 +15,12 @@ object Codec {
   import DecoderInstances._
 
   def coerce(charset: Charset)(startingString: String): Either[CodecError, String] = for {
-    encodedByteBuffer <- {
-      Try(charset.encode(startingString)) match {
-        case Success(s) => Right(s)
-        case Failure(e) => Left(CharsetEncodingError(e))
-      }
+
+    // TODO: We don't have any tests for these for comprehensions.
+    // If we can find strings that will throw these errors, we should add tests.
+    encodedByteBuffer <- Try(charset.encode(startingString)) match {
+      case Success(s) => Right(s)
+      case Failure(e) => Left(CharsetEncodingError(e))
     }
 
     decodedCharBuffer <- Try(charset.decode(encodedByteBuffer)) match {
