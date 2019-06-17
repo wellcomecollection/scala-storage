@@ -25,7 +25,7 @@ object EncoderInstances extends Logging {
           new ByteArrayInputStream(bytes),
           length = bytes.length
         )
-      )
+    )
 
   implicit def stringEncoder(
     implicit charset: Charset = StandardCharsets.UTF_8

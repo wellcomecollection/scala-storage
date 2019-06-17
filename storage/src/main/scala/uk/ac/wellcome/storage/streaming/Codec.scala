@@ -46,7 +46,8 @@ object Codec {
     } yield result
 
   implicit val bytesCodec: Codec[Array[Byte]] = new Codec[Array[Byte]] {
-    override def fromStream(inputStream: FiniteInputStream): DecoderResult[Array[Byte]] =
+    override def fromStream(
+      inputStream: FiniteInputStream): DecoderResult[Array[Byte]] =
       bytesDecoder.fromStream(inputStream)
 
     override def toStream(bytes: Array[Byte]): EncoderResult =

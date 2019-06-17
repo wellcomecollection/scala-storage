@@ -29,19 +29,19 @@ object DecoderInstances {
         case Success(bytes) if bytes.length == inputStream.length =>
           Right(bytes)
         case Success(bytes) =>
-          Left(IncorrectStreamLengthError(
-            new Throwable(
-              s"Expected length ${inputStream.length}, actually had length ${bytes.length}")
-          ))
+          Left(
+            IncorrectStreamLengthError(
+              new Throwable(
+                s"Expected length ${inputStream.length}, actually had length ${bytes.length}")
+            ))
         case Failure(err) => Left(ByteDecodingError(err))
-      }
+    }
 
   implicit def stringDecoder(
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Decoder[String] =
     (inputStream: FiniteInputStream) =>
       bytesDecoder.fromStream(inputStream).flatMap { bytes =>
-
         // TODO: We don't have a test for this String construction failing, because
         // we can't find a sequence of bugs that triggers an exception!
         //
@@ -49,9 +49,9 @@ object DecoderInstances {
         // a test for this case.
         Try { new String(bytes, charset) } match {
           case Success(string) => Right(string)
-          case Failure(err) => Left(StringDecodingError(err))
+          case Failure(err)    => Left(StringDecodingError(err))
         }
-      }
+    }
 
   implicit val jsonDecoder: Decoder[Json] =
     (inputStream: FiniteInputStream) => {
