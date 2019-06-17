@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.4.1 - 2019-06-17
+
+Improve the testing of our custom DynamoFormat implementations, and fix a bug in the DynamoFormat for `java.net.URI`.
+
 ## v7.4.0 - 2019-06-17
 
 This patch adds the `Maxima` class, for looking up the highest version of a thing.  It includes in-memory and DynamoDB implementations.
