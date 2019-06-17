@@ -10,10 +10,6 @@ import uk.ac.wellcome.storage.locking.dynamo.{
   DynamoLockDaoConfig,
   DynamoLockingService
 }
-import uk.ac.wellcome.storage.locking.{
-  DynamoLockDaoConfig,
-  DynamoLockingService
-}
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
 
 import scala.concurrent.ExecutionContext
