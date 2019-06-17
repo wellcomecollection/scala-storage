@@ -11,12 +11,14 @@ import org.apache.commons.io.IOUtils
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage._
+import uk.ac.wellcome.storage.generators.RandomThings
 
 import scala.util.Random
 
 class DecoderTest extends FunSpec
   with EitherValues
-  with Matchers {
+  with Matchers
+  with RandomThings {
 
   import DecoderInstances._
 
@@ -24,10 +26,7 @@ class DecoderTest extends FunSpec
 
   describe("successfully decodes") {
     it("a byte array") {
-      val byteArray = Array[Byte](20)
-      Random.nextBytes(byteArray)
-
-      byteArray.length > 0 shouldBe true
+      val byteArray = randomBytes()
 
       val stream = new FiniteInputStream(
         new ByteArrayInputStream(byteArray),
@@ -84,9 +83,9 @@ class DecoderTest extends FunSpec
 
   describe("fails to decode") {
     it("from an invalid stream") {
-      stringDecoder.fromStream(null).left.value shouldBe a[StringDecodingError]
-      jsonDecoder.fromStream(null).left.value shouldBe a[StringDecodingError]
-      typeDecoder[Vehicle].fromStream(null).left.value shouldBe a[StringDecodingError]
+      stringDecoder.fromStream(null).left.value shouldBe a[ByteDecodingError]
+      jsonDecoder.fromStream(null).left.value shouldBe a[ByteDecodingError]
+      typeDecoder[Vehicle].fromStream(null).left.value shouldBe a[ByteDecodingError]
     }
 
     it("an invalid json string") {
@@ -106,18 +105,22 @@ class DecoderTest extends FunSpec
     }
 
     it("if the specified length is too long") {
+      val byteArray = randomBytes()
+
       val badStream = new FiniteInputStream(
-        IOUtils.toInputStream(Random.nextString(8), StandardCharsets.UTF_8),
-        length = 100
+        new ByteArrayInputStream(byteArray),
+        length = byteArray.length + 1
       )
 
       stringDecoder.fromStream(badStream).left.value shouldBe a[IncorrectStreamLengthError]
     }
 
     it("if the specified length is too short") {
+      val byteArray = randomBytes()
+
       val badStream = new FiniteInputStream(
-        IOUtils.toInputStream(Random.nextString(8), StandardCharsets.UTF_8),
-        length = 5
+        new ByteArrayInputStream(byteArray),
+        length = byteArray.length - 1
       )
 
       stringDecoder.fromStream(badStream).left.value shouldBe a[IncorrectStreamLengthError]

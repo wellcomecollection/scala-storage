@@ -1,8 +1,10 @@
 package uk.ac.wellcome.storage.generators
 
+import org.scalatest.Matchers
+
 import scala.util.Random
 
-trait RandomThings {
+trait RandomThings extends Matchers {
   def randomAlphanumeric: String =
     Random.alphanumeric take 8 mkString
 
@@ -25,5 +27,14 @@ trait RandomThings {
     val randomOffset = Random.nextInt(difference) + 1
 
     from + randomOffset
+  }
+
+  def randomBytes(length: Int = 20): Array[Byte] = {
+    val byteArray = Array[Byte](20)
+    Random.nextBytes(byteArray)
+
+    byteArray.length > 0 shouldBe true
+
+    byteArray
   }
 }

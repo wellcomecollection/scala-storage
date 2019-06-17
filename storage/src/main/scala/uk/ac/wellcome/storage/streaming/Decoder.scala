@@ -41,6 +41,12 @@ object DecoderInstances {
   ): Decoder[String] =
     (inputStream: FiniteInputStream) =>
       bytesDecoder.fromStream(inputStream).flatMap { bytes =>
+
+        // TODO: We don't have a test for this String construction failing, because
+        // we can't find a sequence of bugs that triggers an exception!
+        //
+        // We should either satisfy ourselves that this code can't throw, or add
+        // a test for this case.
         Try { new String(bytes, charset) } match {
           case Success(string) => Right(string)
           case Failure(err) => Left(StringDecodingError(err))
