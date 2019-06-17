@@ -13,7 +13,9 @@ import uk.ac.wellcome.storage.{EncoderError, JsonEncodingError}
 import scala.util.{Failure, Success}
 
 trait Encoder[T] {
-  def toStream(t: T): Either[EncoderError, InputStream]
+  type EncoderResult = Either[EncoderError, InputStream]
+
+  def toStream(t: T): EncoderResult
 }
 
 object EncoderInstances extends Logging {

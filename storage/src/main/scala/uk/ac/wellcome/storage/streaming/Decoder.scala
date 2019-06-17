@@ -16,7 +16,9 @@ import uk.ac.wellcome.storage.{
 import scala.util.{Failure, Success, Try}
 
 trait Decoder[T] {
-  def fromStream(inputStream: InputStream): Either[DecoderError, T]
+  type DecoderResult[S] = Either[DecoderError, S]
+
+  def fromStream(inputStream: InputStream): DecoderResult[T]
 }
 
 object DecoderInstances {
