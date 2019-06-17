@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.4.0 - 2019-06-17
+
+This patch adds the `Maxima` class, for looking up the highest version of a thing.  It includes in-memory and DynamoDB implementations.
+
 ## v7.3.0 - 2019-06-17
 
 This rearranges the classes around locking to follow a more consistent pattern, and improves the testing of the locking classes.
