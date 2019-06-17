@@ -1,9 +1,8 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage.locking.memory
 
 import java.util.UUID
 
 import org.scalatest.{EitherValues, FunSpec, Matchers}
-import uk.ac.wellcome.storage.memory.{MemoryLockDao, PermanentLock}
 
 import scala.util.Random
 

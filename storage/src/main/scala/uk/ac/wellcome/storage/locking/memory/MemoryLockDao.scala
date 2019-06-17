@@ -1,7 +1,7 @@
-package uk.ac.wellcome.storage.memory
+package uk.ac.wellcome.storage.locking.memory
 
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.{Lock, LockDao, LockFailure}
+import uk.ac.wellcome.storage.locking.{Lock, LockDao, LockFailure}
 
 trait MemoryLockDao[MemoryIdent, MemoryContextId]
     extends LockDao[MemoryIdent, MemoryContextId]

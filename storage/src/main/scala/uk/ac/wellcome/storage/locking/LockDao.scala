@@ -1,4 +1,4 @@
-package uk.ac.wellcome.storage
+package uk.ac.wellcome.storage.locking
 
 /** This trait defines a generic locking dao (data ccess object).
   *

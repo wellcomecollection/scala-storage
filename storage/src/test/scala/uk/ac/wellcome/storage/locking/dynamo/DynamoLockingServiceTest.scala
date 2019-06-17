@@ -1,8 +1,8 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage.locking.dynamo
 
 import cats.implicits._
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.FunSpec
+import org.scalatest.concurrent.ScalaFutures
 import org.scanamo.auto._
 import org.scanamo.time.JavaTimeFormats._
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table

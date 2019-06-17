@@ -1,10 +1,7 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage.locking.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.model.{
-  ConditionalCheckFailedException,
-  PutItemResult
-}
+import com.amazonaws.services.dynamodbv2.model.{ConditionalCheckFailedException, PutItemResult}
 import org.scanamo.ops.ScanamoOps
 import org.scanamo.{DynamoFormat, Scanamo, Table => ScanamoTable}
 
@@ -34,5 +31,4 @@ trait ScanamoHelpers[T] {
 
   protected def toEither[Out](f: => Out): Either[Throwable, Out] =
     Try(f).toEither
-
 }

@@ -1,4 +1,4 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage.locking.dynamo
 
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
@@ -13,7 +13,7 @@ import org.scanamo.auto._
 import org.scanamo.time.JavaTimeFormats._
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.fixtures.DynamoLockingFixtures
-import uk.ac.wellcome.storage.{LockFailure, UnlockFailure}
+import uk.ac.wellcome.storage.locking.{LockFailure, UnlockFailure}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

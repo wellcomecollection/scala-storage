@@ -1,8 +1,8 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage.locking.dynamo
 
 import java.util.UUID
 
-import uk.ac.wellcome.storage.{LockDao, LockingService}
+import uk.ac.wellcome.storage.locking.{LockDao, LockingService}
 
 import scala.language.higherKinds
 

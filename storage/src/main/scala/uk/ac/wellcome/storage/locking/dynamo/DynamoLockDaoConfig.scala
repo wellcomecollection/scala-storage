@@ -1,4 +1,4 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage.locking.dynamo
 
 import java.time.Duration
 

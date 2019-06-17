@@ -5,8 +5,8 @@ import java.util.UUID
 import grizzled.slf4j.Logging
 import org.scalatest.{Assertion, EitherValues, Matchers, TryValues}
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage._
-import uk.ac.wellcome.storage.memory.MemoryLockDao
+import uk.ac.wellcome.storage.locking._
+import uk.ac.wellcome.storage.locking.memory.MemoryLockDao
 
 import scala.util.Try
 
