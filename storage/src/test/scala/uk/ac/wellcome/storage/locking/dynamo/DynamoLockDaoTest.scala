@@ -19,8 +19,8 @@ class DynamoLockDaoTest
     with MockitoSugar
     with IntegrationPatience {
 
-  private val staticId = createRandomId
-  private val staticContextId = createRandomContextId
+  private val staticId = createIdent
+  private val staticContextId = createContextId
 
   it("records a lock in DynamoDB") {
     withLocalDynamoDbTable { lockTable =>
@@ -59,7 +59,7 @@ class DynamoLockDaoTest
   it("creates a new lock in a different context when the existing lock expires") {
     withLocalDynamoDbTable { lockTable =>
       withLockDao(lockTable, seconds = 1) { lockDao =>
-        val contextId = createRandomContextId
+        val contextId = createContextId
 
         lockDao.lock(staticId, staticContextId)
           .right.value.id shouldBe staticId
