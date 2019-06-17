@@ -1,5 +1,6 @@
 package uk.ac.wellcome.storage.streaming
 
+import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 
 import io.circe
@@ -22,6 +23,20 @@ class DecoderTest extends FunSpec
   case class Vehicle(model: String, speed: Int)
 
   describe("successfully decodes") {
+    it("a byte array") {
+      val byteArray = Array[Byte](20)
+      Random.nextBytes(byteArray)
+
+      byteArray.length > 0 shouldBe true
+
+      val stream = new FiniteInputStream(
+        new ByteArrayInputStream(byteArray),
+        length = byteArray.length
+      )
+
+      bytesDecoder.fromStream(stream).right.value shouldBe byteArray
+    }
+
     it("a string") {
       val randomString = Random.nextString(8)
       val randomStream = createStream(randomString)
