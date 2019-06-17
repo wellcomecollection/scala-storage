@@ -2,12 +2,7 @@ package uk.ac.wellcome.storage.generators
 
 import uk.ac.wellcome.storage.ObjectLocation
 
-import scala.util.Random
-
-trait ObjectLocationGenerators {
-  def randomAlphanumeric: String =
-    Random.alphanumeric take 8 mkString
-
+trait ObjectLocationGenerators extends RandomThings {
   def createObjectLocationWith(
     namespace: String = randomAlphanumeric,
     key: String = randomAlphanumeric,

@@ -13,7 +13,8 @@ import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config}
-import uk.ac.wellcome.storage.streaming.CodecInstances._
+import uk.ac.wellcome.storage.streaming.Codec._
+import uk.ac.wellcome.storage.streaming.FiniteInputStream
 
 import scala.collection.JavaConverters._
 
@@ -66,7 +67,12 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
     )
 
   def getContentFromS3(location: ObjectLocation): String = {
-    val inputStream = s3Client.getObject(location.namespace, location.key).getObjectContent
+    val s3Object = s3Client.getObject(location.namespace, location.key)
+
+    val inputStream = new FiniteInputStream(
+      s3Object.getObjectContent,
+      length = s3Object.getObjectMetadata.getContentLength
+    )
     stringCodec.fromStream(inputStream).right.value
   }
 
