@@ -4,27 +4,12 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{EitherValues, FunSpec, Matchers}
-import uk.ac.wellcome.fixtures.TestWith
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.runtime.BoxedUnit
 
-trait LockDaoTestCases[Ident, ContextId, LockDaoContext] extends FunSpec with Matchers with EitherValues with ScalaFutures {
-  def withLockDaoContext[R](testWith: TestWith[LockDaoContext, R]): R
-
-  def withLockDao[R](context: LockDaoContext)(testWith: TestWith[LockDao[Ident, ContextId], R]): R
-
-  def withLockDao[R](testWith: TestWith[LockDao[Ident, ContextId], R]): R =
-    withLockDaoContext { lockDaoContext =>
-      withLockDao(lockDaoContext) { lockDao =>
-        testWith(lockDao)
-      }
-    }
-
-  def createIdent: Ident
-  def createContextId: ContextId
-
+trait LockDaoTestCases[Ident, ContextId, LockDaoContext] extends FunSpec with Matchers with EitherValues with ScalaFutures with LockDaoFixtures[Ident, ContextId, LockDaoContext] {
   it("behaves correctly") {
     withLockDaoContext { lockDaoContext =>
       withLockDao(lockDaoContext) { lockDao =>

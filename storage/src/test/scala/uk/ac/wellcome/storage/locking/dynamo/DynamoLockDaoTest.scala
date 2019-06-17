@@ -10,34 +10,14 @@ import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.mockito.MockitoSugar
 import org.scanamo.auto._
 import org.scanamo.time.JavaTimeFormats._
-import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
-import uk.ac.wellcome.storage.fixtures.DynamoLockingFixtures
-import uk.ac.wellcome.storage.generators.RandomThings
-import uk.ac.wellcome.storage.locking.{LockDao, LockDaoTestCases, LockFailure, UnlockFailure}
+import uk.ac.wellcome.storage.locking.{LockDaoTestCases, LockFailure, UnlockFailure}
 
 class DynamoLockDaoTest
   extends LockDaoTestCases[String, UUID, Table]
+    with DynamoLockDaoFixtures
     with MockitoSugar
-    with DynamoLockingFixtures
-    with IntegrationPatience
-    with RandomThings {
-
-  def createTable(table: Table): Table =
-    createLockTable(table)
-
-  override def withLockDaoContext[R](testWith: TestWith[Table, R]): R =
-    withLocalDynamoDbTable { table =>
-      testWith(table)
-    }
-
-  override def withLockDao[R](lockTable: Table)(testWith: TestWith[LockDao[String, UUID], R]): R =
-    withLockDao(dynamoClient, lockTable = lockTable) { lockDao =>
-      testWith(lockDao)
-    }
-
-  override def createIdent: String = randomAlphanumeric
-  override def createContextId: UUID = UUID.randomUUID()
+    with IntegrationPatience {
 
   private val staticId = createRandomId
   private val staticContextId = createRandomContextId
