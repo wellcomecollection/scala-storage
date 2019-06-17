@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.5.0 - 2019-06-17
+
+Add a codec, decoder and encoder for `Array[Byte]`.
+
 ## v7.4.1 - 2019-06-17
 
 Improve the testing of our custom DynamoFormat implementations, and fix a bug in the DynamoFormat for `java.net.URI`.
