@@ -1,20 +1,9 @@
 package uk.ac.wellcome.storage.typesafe
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.gu.scanamo.DynamoFormat
 import com.typesafe.config.Config
 import uk.ac.wellcome.config.models.AWSClientConfig
-import uk.ac.wellcome.storage.dynamo.{
-  DynamoClientFactory,
-  DynamoConfig,
-  DynamoVersionedDao,
-  UpdateExpressionGenerator
-}
-import uk.ac.wellcome.storage.type_classes.{
-  IdGetter,
-  VersionGetter,
-  VersionUpdater
-}
+import uk.ac.wellcome.storage.dynamo.{DynamoClientFactory, DynamoConfig}
 import uk.ac.wellcome.typesafe.config.builders.AWSClientConfigBuilder
 import uk.ac.wellcome.typesafe.config.builders.EnrichConfig._
 
@@ -27,8 +16,8 @@ object DynamoBuilder extends AWSClientConfigBuilder {
       .getOrElse[String](s"aws.$namespace.dynamo.tableIndex")(default = "")
 
     DynamoConfig(
-      table = tableName,
-      maybeIndex = if (tableIndex.isEmpty) None else Some(tableIndex)
+      tableName = tableName,
+      maybeIndexName = if (tableIndex.isEmpty) None else Some(tableIndex)
     )
   }
 
@@ -44,18 +33,5 @@ object DynamoBuilder extends AWSClientConfigBuilder {
   def buildDynamoClient(config: Config): AmazonDynamoDB =
     buildDynamoClient(
       awsClientConfig = buildAWSClientConfig(config, namespace = "dynamo")
-    )
-
-  def buildVersionedDao[Ident, T](config: Config, namespace: String = "")(
-    implicit
-    evidence: DynamoFormat[T],
-    versionUpdater: VersionUpdater[T],
-    idGetter: IdGetter[T],
-    versionGetter: VersionGetter[T],
-    updateExpressionGenerator: UpdateExpressionGenerator[T])
-    : DynamoVersionedDao[Ident, T] =
-    DynamoVersionedDao[Ident, T](
-      dynamoClient = buildDynamoClient(config),
-      dynamoConfig = buildDynamoConfig(config, namespace = namespace)
     )
 }

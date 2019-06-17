@@ -107,8 +107,8 @@ trait LocalDynamoDb extends Eventually with Matchers with IntegrationPatience {
 
   def createDynamoConfigWith(table: Table): DynamoConfig =
     DynamoConfig(
-      table = table.name,
-      maybeIndex = Some(table.index)
+      tableName = table.name,
+      maybeIndexName = Some(table.index)
     )
 
   def withDynamoDao[T, R](table: Table)(testWith: TestWith[DynamoDao[String, T], R])(
