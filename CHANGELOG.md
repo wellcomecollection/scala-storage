@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.3.0 - 2019-06-17
+
+This rearranges the classes around locking to follow a more consistent pattern, and improves the testing of the locking classes.
+
 ## v7.2.0 - 2019-06-17
 
 This adds the `FiniteInputStream` class, an instance of `java.io.InputStream` that records the length of the underlying stream.
