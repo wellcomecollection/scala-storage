@@ -1,6 +1,5 @@
 package uk.ac.wellcome.storage.streaming
 
-import java.io.InputStream
 import java.nio.charset.{Charset, StandardCharsets}
 
 import grizzled.slf4j.Logging
@@ -13,7 +12,7 @@ import uk.ac.wellcome.storage.{EncoderError, JsonEncodingError}
 import scala.util.{Failure, Success}
 
 trait Encoder[T] {
-  type EncoderResult = Either[EncoderError, InputStream]
+  type EncoderResult = Either[EncoderError, FiniteInputStream]
 
   def toStream(t: T): EncoderResult
 }
@@ -23,12 +22,17 @@ object EncoderInstances extends Logging {
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Encoder[String] =
     (t: String) => {
-      info(s"Encoding string <$t> with charset <$charset>")
+      trace(s"Encoding string <$t> with charset <$charset>")
 
       // We tried to write a test that causes toInputStream to throw,
       // but were unable to find a way to do so! If you get an
       // exception from this, wrap it in a Try and add a test case (please).
-      Right(IOUtils.toInputStream(t, charset))
+      Right(
+        new FiniteInputStream(
+          IOUtils.toInputStream(t, charset),
+          length = t.getBytes.length
+        )
+      )
     }
 
   // Circe uses the UTF-8 encoder internally
@@ -42,6 +46,6 @@ object EncoderInstances extends Logging {
         case Failure(err)        => Left(JsonEncodingError(err))
     }
 
-  implicit val streamEncoder: Encoder[InputStream] =
-    (t: InputStream) => Right(t)
+  implicit val streamEncoder: Encoder[FiniteInputStream] =
+    (t: FiniteInputStream) => Right(t)
 }

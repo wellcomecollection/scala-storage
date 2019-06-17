@@ -18,6 +18,9 @@ case class ConditionalWriteError(e: Throwable) extends WriteError with DaoError
 
 case class BackendWriteError(e: Throwable) extends WriteError with BackendError
 
+case class IncorrectStreamLengthError(e: Throwable = new Error())
+  extends DecoderError
+
 case class JsonEncodingError(e: Throwable) extends EncoderError
 
 case class CharsetEncodingError(e: Throwable = new Error()) extends CodecError with EncoderError

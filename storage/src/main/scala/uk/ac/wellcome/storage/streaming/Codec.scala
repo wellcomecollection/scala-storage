@@ -1,6 +1,5 @@
 package uk.ac.wellcome.storage.streaming
 
-import java.io.InputStream
 import java.nio.charset.{Charset, StandardCharsets}
 
 import io.circe
@@ -42,7 +41,7 @@ object Codec {
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Codec[String] = new Codec[String] {
     override def fromStream(
-      inputStream: InputStream): DecoderResult[String] =
+      inputStream: FiniteInputStream): DecoderResult[String] =
       stringDecoder.fromStream(inputStream)
 
     override def toStream(t: String): EncoderResult =
@@ -51,7 +50,7 @@ object Codec {
 
   implicit def jsonCodec: Codec[Json] = new Codec[Json] {
     override def fromStream(
-      inputStream: InputStream): DecoderResult[Json] =
+      inputStream: FiniteInputStream): DecoderResult[Json] =
       jsonDecoder.fromStream(inputStream)
 
     override def toStream(t: Json): EncoderResult =
@@ -63,19 +62,19 @@ object Codec {
     dec: circe.Decoder[T],
     enc: circe.Encoder[T]
   ): Codec[T] = new Codec[T] {
-    override def fromStream(inputStream: InputStream): DecoderResult[T] =
+    override def fromStream(inputStream: FiniteInputStream): DecoderResult[T] =
       typeDecoder.fromStream(inputStream)
 
     override def toStream(t: T): EncoderResult =
       typeEncoder.toStream(t)
   }
 
-  implicit val streamCodec: Codec[InputStream] = new Codec[InputStream] {
+  implicit val streamCodec: Codec[FiniteInputStream] = new Codec[FiniteInputStream] {
     override def fromStream(
-      inputStream: InputStream): DecoderResult[InputStream] =
+      inputStream: FiniteInputStream): DecoderResult[FiniteInputStream] =
       streamDecoder.fromStream(inputStream)
 
-    override def toStream(t: InputStream): EncoderResult =
+    override def toStream(t: FiniteInputStream): EncoderResult =
       streamEncoder.toStream(t)
   }
 }
