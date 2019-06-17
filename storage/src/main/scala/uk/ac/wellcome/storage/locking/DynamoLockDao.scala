@@ -97,8 +97,8 @@ class DynamoLockDao(
   private def deleteLocks(
     rowLocks: List[ExpiringLock]): Either[Error, List[DeleteItemResult]] = {
     val deleteT = EitherT(
-      rowLocks.map {
-        rowLock => toEither(
+      rowLocks.map { rowLock =>
+        toEither(
           scanamo.exec(table.delete('id -> rowLock.id))
         )
       }

@@ -1,7 +1,10 @@
 package uk.ac.wellcome.storage.locking
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.model.{ConditionalCheckFailedException, PutItemResult}
+import com.amazonaws.services.dynamodbv2.model.{
+  ConditionalCheckFailedException,
+  PutItemResult
+}
 import org.scanamo.ops.ScanamoOps
 import org.scanamo.{DynamoFormat, Scanamo, Table => ScanamoTable}
 
