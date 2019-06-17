@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.0.0 - 2019-06-17
+
+This deletes most of the existing scala-storage functionality in prep for a major refactor.
+
 ## v6.1.3 - 2019-06-03
 
 Remove an unused dependency on scala-monitoring.
