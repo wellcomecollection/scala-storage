@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.2.0 - 2019-06-17
+
+This adds the `FiniteInputStream` class, an instance of `java.io.InputStream` that records the length of the underlying stream.
+
 ## v7.1.0 - 2019-06-17
 
 Bump the bundled version of Scanamo and expand the tests around DynamoFormat.
