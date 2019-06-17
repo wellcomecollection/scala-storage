@@ -76,7 +76,7 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
     record.get.right.get
   }
 
-  def scanTable[T: DynamoFormat](table: Table): immutable.Seq[Either[DynamoReadError, Any]] =
+  def scanTable[T: DynamoFormat](table: Table): immutable.Seq[Either[DynamoReadError, T]] =
     scanamo.exec(
       ScanamoTable[T](table.name).scan()
     )

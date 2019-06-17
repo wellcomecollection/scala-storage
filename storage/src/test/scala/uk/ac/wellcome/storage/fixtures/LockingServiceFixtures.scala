@@ -1,42 +1,39 @@
 package uk.ac.wellcome.storage.fixtures
 
-import java.util.UUID
-
 import grizzled.slf4j.Logging
 import org.scalatest.{Assertion, EitherValues, Matchers, TryValues}
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.generators.RandomThings
 import uk.ac.wellcome.storage.locking._
-import uk.ac.wellcome.storage.locking.memory.MemoryLockDao
 
 import scala.util.Try
 
-trait LockingServiceFixtures
+trait LockingServiceFixtures[Ident, ContextId, LockDaoContext]
   extends EitherValues
     with TryValues
     with Matchers
-    with Logging {
+    with Logging
+    with LockDaoFixtures[Ident, ContextId, LockDaoContext]
+    with RandomThings {
 
-  type LockDaoStub = LockDao[String, UUID]
+  type LockDaoStub = LockDao[Ident, ContextId]
   type ResultF = Try[Either[FailedLockingServiceOp, String]]
   type LockingServiceStub =
     LockingService[String, Try, LockDaoStub]
 
+  private def createLockingServiceContextId: ContextId = createContextId
+
   def withLockingService[R](lockDaoImpl: LockDaoStub)(testWith: TestWith[LockingServiceStub, R]): R = {
-    val lockingService = new LockingService[String, Try, LockDaoStub] {
-      type UnlockFail = UnlockFailure[String]
+    val lockingService = new LockingServiceStub {
+      type UnlockFail = UnlockFailure[Ident]
 
       override implicit val lockDao: LockDaoStub = lockDaoImpl
-      override protected def createContextId(): UUID =
-        UUID.randomUUID()
+      override protected def createContextId(): ContextId =
+        createLockingServiceContextId
     }
 
     testWith(lockingService)
   }
-
-  def withLockingService[R](testWith: TestWith[LockingServiceStub, R]): R =
-    withLockingService(new MemoryLockDao[String, UUID] {}) { lockingService =>
-      testWith(lockingService)
-    }
 
   def successfulRightOf(result: ResultF): String =
     result
@@ -53,10 +50,10 @@ trait LockingServiceFixtures
     successfulRightOf(result) shouldBe expectedResult
   }
 
-  def assertFailedLock(result: ResultF, lockIds: Set[String]): Assertion = {
+  def assertFailedLock(result: ResultF, lockIds: Set[Ident]): Assertion = {
     debug(s"Got $result, with $lockIds")
     val failedLock = successfulLeftOf(result)
-      .asInstanceOf[FailedLock[String, String]]
+      .asInstanceOf[FailedLock[ContextId, Ident]]
 
     failedLock.lockFailures shouldBe a[Set[_]]
     failedLock.lockFailures
@@ -65,15 +62,13 @@ trait LockingServiceFixtures
 
   def assertFailedProcess(result: ResultF, e: Throwable): Assertion = {
     val failedLock = successfulLeftOf(result)
-      .asInstanceOf[FailedProcess[String]]
+      .asInstanceOf[FailedProcess[ContextId]]
 
     failedLock.e shouldBe e
   }
 
-  private val randomString = UUID.randomUUID().toString
-
-  val expectedResult: String = randomString
-  val expectedError: Error = new Error(randomString)
+  val expectedResult: String = randomAlphanumeric
+  val expectedError: Error = new Error(randomAlphanumeric)
 
   def f = Try { expectedResult }
   def fError = Try { throw expectedError }

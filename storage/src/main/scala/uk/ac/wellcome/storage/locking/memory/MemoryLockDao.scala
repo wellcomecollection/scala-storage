@@ -8,7 +8,7 @@ trait MemoryLockDao[MemoryIdent, MemoryContextId]
     with Logging {
   type MemoryLock = PermanentLock[MemoryIdent, MemoryContextId]
 
-  private var locks: Map[MemoryIdent, MemoryLock] = Map.empty
+  var locks: Map[MemoryIdent, MemoryLock] = Map.empty
 
   var history: List[MemoryLock] = List.empty
 
