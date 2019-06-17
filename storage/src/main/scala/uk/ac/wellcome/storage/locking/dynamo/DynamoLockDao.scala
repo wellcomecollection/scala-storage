@@ -1,4 +1,4 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage.locking.dynamo
 
 import java.util.UUID
 
@@ -8,10 +8,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.{DeleteItemResult, PutItemResult}
 import grizzled.slf4j.Logging
 import org.scanamo.query.Condition
-import org.scanamo.{DynamoFormat, Table => ScanamoTable}
 import org.scanamo.syntax._
 import org.scanamo.time.JavaTimeFormats._
-import uk.ac.wellcome.storage.{LockDao, LockFailure, UnlockFailure}
+import org.scanamo.{DynamoFormat, Table => ScanamoTable}
+import uk.ac.wellcome.storage.locking.{LockDao, LockFailure, UnlockFailure}
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try

@@ -1,4 +1,4 @@
-package uk.ac.wellcome.storage.fixtures
+package uk.ac.wellcome.storage.locking.dynamo
 
 import java.time.Duration
 import java.util.UUID
@@ -6,47 +6,54 @@ import java.util.UUID
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
-import org.scalatest.{Assertion, EitherValues, OptionValues}
+import org.scalatest.Assertion
 import org.scanamo.auto._
 import org.scanamo.time.JavaTimeFormats._
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.fixtures.DynamoFixtures
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
-import uk.ac.wellcome.storage.locking.{DynamoLockDao, DynamoLockDaoConfig, DynamoLockingService, ExpiringLock}
+import uk.ac.wellcome.storage.generators.RandomThings
+import uk.ac.wellcome.storage.locking.{LockDao, LockDaoFixtures}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.Random
 
-trait DynamoLockingFixtures extends DynamoFixtures with EitherValues with OptionValues {
+trait DynamoLockDaoFixtures extends LockDaoFixtures[String, UUID, Table] with DynamoFixtures with RandomThings {
+  def createTable(table: Table): Table =
+    createLockTable(table)
+
+  override def withLockDaoContext[R](testWith: TestWith[Table, R]): R =
+    withLocalDynamoDbTable { table =>
+      testWith(table)
+    }
+
+  override def withLockDao[R](lockTable: Table)(testWith: TestWith[LockDao[String, UUID], R]): R =
+    withLockDao(dynamoClient, lockTable = lockTable) { lockDao =>
+      testWith(lockDao)
+    }
+
+  override def createIdent: String = randomAlphanumeric
+  override def createContextId: UUID = UUID.randomUUID()
+
   def assertNoLocks(lockTable: Table): Assertion =
     scanTable[ExpiringLock](lockTable) shouldBe empty
 
-  def createRandomContextId: UUID = UUID.randomUUID()
-  def createRandomId: String = Random.nextString(32)
-
   def withLockDao[R](
-    dynamoDbClient: AmazonDynamoDB,
-    lockTable: Table,
-    seconds: Int = 180)(
-    testWith: TestWith[DynamoLockDao, R]): R = {
+                      dynamoClient: AmazonDynamoDB,
+                      lockTable: Table,
+                      seconds: Int = 180)(
+                      testWith: TestWith[DynamoLockDao, R]): R = {
     val rowLockDaoConfig = DynamoLockDaoConfig(
       dynamoConfig = createDynamoConfigWith(lockTable),
       expiryTime = Duration.ofSeconds(seconds)
     )
 
     val dynamoLockDao = new DynamoLockDao(
-      client = dynamoDbClient,
+      client = dynamoClient,
       config = rowLockDaoConfig
     )
 
     testWith(dynamoLockDao)
   }
-
-  def withLockDao[R](lockTable: Table)(
-    testWith: TestWith[DynamoLockDao, R]): R =
-    withLockDao(dynamoClient, lockTable = lockTable) { lockDao =>
-      testWith(lockDao)
-    }
 
   def withLockDao[R](dynamoDbClient: AmazonDynamoDB)(
     testWith: TestWith[DynamoLockDao, R]): R =
@@ -60,14 +67,6 @@ trait DynamoLockingFixtures extends DynamoFixtures with EitherValues with Option
     testWith: TestWith[DynamoLockDao, R]): R =
     withLockDao(dynamoClient, lockTable = lockTable, seconds = seconds) { lockDao =>
       testWith(lockDao)
-    }
-
-  def withLockDao[R](
-    testWith: TestWith[DynamoLockDao, R]): R =
-    withLocalDynamoDbTable { lockTable =>
-      withLockDao(dynamoClient, lockTable = lockTable) { lockDao =>
-        testWith(lockDao)
-      }
     }
 
   def createLockTable(table: Table): Table = {
@@ -106,20 +105,4 @@ trait DynamoLockingFixtures extends DynamoFixtures with EitherValues with Option
     }
     table
   }
-
-  type DynamoLockingServiceStub = DynamoLockingService[Unit, Future]
-
-  def withDynamoLockingService[R](
-    testWith: TestWith[DynamoLockingServiceStub, R])(implicit dynamoLockDao: DynamoLockDao): R = {
-    val lockingService = new DynamoLockingService[Unit, Future]()
-    testWith(lockingService)
-  }
-
-  def withDynamoLockingService[R](table: Table)(
-    testWith: TestWith[DynamoLockingServiceStub, R]): R =
-    withLockDao(table) { implicit lockDao =>
-      withDynamoLockingService { lockingService =>
-        testWith(lockingService)
-      }
-    }
 }

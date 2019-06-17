@@ -1,14 +1,14 @@
-package uk.ac.wellcome.storage.memory
+package uk.ac.wellcome.storage.locking.memory
 
 import grizzled.slf4j.Logging
-import uk.ac.wellcome.storage.{Lock, LockDao, LockFailure}
+import uk.ac.wellcome.storage.locking.{Lock, LockDao, LockFailure}
 
-trait MemoryLockDao[MemoryIdent, MemoryContextId]
+class MemoryLockDao[MemoryIdent, MemoryContextId]
     extends LockDao[MemoryIdent, MemoryContextId]
     with Logging {
   type MemoryLock = PermanentLock[MemoryIdent, MemoryContextId]
 
-  private var locks: Map[MemoryIdent, MemoryLock] = Map.empty
+  var locks: Map[MemoryIdent, MemoryLock] = Map.empty
 
   var history: List[MemoryLock] = List.empty
 

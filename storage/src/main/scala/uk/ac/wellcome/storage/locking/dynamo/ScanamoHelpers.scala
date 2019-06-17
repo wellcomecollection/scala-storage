@@ -1,4 +1,4 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage.locking.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.{
@@ -34,5 +34,4 @@ trait ScanamoHelpers[T] {
 
   protected def toEither[Out](f: => Out): Either[Throwable, Out] =
     Try(f).toEither
-
 }

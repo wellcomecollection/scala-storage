@@ -1,10 +1,10 @@
-package uk.ac.wellcome.storage.locking
+package uk.ac.wellcome.storage.locking.dynamo
 
 import java.time.Instant
 import java.time.temporal.TemporalAmount
 import java.util.UUID
 
-import uk.ac.wellcome.storage.Lock
+import uk.ac.wellcome.storage.locking.Lock
 
 case class ExpiringLock(id: String,
                         contextId: UUID,
