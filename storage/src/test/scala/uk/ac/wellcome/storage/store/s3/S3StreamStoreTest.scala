@@ -7,7 +7,7 @@ import uk.ac.wellcome.storage.store.StreamStoreTestCases
 import uk.ac.wellcome.storage.store.fixtures.BucketNamespaceFixtures
 import uk.ac.wellcome.storage.{DoesNotExistError, ObjectLocation, StoreReadError, StoreWriteError}
 
-class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, Unit] with S3StreamStoreFixtures with BucketNamespaceFixtures {
+class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3StreamingStore, Unit] with S3StreamStoreFixtures with BucketNamespaceFixtures {
   describe("handles errors from S3") {
     describe("get") {
       it("errors if S3 has a problem") {

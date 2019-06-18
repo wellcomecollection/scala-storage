@@ -1,12 +1,12 @@
 package uk.ac.wellcome.storage.store
 
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.store.fixtures.{StreamStoreFixtures, TypedStoreFixtures}
+import uk.ac.wellcome.storage.store.fixtures.TypedStoreFixtures
+import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 
-trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreContext]
+trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata], StreamStoreContext]
   extends StoreTestCases[Ident, TypedStoreEntry[T], Namespace, StreamStoreContext]
-  with TypedStoreFixtures[Ident, T, StreamStoreContext]
-  with StreamStoreFixtures[Ident, StreamStoreContext] {
+  with TypedStoreFixtures[Ident, T, StreamStoreImpl, StreamStoreContext] {
 
   override def withStoreImpl[R](storeContext: StreamStoreContext, initialEntries: Map[Ident, TypedStoreEntry[T]])(testWith: TestWith[StoreImpl, R]): R =
     withTypedStoreImpl(storeContext, initialEntries) { typedStore =>

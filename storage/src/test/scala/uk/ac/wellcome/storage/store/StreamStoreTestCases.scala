@@ -12,12 +12,12 @@ import uk.ac.wellcome.storage.streaming._
 // traits.  This starts to get awkward with the underlying StoreTestCases trait
 // if you want them both, so I've left it for now.  Would be nice to fix another time.
 //
-trait StreamStoreTestCases[Ident, Namespace, StreamStoreContext]
+trait StreamStoreTestCases[Ident, Namespace, StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata], StreamStoreContext]
   extends FunSpec
     with Matchers
     with StreamAssertions
     with ReplayableStreamFixtures
-    with StreamStoreFixtures[Ident, StreamStoreContext]
+    with StreamStoreFixtures[Ident, StreamStoreImpl, StreamStoreContext]
     with StoreTestCases[Ident, InputStreamWithLengthAndMetadata, Namespace, StreamStoreContext] {
 
   override def withStoreImpl[R](storeContext: StreamStoreContext, initialEntries: Map[Ident, InputStreamWithLengthAndMetadata])(testWith: TestWith[StoreImpl, R]): R =
