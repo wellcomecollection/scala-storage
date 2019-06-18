@@ -4,30 +4,15 @@ import java.io.InputStream
 
 import org.scalatest.{Assertion, FunSpec, Matchers}
 import uk.ac.wellcome.storage.IncorrectStreamLengthError
-import uk.ac.wellcome.storage.generators.MetadataGenerators
-import uk.ac.wellcome.storage.streaming.Codec._
+import uk.ac.wellcome.storage.store.fixtures.ReplayableStreamFixtures
 import uk.ac.wellcome.storage.streaming._
 
 trait StreamingStoreTestCases[Ident, IS <: InputStream with HasLength with HasMetadata, StoreContext]
   extends FunSpec
     with Matchers
     with StreamAssertions
-    with MetadataGenerators
+    with ReplayableStreamFixtures
     with StoreTestCases[Ident, InputStream with HasLength with HasMetadata, String, StoreContext] {
-
-  class ReplayableStream(val originalBytes: Array[Byte], length: Long, metadata: Map[String, String]) extends InputStreamWithLengthAndMetadata(
-    inputStream = bytesCodec.toStream(originalBytes).right.value,
-    length = length,
-    metadata = metadata
-  )
-
-  object ReplayableStream {
-    def apply(bytes: Array[Byte], metadata: Map[String, String]): ReplayableStream =
-      new ReplayableStream(bytes, length = bytes.length, metadata = metadata)
-  }
-
-  def createReplayableStream: ReplayableStream =
-    ReplayableStream(randomBytes(), metadata = createValidMetadata)
 
   override def createT: ReplayableStream =
     createReplayableStream
