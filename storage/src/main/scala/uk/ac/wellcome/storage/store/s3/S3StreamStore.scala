@@ -18,7 +18,7 @@ import uk.ac.wellcome.storage.streaming._
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
-class S3StreamingStore()(implicit s3Client: AmazonS3)
+class S3StreamStore()(implicit s3Client: AmazonS3)
     extends StreamStore[ObjectLocation, InputStreamWithLengthAndMetadata] {
   type Metadata = Map[String, String]
 

@@ -7,11 +7,11 @@ import uk.ac.wellcome.storage.store.StreamStoreTestCases
 import uk.ac.wellcome.storage.store.fixtures.BucketNamespaceFixtures
 import uk.ac.wellcome.storage.{DoesNotExistError, ObjectLocation, StoreReadError, StoreWriteError}
 
-class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3StreamingStore, Unit] with S3StreamStoreFixtures with BucketNamespaceFixtures {
+class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3StreamStore, Unit] with S3StreamStoreFixtures with BucketNamespaceFixtures {
   describe("handles errors from S3") {
     describe("get") {
       it("errors if S3 has a problem") {
-        val store = new S3StreamingStore()(brokenS3Client)
+        val store = new S3StreamStore()(brokenS3Client)
 
         val result = store.get(createObjectLocation).left.value
         result shouldBe a[StoreReadError]
@@ -39,7 +39,7 @@ class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3S
 
     describe("put") {
       it("errors if S3 fails to respond") {
-        val store = new S3StreamingStore()(brokenS3Client)
+        val store = new S3StreamStore()(brokenS3Client)
 
         val result = store.put(createObjectLocation)(createT).left.value
         result shouldBe a[StoreWriteError]
