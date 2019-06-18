@@ -77,6 +77,8 @@ trait LockDaoTestCases[Ident, ContextId, LockDaoContext] extends FunSpec with Ma
     }
   }
 
+  // TODO: This test is occasionally flaky in the MemoryLockDao.
+  // We should find a way to make it succeed consistently.
   it("allows one success if multiple processes try to lock the same ID") {
     withLockDao { lockDao =>
       val lockUnlockCycles = 5
