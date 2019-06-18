@@ -3,7 +3,7 @@ package uk.ac.wellcome.storage.store
 import java.io.{FilterInputStream, InputStream}
 
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.StoreReadError
+import uk.ac.wellcome.storage.{CannotCloseStreamError, StoreReadError}
 import uk.ac.wellcome.storage.generators.RandomThings
 import uk.ac.wellcome.storage.store.fixtures.TypedStoreFixtures
 import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
@@ -51,7 +51,7 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
         }
       }
 
-      it("if we're getting the raw stream, we don't close it") {
+      it("always closes the underlying stream") {
         withNamespace { implicit namespace =>
           val closeDetectionStream = new CloseDetectionStream(randomBytes())
 
@@ -64,71 +64,33 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
           }
         }
       }
+      
+      it("errors if it can't close the stream") {
+        withNamespace { implicit namespace =>
+          val exception = new Throwable("BOOM!")
+
+          val rawStream = new CloseDetectionStream(randomBytes())
+
+          val closeShieldStream =
+            new FilterInputStream(rawStream) {
+              override def close(): Unit = throw exception
+            }
+
+          withSingleValueStreamStore(closeShieldStream) { streamingStore =>
+            withTypedStore(streamingStore, initialEntries = Map.empty) { typedStore =>
+              val result = typedStore.get(createId).left.value
+              result shouldBe a[CannotCloseStreamError]
+              result.e shouldBe exception
+            }
+          }
+        }
+      }
     }
   }
 
 
-//
-//      it("if we're interpreting the stream, we close the raw stream") {
-//        withNamespace { implicit identContext =>
-//          val rawStream = new CloseDetectionStream(randomUTF16String)
-//          withCustomInputStream(rawStream) { streamingStore =>
-//
-//            withStoreImpl(
-//              storeContext = ObjectStoreContext(streamingStore, codec),
-//              initialEntries = Map.empty) { store =>
-//              store.get(createId)
-//
-//              rawStream.isClosed shouldBe true
-//            }
-//          }
-//        }
-//      }
-//
-//      it("if we're interpreting the stream and there's a decoding error, we still close the raw stream") {
-//        withNamespace { implicit identContext =>
-//          val rawStream = new CloseDetectionStream(randomUTF16String)
-//          withCustomInputStream(rawStream) { streamingStore =>
-//
-//            withStoreImpl(
-//              storeContext = ObjectStoreContext(streamingStore, codec),
-//              initialEntries = Map.empty) { store =>
-//              store.get(createId)
-//
-//              rawStream.isClosed shouldBe true
-//            }
-//          }
-//        }
-//      }
-//
-//      it("errors if it can't close the stream") {
-//        withNamespace { implicit identContext =>
-//          val string = createJsonT
-//
-//          val exception = new Throwable("BOOM!")
-//
-//          val rawStream = new CloseDetectionStream(string)
-//
-//          val closeShieldStream =
-//            new FilterInputStream(rawStream) {
-//              override def close(): Unit = throw exception
-//            }
-//
-//          withNamespace { implicit identContext =>
-//            withCustomInputStream(closeShieldStream) { streamingStore =>
-//              withStoreImpl(
-//                storeContext = ObjectStoreContext(streamingStore, codec),
-//                initialEntries = Map.empty
-//              ) { store =>
-//                val result = store.get(createId).left.value
-//                result shouldBe a[CannotCloseStreamError]
-//                result.e shouldBe exception
-//              }
-//            }
-//          }
-//        }
-//      }
-//    }
+
+
 //
 //    describe("put") {
 //      it("errors if the streaming store has an error") {
@@ -241,8 +203,7 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
 ////      }
 ////    }
 ////
-////  def createJsonT: String =
-////    stringCodec.fromStream(codec.toStream(createT.objectStoreT).right.value).right.value
+
 ////
 ////  def withInputStreamStoreImpl[R](testWith: TestWith[ObjectStore[FiniteInputStream], R])(implicit streamingStore: StreamingStoreImpl): R
 ////
