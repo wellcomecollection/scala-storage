@@ -47,6 +47,13 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
     secretKey = secretKey
   )
 
+  val brokenS3Client: AmazonS3 = S3ClientFactory.create(
+    region = "nuh-uh",
+    endpoint = "http://nope.nope",
+    accessKey = randomAlphanumeric,
+    secretKey = randomAlphanumeric
+  )
+
   def withLocalS3Bucket[R]: Fixture[Bucket, R] =
     fixture[Bucket, R](
       create = {

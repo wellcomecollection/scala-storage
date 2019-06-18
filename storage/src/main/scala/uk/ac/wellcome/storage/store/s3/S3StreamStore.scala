@@ -142,6 +142,6 @@ class S3StreamingStore()(implicit s3Client: AmazonS3) extends StreamStore[Object
   private def buildPutError(throwable: Throwable): WriteError = throwable match {
     case exc: SdkClientException if exc.getMessage.startsWith("Data read has a different length than the expected") => IncorrectStreamLengthError(exc)
     case exc: SdkClientException if exc.getMessage.startsWith("More data read than expected") => IncorrectStreamLengthError(exc)
-    case _ => BackendWriteError(throwable)
+    case _ => StoreWriteError(throwable)
   }
 }

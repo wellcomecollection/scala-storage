@@ -35,7 +35,7 @@ class MemoryStreamStore[Ident](
 
       case Left(err: IncorrectStreamLengthError) => Left(err)
 
-      case Left(err: DecoderError) => Left(BackendWriteError(err.e))
+      case Left(err: DecoderError) => Left(StoreWriteError(err.e))
     }
 }
 

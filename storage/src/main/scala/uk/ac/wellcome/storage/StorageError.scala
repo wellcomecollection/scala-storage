@@ -16,7 +16,7 @@ case class DaoWriteError(e: Throwable) extends WriteError with DaoError
 
 case class ConditionalWriteError(e: Throwable) extends WriteError with DaoError
 
-case class BackendWriteError(e: Throwable) extends WriteError with BackendError
+case class StoreWriteError(e: Throwable) extends WriteError with BackendError
 
 case class IncorrectStreamLengthError(e: Throwable = new Error())
     extends DecoderError
