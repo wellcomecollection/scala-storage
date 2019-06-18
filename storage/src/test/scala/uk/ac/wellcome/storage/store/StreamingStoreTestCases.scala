@@ -8,14 +8,14 @@ import uk.ac.wellcome.storage.generators.MetadataGenerators
 import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming._
 
-trait StreamingStoreTestCases[Ident, IS <: InputStream with FiniteStream with HasMetadata, StoreContext]
+trait StreamingStoreTestCases[Ident, IS <: InputStream with HasLength with HasMetadata, StoreContext]
   extends FunSpec
     with Matchers
     with StreamAssertions
     with MetadataGenerators
-    with StoreTestCases[Ident, InputStream with FiniteStream with HasMetadata, String, StoreContext] {
+    with StoreTestCases[Ident, InputStream with HasLength with HasMetadata, String, StoreContext] {
 
-  class ReplayableStream(val originalBytes: Array[Byte], length: Long, metadata: Map[String, String]) extends FiniteInputStreamWithMetadata(
+  class ReplayableStream(val originalBytes: Array[Byte], length: Long, metadata: Map[String, String]) extends InputStreamWithLengthAndMetadata(
     inputStream = bytesCodec.toStream(originalBytes).right.value,
     length = length,
     metadata = metadata
@@ -32,7 +32,7 @@ trait StreamingStoreTestCases[Ident, IS <: InputStream with FiniteStream with Ha
   override def createT: ReplayableStream =
     createReplayableStream
 
-  override def assertEqualT(original: InputStream with FiniteStream with HasMetadata, stored: InputStream with FiniteStream with HasMetadata): Assertion = {
+  override def assertEqualT(original: InputStream with HasLength with HasMetadata, stored: InputStream with HasLength with HasMetadata): Assertion = {
     original.metadata shouldBe stored.metadata
 
     val originalBytes = original.asInstanceOf[ReplayableStream].originalBytes

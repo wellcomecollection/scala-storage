@@ -12,7 +12,7 @@ import uk.ac.wellcome.storage.{EncoderError, JsonEncodingError}
 import scala.util.{Failure, Success}
 
 trait Encoder[T] {
-  type EncoderResult = Either[EncoderError, InputStream with FiniteStream]
+  type EncoderResult = Either[EncoderError, InputStream with HasLength]
 
   def toStream(t: T): EncoderResult
 }
@@ -21,7 +21,7 @@ object EncoderInstances extends Logging {
   implicit val bytesEncoder: Encoder[Array[Byte]] =
     (bytes: Array[Byte]) =>
       Right(
-        new FiniteInputStream(
+        new InputStreamWithLength(
           new ByteArrayInputStream(bytes),
           length = bytes.length
         )
@@ -47,6 +47,6 @@ object EncoderInstances extends Logging {
         case Failure(err)        => Left(JsonEncodingError(err))
     }
 
-  implicit val streamEncoder: Encoder[InputStream with FiniteStream] =
-    (t: InputStream with FiniteStream) => Right(t)
+  implicit val streamEncoder: Encoder[InputStream with HasLength] =
+    (t: InputStream with HasLength) => Right(t)
 }

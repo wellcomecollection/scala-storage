@@ -43,7 +43,7 @@ object Codec {
 
   implicit val bytesCodec: Codec[Array[Byte]] = new Codec[Array[Byte]] {
     override def fromStream(
-      inputStream: InputStream with FiniteStream): DecoderResult[Array[Byte]] =
+      inputStream: InputStream with HasLength): DecoderResult[Array[Byte]] =
       bytesDecoder.fromStream(inputStream)
 
     override def toStream(bytes: Array[Byte]): EncoderResult =
@@ -54,7 +54,7 @@ object Codec {
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Codec[String] = new Codec[String] {
     override def fromStream(
-      inputStream: InputStream with FiniteStream): DecoderResult[String] =
+      inputStream: InputStream with HasLength): DecoderResult[String] =
       stringDecoder.fromStream(inputStream)
 
     override def toStream(t: String): EncoderResult =
@@ -63,7 +63,7 @@ object Codec {
 
   implicit def jsonCodec: Codec[Json] = new Codec[Json] {
     override def fromStream(
-      inputStream: InputStream with FiniteStream): DecoderResult[Json] =
+      inputStream: InputStream with HasLength): DecoderResult[Json] =
       jsonDecoder.fromStream(inputStream)
 
     override def toStream(t: Json): EncoderResult =
@@ -75,20 +75,20 @@ object Codec {
     dec: circe.Decoder[T],
     enc: circe.Encoder[T]
   ): Codec[T] = new Codec[T] {
-    override def fromStream(inputStream: InputStream with FiniteStream): DecoderResult[T] =
+    override def fromStream(inputStream: InputStream with HasLength): DecoderResult[T] =
       typeDecoder.fromStream(inputStream)
 
     override def toStream(t: T): EncoderResult =
       typeEncoder.toStream(t)
   }
 
-  implicit val streamCodec: Codec[InputStream with FiniteStream] =
-    new Codec[InputStream with FiniteStream] {
+  implicit val streamCodec: Codec[InputStream with HasLength] =
+    new Codec[InputStream with HasLength] {
       override def fromStream(
-        inputStream: InputStream with FiniteStream): DecoderResult[InputStream with FiniteStream] =
+        inputStream: InputStream with HasLength): DecoderResult[InputStream with HasLength] =
         streamDecoder.fromStream(inputStream)
 
-      override def toStream(t: InputStream with FiniteStream): EncoderResult =
+      override def toStream(t: InputStream with HasLength): EncoderResult =
         streamEncoder.toStream(t)
     }
 }
