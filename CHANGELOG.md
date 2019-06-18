@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.8.0 - 2019-06-18
+
+This adds the `TypedStore` class.
+
 ## v7.7.0 - 2019-06-18
 
 Adds the S3 implementation of a StreamStore.
