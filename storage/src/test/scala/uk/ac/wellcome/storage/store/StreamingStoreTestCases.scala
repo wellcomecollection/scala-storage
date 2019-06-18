@@ -4,6 +4,7 @@ import java.io.InputStream
 
 import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.IncorrectStreamLengthError
 import uk.ac.wellcome.storage.generators.{MetadataGenerators, RandomThings}
 import uk.ac.wellcome.storage.store.memory.{MemoryStore, MemoryStoreEntry, MemoryStreamingStore}
 import uk.ac.wellcome.storage.streaming.Codec._
@@ -40,155 +41,119 @@ class MemoryStreamingStoreTest extends StreamingStoreWithMetadataTestCases[Strin
 trait StreamingStoreWithMetadataTestCases[Ident, IS <: InputStream with FiniteStream with HasMetadata, StoreContext]
   extends FunSpec
     with Matchers
-    with EitherValues
     with StreamAssertions
     with MetadataGenerators
     with StoreTestCases[Ident, InputStream with FiniteStream with HasMetadata, String, StoreContext] {
 
-  // TODO: This should use bytes, not String
-
-  class ReplayableStream(val originalString: String, metadata: Map[String, String]) extends FiniteInputStreamWithMetadata(
-    inputStream = stringCodec.toStream(originalString).right.get,
-    length = originalString.getBytes.length,
+  class ReplayableStream(val originalBytes: Array[Byte], length: Long, metadata: Map[String, String]) extends FiniteInputStreamWithMetadata(
+    inputStream = bytesCodec.toStream(originalBytes).right.value,
+    length = length,
     metadata = metadata
   )
 
+  object ReplayableStream {
+    def apply(bytes: Array[Byte], metadata: Map[String, String]): ReplayableStream =
+      new ReplayableStream(bytes, length = bytes.length, metadata = metadata)
+  }
+
+  def createReplayableStream: ReplayableStream =
+    ReplayableStream(randomBytes(), metadata = createValidMetadata)
+
   override def createT: ReplayableStream =
-    new ReplayableStream(randomAlphanumeric, metadata = createValidMetadata)
+    createReplayableStream
 
   override def assertEqualT(original: InputStream with FiniteStream with HasMetadata, stored: InputStream with FiniteStream with HasMetadata): Assertion = {
     original.metadata shouldBe stored.metadata
 
-    assertStreamEquals(stored, original.asInstanceOf[ReplayableStream].originalString)
+    val originalBytes = original.asInstanceOf[ReplayableStream].originalBytes
+    assertStreamEquals(stored, originalBytes, expectedLength = originalBytes.length)
   }
 
   describe("it behaves as a streaming store") {
+    describe("get") {
+      it("can get a stream without metadata") {
+        withNamespace { implicit namespace =>
+          val id = createId
+          val initialEntry = ReplayableStream(randomBytes(), metadata = Map.empty)
 
+          withStoreImpl(initialEntries = Map(id -> initialEntry)) { store =>
+            val retrievedEntry = store.get(id).right.value
+
+            assertEqualT(initialEntry, retrievedEntry.identifiedT)
+          }
+        }
+      }
+
+      it("can get a stream with metadata") {
+        withNamespace { implicit namespace =>
+          val id = createId
+          val initialEntry = ReplayableStream(randomBytes(), metadata = createValidMetadata)
+
+          withStoreImpl(initialEntries = Map(id -> initialEntry)) { store =>
+            val retrievedEntry = store.get(id).right.value
+
+            assertEqualT(initialEntry, retrievedEntry.identifiedT)
+          }
+        }
+      }
+    }
+
+    describe("put") {
+      it("can put a stream without metadata") {
+        withNamespace { implicit namespace =>
+          val id = createId
+          val entry = ReplayableStream(randomBytes(), metadata = Map.empty)
+
+          withStoreImpl(initialEntries = Map.empty) { store =>
+            store.put(id)(entry) shouldBe a[Right[_, _]]
+          }
+        }
+      }
+
+      it("can put a stream with metadata") {
+        withNamespace { implicit namespace =>
+          val id = createId
+          val entry = ReplayableStream(randomBytes(), metadata = createValidMetadata)
+
+          withStoreImpl(initialEntries = Map.empty) { store =>
+            store.put(id)(entry) shouldBe a[Right[_, _]]
+          }
+        }
+      }
+
+      it("errors if the stream length is too long") {
+        withNamespace { implicit namespace =>
+          val bytes = randomBytes()
+          val brokenStream = new ReplayableStream(
+            bytes,
+            length = bytes.length + 1,
+            metadata = createValidMetadata
+          )
+
+          withStoreImpl(initialEntries = Map.empty) { store =>
+            val result = store.put(createId)(brokenStream).left.value
+
+            result shouldBe a[IncorrectStreamLengthError]
+          }
+        }
+      }
+
+      it("errors if the stream length is too short") {
+        withNamespace { implicit namespace =>
+          val bytes = randomBytes()
+          val brokenStream = new ReplayableStream(
+            bytes,
+            length = bytes.length - 1,
+            metadata = createValidMetadata
+          )
+
+          withStoreImpl(initialEntries = Map.empty) { store =>
+            val result = store.put(createId)(brokenStream).left.value
+
+            result shouldBe a[IncorrectStreamLengthError]
+          }
+        }
+      }
+    }
   }
-
-
-//
-//  override def createId(implicit Context: String): ObjectLocation =
-//    createObjectLocationWith(namespace = Context)
-//
-//  def withStoreNamespace[R](testWith: TestWith[String, R]): R = withNamespace { Context =>
-//    testWith(Context)
-//  }
-//
-
-//
-
-//
-//  def createStoreEntryWith(randomString: String = Random.nextString(8), metadata: Map[String, String] = createValidMetadata): StreamingStoreEntry =
-//    StreamingStoreEntry(
-//      stream = new ReplayableFiniteInputStream(randomString),
-//      metadata = metadata
-//    )
-//
-//  def createStoreEntry: StreamingStoreEntry = createStoreEntryWith()
-//
-//  def createT: StreamingStoreEntry = createStoreEntry
-//
-//  describe("StreamingStore") {
-//    describe("get") {
-//      it("can get a stream without metadata") {
-//        withStoreNamespace { namespace =>
-//          val location = createObjectLocationWith(namespace)
-//          val initialEntry = createStoreEntryWith(metadata = Map.empty)
-//
-//          withStoreImpl(initialEntries = Map(location -> initialEntry)) { store =>
-//            val retrievedEntry = store.get(location).right.value
-//
-//            assertEqualT(initialEntry, retrievedEntry.identifiedT)
-//          }
-//        }
-//      }
-//
-//      it("can get a stream with metadata") {
-//        withStoreNamespace { namespace =>
-//          val location = createObjectLocationWith(namespace)
-//          val initialEntry = createStoreEntryWith(metadata = createValidMetadata)
-//
-//          withStoreImpl(initialEntries = Map(location -> initialEntry)) { store =>
-//            val retrievedEntry = store.get(location).right.value
-//
-//            assertEqualT(initialEntry, retrievedEntry.identifiedT)
-//          }
-//        }
-//      }
-//    }
-//
-//    describe("put") {
-//      it("can put a stream without metadata") {
-//        withStoreNamespace { namespace =>
-//          val location = createObjectLocationWith(namespace)
-//          val entry = createStoreEntryWith(metadata = Map.empty)
-//
-//          withStoreImpl() { store =>
-//            store.put(location)(entry) shouldBe a[Right[_, _]]
-//          }
-//        }
-//      }
-//
-//      it("can put a stream with metadata") {
-//        withStoreNamespace { namespace =>
-//          val location = createObjectLocationWith(namespace)
-//          val entry = createStoreEntryWith(metadata = createValidMetadata)
-//
-//          withStoreImpl() { store =>
-//            store.put(location)(entry) shouldBe a[Right[_, _]]
-//          }
-//        }
-//      }
-//
-//      it("can overwrite an existing stream") {
-//        withStoreNamespace { namespace =>
-//          val location = createObjectLocationWith(namespace)
-//          val entry1 = createStoreEntry
-//          val entry2 = createStoreEntry
-//
-//          withStoreImpl() { store =>
-//            store.put(location)(entry1) shouldBe a[Right[_, _]]
-//            store.put(location)(entry2) shouldBe a[Right[_, _]]
-//          }
-//        }
-//      }
-//
-//      it("errors if the stream length is too long") {
-//        withStoreNamespace { namespace =>
-//          val entry = createStoreEntry
-//          val brokenEntry = entry.copy(
-//            stream = new FiniteInputStream(
-//              entry.stream,
-//              length = entry.stream.length + 10
-//            )
-//          )
-//
-//          withStoreImpl() { store =>
-//            val result = store.put(createObjectLocationWith(namespace))(brokenEntry).left.value
-//
-//            result shouldBe a[IncorrectStreamLengthError]
-//          }
-//        }
-//      }
-//
-//      it("errors if the stream length is too short") {
-//        withStoreNamespace { namespace =>
-//          val entry = createStoreEntry
-//          val brokenEntry = entry.copy(
-//            stream = new FiniteInputStream(
-//              entry.stream,
-//              length = entry.stream.length - 10
-//            )
-//          )
-//
-//          withStoreImpl() { store =>
-//            val result = store.put(createObjectLocationWith(namespace))(brokenEntry).left.value
-//
-//            result shouldBe a[IncorrectStreamLengthError]
-//          }
-//        }
-//      }
-//    }
-//  }
 }
