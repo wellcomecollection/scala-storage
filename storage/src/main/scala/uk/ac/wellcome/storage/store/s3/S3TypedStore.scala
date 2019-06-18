@@ -11,6 +11,7 @@ class S3TypedStore[T](
 ) extends TypedStore[ObjectLocation, T]
 
 object S3TypedStore {
-  def apply[T](implicit codec: Codec[T], streamStore: S3StreamStore): S3TypedStore[T] =
+  def apply[T](implicit codec: Codec[T],
+               streamStore: S3StreamStore): S3TypedStore[T] =
     new S3TypedStore[T]()(codec, streamStore)
 }
