@@ -1,8 +1,8 @@
-package uk.ac.wellcome.storage.store
+package uk.ac.wellcome.storage.store.fixtures
 
 import org.scalatest.{Assertion, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.store.fixtures.NamespaceFixtures
+import uk.ac.wellcome.storage.store.Store
 
 trait StoreFixtures[Ident, T, Namespace, StoreContext] extends Matchers with NamespaceFixtures[Ident, Namespace] {
   type StoreImpl = Store[Ident, T]
