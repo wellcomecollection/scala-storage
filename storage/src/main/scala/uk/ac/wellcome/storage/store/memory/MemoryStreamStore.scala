@@ -1,20 +1,14 @@
 package uk.ac.wellcome.storage.store.memory
 
-import java.io.InputStream
-
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage._
-import uk.ac.wellcome.storage.store.StreamingStore
+import uk.ac.wellcome.storage.store.StreamStore
 import uk.ac.wellcome.storage.streaming.Codec._
-import uk.ac.wellcome.storage.streaming.{
-  HasLength,
-  HasMetadata,
-  InputStreamWithLengthAndMetadata
-}
+import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 
-class MemoryStreamingStore[Ident](
+class MemoryStreamStore[Ident](
   memoryStore: MemoryStore[Ident, MemoryStoreEntry])
-    extends StreamingStore[Ident, InputStream with HasLength with HasMetadata]
+    extends StreamStore[Ident, InputStreamWithLengthAndMetadata]
     with Logging {
   override def get(id: Ident): ReadEither =
     for {
@@ -32,7 +26,7 @@ class MemoryStreamingStore[Ident](
     } yield Identified(id, result)
 
   override def put(id: Ident)(
-    entry: InputStream with HasLength with HasMetadata): WriteEither =
+    entry: InputStreamWithLengthAndMetadata): WriteEither =
     bytesCodec.fromStream(entry) match {
       case Right(bytes) =>
         val internalEntry = MemoryStoreEntry(bytes, metadata = entry.metadata)
@@ -42,7 +36,7 @@ class MemoryStreamingStore[Ident](
 
       case Left(err: IncorrectStreamLengthError) => Left(err)
 
-      case Left(err: DecoderError) => Left(BackendWriteError(err.e))
+      case Left(err: DecoderError) => Left(StoreWriteError(err.e))
     }
 }
 

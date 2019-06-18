@@ -16,7 +16,7 @@ case class DaoWriteError(e: Throwable) extends WriteError with DaoError
 
 case class ConditionalWriteError(e: Throwable) extends WriteError with DaoError
 
-case class BackendWriteError(e: Throwable) extends WriteError with BackendError
+case class StoreWriteError(e: Throwable) extends WriteError with BackendError
 
 case class IncorrectStreamLengthError(e: Throwable = new Error())
     extends DecoderError
@@ -40,12 +40,18 @@ sealed trait DecoderError extends ReadError
 
 case class DaoReadError(e: Throwable) extends ReadError with DaoError
 
+case class MetadataCoercionFailure(
+  failure: List[CodecError],
+  success: List[(String, String)],
+  e: Throwable = new Error()
+) extends WriteError
+
 case class DoesNotExistError(e: Throwable = new Error())
     extends ReadError
     with DaoError
     with BackendError
 
-case class BackendReadError(e: Throwable) extends ReadError with BackendError
+case class StoreReadError(e: Throwable) extends ReadError with BackendError
 
 case class CannotCloseStreamError(e: Throwable)
     extends ReadError
