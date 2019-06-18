@@ -1,9 +1,14 @@
 package uk.ac.wellcome.storage.store
 
 import org.scalatest.{EitherValues, FunSpec}
+import uk.ac.wellcome.storage.store.fixtures.StoreFixtures
 import uk.ac.wellcome.storage.{DoesNotExistError, Identified}
 
-trait StoreTestCases[Id, T, Namespace, StoreContext] extends FunSpec with EitherValues with StoreFixtures[Id, T, Namespace, StoreContext] {
+trait StoreTestCases[Id, T, Namespace, StoreContext]
+  extends FunSpec
+    with EitherValues
+    with StoreFixtures[Id, T, Namespace, StoreContext] {
+
   describe("it behaves as a store") {
     describe("get") {
       it("fails to get a non-existent location") {

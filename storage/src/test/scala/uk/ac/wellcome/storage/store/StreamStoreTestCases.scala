@@ -1,21 +1,34 @@
 package uk.ac.wellcome.storage.store
 
 import org.scalatest.{Assertion, FunSpec, Matchers}
+import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.IncorrectStreamLengthError
-import uk.ac.wellcome.storage.store.fixtures.ReplayableStreamFixtures
+import uk.ac.wellcome.storage.store.fixtures.{ReplayableStreamFixtures, StreamStoreFixtures}
 import uk.ac.wellcome.storage.streaming._
+
 
 // TODO: Strictly speaking, a StreamingStore just cares about a vanilla InputStream,
 // and we should put the `HasLength` and `HasMetadata` test cases into separate
 // traits.  This starts to get awkward with the underlying StoreTestCases trait
 // if you want them both, so I've left it for now.  Would be nice to fix another time.
 //
-trait StreamStoreTestCases[Ident, Namespace, StoreContext]
+trait StreamStoreTestCases[Ident, Namespace, StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata], StreamStoreContext]
   extends FunSpec
     with Matchers
     with StreamAssertions
     with ReplayableStreamFixtures
-    with StoreTestCases[Ident, InputStreamWithLengthAndMetadata, Namespace, StoreContext] {
+    with StreamStoreFixtures[Ident, StreamStoreImpl, StreamStoreContext]
+    with StoreTestCases[Ident, InputStreamWithLengthAndMetadata, Namespace, StreamStoreContext] {
+
+  override def withStoreImpl[R](storeContext: StreamStoreContext, initialEntries: Map[Ident, InputStreamWithLengthAndMetadata])(testWith: TestWith[StoreImpl, R]): R =
+    withStreamStoreImpl(storeContext, initialEntries) { streamStore =>
+      testWith(streamStore)
+    }
+
+  override def withStoreContext[R](testWith: TestWith[StreamStoreContext, R]): R =
+    withStreamStoreContext { context =>
+      testWith(context)
+    }
 
   override def createT: ReplayableStream =
     createReplayableStream

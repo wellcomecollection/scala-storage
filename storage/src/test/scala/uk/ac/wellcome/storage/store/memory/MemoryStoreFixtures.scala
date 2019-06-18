@@ -2,7 +2,7 @@ package uk.ac.wellcome.storage.store.memory
 
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.generators.RandomThings
-import uk.ac.wellcome.storage.store.StoreFixtures
+import uk.ac.wellcome.storage.store.fixtures.StoreFixtures
 
 trait MemoryStoreFixtures[Ident, T, Namespace]
   extends StoreFixtures[Ident, T, Namespace, MemoryStore[Ident, T]]

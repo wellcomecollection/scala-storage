@@ -7,7 +7,7 @@ import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 
 class MemoryStreamStore[Ident](
-  memoryStore: MemoryStore[Ident, MemoryStoreEntry])
+  val memoryStore: MemoryStore[Ident, MemoryStoreEntry])
     extends StreamStore[Ident, InputStreamWithLengthAndMetadata]
     with Logging {
   override def get(id: Ident): ReadEither =

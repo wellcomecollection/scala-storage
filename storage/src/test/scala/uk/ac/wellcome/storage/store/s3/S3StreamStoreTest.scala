@@ -2,32 +2,16 @@ package uk.ac.wellcome.storage.store.s3
 
 import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.model.AmazonS3Exception
-import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.{DoesNotExistError, ObjectLocation, StoreReadError, StoreWriteError}
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.store.StreamStoreTestCases
 import uk.ac.wellcome.storage.store.fixtures.BucketNamespaceFixtures
-import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
+import uk.ac.wellcome.storage.{DoesNotExistError, ObjectLocation, StoreReadError, StoreWriteError}
 
-class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, Unit] with BucketNamespaceFixtures {
-  override def withStoreImpl[R](
-    storeContext: Unit,
-    initialEntries: Map[ObjectLocation, InputStreamWithLengthAndMetadata])(
-    testWith: TestWith[StoreImpl, R]): R = {
-    initialEntries.map { case (location, stream) =>
-      putStream(location, stream)
-    }
-
-    testWith(new S3StreamingStore())
-  }
-
-  override def withStoreContext[R](testWith: TestWith[Unit, R]): R =
-    testWith(())
-
+class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3StreamStore, Unit] with S3StreamStoreFixtures with BucketNamespaceFixtures {
   describe("handles errors from S3") {
     describe("get") {
       it("errors if S3 has a problem") {
-        val store = new S3StreamingStore()(brokenS3Client)
+        val store = new S3StreamStore()(brokenS3Client)
 
         val result = store.get(createObjectLocation).left.value
         result shouldBe a[StoreReadError]
@@ -55,7 +39,7 @@ class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, Uni
 
     describe("put") {
       it("errors if S3 fails to respond") {
-        val store = new S3StreamingStore()(brokenS3Client)
+        val store = new S3StreamStore()(brokenS3Client)
 
         val result = store.put(createObjectLocation)(createT).left.value
         result shouldBe a[StoreWriteError]
