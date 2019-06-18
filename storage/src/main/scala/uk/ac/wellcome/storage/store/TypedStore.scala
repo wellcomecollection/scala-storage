@@ -5,15 +5,15 @@ import uk.ac.wellcome.storage._
 
 import scala.util.{Failure, Success, Try}
 
-case class TypedStoreEntry[T](objectStoreT: T, metadata: Map[String, String])
+case class TypedStoreEntry[T](t: T, metadata: Map[String, String])
 
 trait TypedStore[Ident, T] extends Store[Ident, TypedStoreEntry[T]] {
   implicit val codec: Codec[T]
-  implicit val streamingStore: StreamingStore[Ident, InputStreamWithLengthAndMetadata]
+  implicit val streamStore: StreamStore[Ident, InputStreamWithLengthAndMetadata]
 
   override def get(id: Ident): ReadEither =
     for {
-      internalEntry <- streamingStore.get(id)
+      internalEntry <- streamStore.get(id)
       decodeResult <- codec.fromStream(internalEntry.identifiedT) match {
         case value => Right(value)
       }
@@ -37,8 +37,8 @@ trait TypedStore[Ident, T] extends Store[Ident, TypedStoreEntry[T]] {
   }
 
   override def put(id: Ident)(entry: TypedStoreEntry[T]): WriteEither = for {
-    stream <- codec.toStream(entry.objectStoreT)
-    _ <- streamingStore.put(id)(
+    stream <- codec.toStream(entry.t)
+    _ <- streamStore.put(id)(
       InputStreamWithLengthAndMetadata(
         stream, metadata = entry.metadata
       )
