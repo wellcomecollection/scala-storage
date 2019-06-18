@@ -40,12 +40,18 @@ sealed trait DecoderError extends ReadError
 
 case class DaoReadError(e: Throwable) extends ReadError with DaoError
 
+case class MetadataCoercionFailure(
+  failure: List[CodecError],
+  success: List[(String, String)],
+  e: Throwable = new Error()
+) extends WriteError
+
 case class DoesNotExistError(e: Throwable = new Error())
     extends ReadError
     with DaoError
     with BackendError
 
-case class BackendReadError(e: Throwable) extends ReadError with BackendError
+case class StoreReadError(e: Throwable) extends ReadError with BackendError
 
 case class CannotCloseStreamError(e: Throwable)
     extends ReadError

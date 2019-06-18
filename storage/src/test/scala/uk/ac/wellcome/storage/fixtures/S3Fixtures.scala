@@ -1,8 +1,10 @@
 package uk.ac.wellcome.storage.fixtures
 
+import java.io.InputStream
+
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.iterable.S3Objects
-import com.amazonaws.services.s3.model.S3ObjectSummary
+import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest, PutObjectResult, S3ObjectSummary}
 import grizzled.slf4j.Logging
 import io.circe.parser.parse
 import io.circe.{Decoder, Json}
@@ -14,7 +16,7 @@ import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config}
 import uk.ac.wellcome.storage.streaming.Codec._
-import uk.ac.wellcome.storage.streaming.InputStreamWithLength
+import uk.ac.wellcome.storage.streaming.{HasLength, HasMetadata, InputStreamWithLength}
 
 import scala.collection.JavaConverters._
 
@@ -109,6 +111,22 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
       namespace = bucket.name,
       key = key
     )
+
+  def putStream(location: ObjectLocation, inputStream: InputStream with HasLength with HasMetadata): PutObjectResult = {
+    val metadata = new ObjectMetadata()
+
+    metadata.setContentLength(inputStream.length)
+    metadata.setUserMetadata(inputStream.metadata.asJava)
+
+    val putObjectRequest = new PutObjectRequest(
+      location.namespace,
+      location.key,
+      inputStream,
+      metadata
+    )
+
+    s3Client.putObject(putObjectRequest)
+  }
 
   def assertEqualObjects(x: ObjectLocation, y: ObjectLocation): Assertion =
     getContentFromS3(x) shouldBe getContentFromS3(y)
