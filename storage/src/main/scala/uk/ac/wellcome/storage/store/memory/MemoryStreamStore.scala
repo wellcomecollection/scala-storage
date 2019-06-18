@@ -4,7 +4,7 @@ import java.io.InputStream
 
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage._
-import uk.ac.wellcome.storage.store.StreamingStore
+import uk.ac.wellcome.storage.store.StreamStore
 import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming.{
   HasLength,
@@ -12,9 +12,9 @@ import uk.ac.wellcome.storage.streaming.{
   InputStreamWithLengthAndMetadata
 }
 
-class MemoryStreamingStore[Ident](
+class MemoryStreamStore[Ident](
   memoryStore: MemoryStore[Ident, MemoryStoreEntry])
-    extends StreamingStore[Ident, InputStream with HasLength with HasMetadata]
+    extends StreamStore[Ident, InputStream with HasLength with HasMetadata]
     with Logging {
   override def get(id: Ident): ReadEither =
     for {

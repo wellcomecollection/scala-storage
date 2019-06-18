@@ -4,12 +4,12 @@ import java.io.InputStream
 
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.generators.MetadataGenerators
-import uk.ac.wellcome.storage.store.StreamingStoreTestCases
+import uk.ac.wellcome.storage.store.StreamStoreTestCases
 import uk.ac.wellcome.storage.store.fixtures.StringNamespaceFixtures
 import uk.ac.wellcome.storage.streaming.Codec.bytesCodec
 import uk.ac.wellcome.storage.streaming.{InputStreamWithLengthAndMetadata, HasLength, HasMetadata}
 
-class MemoryStreamingStoreTest extends StreamingStoreTestCases[String, InputStreamWithLengthAndMetadata, MemoryStore[String, MemoryStoreEntry]] with MetadataGenerators with StringNamespaceFixtures {
+class MemoryStreamStoreTest extends StreamStoreTestCases[String, InputStreamWithLengthAndMetadata, MemoryStore[String, MemoryStoreEntry]] with MetadataGenerators with StringNamespaceFixtures {
   override def withStoreImpl[R](storeContext: MemoryStore[String, MemoryStoreEntry], initialEntries: Map[String, InputStream with HasLength with HasMetadata])(testWith: TestWith[StoreImpl, R]): R = {
     val memoryStoreEntries =
       initialEntries.map { case (id, inputStream) =>
@@ -19,7 +19,7 @@ class MemoryStreamingStoreTest extends StreamingStoreTestCases[String, InputStre
     storeContext.entries = storeContext.entries ++ memoryStoreEntries
 
     testWith(
-      new MemoryStreamingStore[String](storeContext)
+      new MemoryStreamStore[String](storeContext)
     )
   }
 

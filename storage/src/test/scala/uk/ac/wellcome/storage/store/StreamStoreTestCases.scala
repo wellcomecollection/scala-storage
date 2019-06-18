@@ -12,7 +12,7 @@ import uk.ac.wellcome.storage.streaming._
 // traits.  This starts to get awkward with the underlying StoreTestCases trait
 // if you want them both, so I've left it for now.  Would be nice to fix another time.
 //
-trait StreamingStoreTestCases[Ident, IS <: InputStream with HasLength with HasMetadata, StoreContext]
+trait StreamStoreTestCases[Ident, IS <: InputStream with HasLength with HasMetadata, StoreContext]
   extends FunSpec
     with Matchers
     with StreamAssertions
