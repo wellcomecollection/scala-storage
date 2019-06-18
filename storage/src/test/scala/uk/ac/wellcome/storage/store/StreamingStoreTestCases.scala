@@ -7,6 +7,11 @@ import uk.ac.wellcome.storage.IncorrectStreamLengthError
 import uk.ac.wellcome.storage.store.fixtures.ReplayableStreamFixtures
 import uk.ac.wellcome.storage.streaming._
 
+// TODO: Strictly speaking, a StreamingStore just cares about a vanilla InputStream,
+// and we should put the `HasLength` and `HasMetadata` test cases into separate
+// traits.  This starts to get awkward with the underlying StoreTestCases trait
+// if you want them both, so I've left it for now.  Would be nice to fix another time.
+//
 trait StreamingStoreTestCases[Ident, IS <: InputStream with HasLength with HasMetadata, StoreContext]
   extends FunSpec
     with Matchers
