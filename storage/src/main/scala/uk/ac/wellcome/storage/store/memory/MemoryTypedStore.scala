@@ -4,7 +4,9 @@ import org.apache.commons.io.IOUtils
 import uk.ac.wellcome.storage.store._
 import uk.ac.wellcome.storage.streaming.Codec
 
-class MemoryTypedStore[Ident, T](initialEntries: Map[Ident, TypedStoreEntry[T]] = Map.empty[Ident, TypedStoreEntry[T]])(
+class MemoryTypedStore[Ident, T](
+  initialEntries: Map[Ident, TypedStoreEntry[T]] =
+    Map.empty[Ident, TypedStoreEntry[T]])(
   implicit
   val streamStore: MemoryStreamStore[Ident],
   val codec: Codec[T]
@@ -15,11 +17,11 @@ class MemoryTypedStore[Ident, T](initialEntries: Map[Ident, TypedStoreEntry[T]] 
       location -> MemoryStoreEntry(
         IOUtils.toByteArray(
           codec.toStream(entry.t).right.get
-        ), entry.metadata
+        ),
+        entry.metadata
       )
   }
 
   streamStore.memoryStore.entries =
     streamStore.memoryStore.entries ++ initial
 }
-

@@ -1,6 +1,9 @@
 package uk.ac.wellcome.storage.store
 
-import uk.ac.wellcome.storage.streaming.{Codec, InputStreamWithLengthAndMetadata}
+import uk.ac.wellcome.storage.streaming.{
+  Codec,
+  InputStreamWithLengthAndMetadata
+}
 import uk.ac.wellcome.storage._
 
 import scala.util.{Failure, Success, Try}
@@ -21,7 +24,9 @@ trait TypedStore[Ident, T] extends Store[Ident, TypedStoreEntry[T]] {
       entry = TypedStoreEntry(t, internalEntry.identifiedT.metadata)
     } yield Identified(id, entry)
 
-  private def ensureStreamClosed(entry: Identified[Ident, InputStreamWithLengthAndMetadata], decodeResult: Either[DecoderError, T]): Either[ReadError, T] = {
+  private def ensureStreamClosed(
+    entry: Identified[Ident, InputStreamWithLengthAndMetadata],
+    decodeResult: Either[DecoderError, T]): Either[ReadError, T] = {
     val underlying = entry.identifiedT
 
     // We need to ensure the underlying stream is closed, unless we're
@@ -36,13 +41,14 @@ trait TypedStore[Ident, T] extends Store[Ident, TypedStoreEntry[T]] {
     }
   }
 
-  override def put(id: Ident)(entry: TypedStoreEntry[T]): WriteEither = for {
-    stream <- codec.toStream(entry.t)
-    _ <- streamStore.put(id)(
-      InputStreamWithLengthAndMetadata(
-        stream, metadata = entry.metadata
+  override def put(id: Ident)(entry: TypedStoreEntry[T]): WriteEither =
+    for {
+      stream <- codec.toStream(entry.t)
+      _ <- streamStore.put(id)(
+        InputStreamWithLengthAndMetadata(
+          stream,
+          metadata = entry.metadata
+        )
       )
-    )
-  } yield Identified(id, entry)
+    } yield Identified(id, entry)
 }
-
