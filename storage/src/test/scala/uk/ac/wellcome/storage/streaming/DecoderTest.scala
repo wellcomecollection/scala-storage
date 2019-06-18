@@ -28,12 +28,18 @@ class DecoderTest extends FunSpec
     it("a byte array") {
       val byteArray = randomBytes()
 
-      val stream = new FiniteInputStream(
+      val stream = new InputStreamWithLength(
         new ByteArrayInputStream(byteArray),
         length = byteArray.length
       )
 
       bytesDecoder.fromStream(stream).right.value shouldBe byteArray
+    }
+
+    it("a byte array without a specified length") {
+      val byteArray = randomBytes()
+
+      bytesDecoder.fromStream(new ByteArrayInputStream(byteArray)).right.value shouldBe byteArray
     }
 
     it("a string") {
@@ -72,13 +78,6 @@ class DecoderTest extends FunSpec
 
       typeDecoder[Vehicle].fromStream(jsonStream) shouldBe Right(vehicle)
     }
-
-    it("a stream as itself") {
-      val randomString = Random.nextString(8)
-      val randomStream = createStream(randomString)
-
-      streamDecoder.fromStream(randomStream).right.value shouldBe randomStream
-    }
   }
 
   describe("fails to decode") {
@@ -107,7 +106,7 @@ class DecoderTest extends FunSpec
     it("if the specified length is too long") {
       val byteArray = randomBytes()
 
-      val badStream = new FiniteInputStream(
+      val badStream = new InputStreamWithLength(
         new ByteArrayInputStream(byteArray),
         length = byteArray.length + 1
       )
@@ -118,7 +117,7 @@ class DecoderTest extends FunSpec
     it("if the specified length is too short") {
       val byteArray = randomBytes()
 
-      val badStream = new FiniteInputStream(
+      val badStream = new InputStreamWithLength(
         new ByteArrayInputStream(byteArray),
         length = byteArray.length - 1
       )
@@ -146,8 +145,8 @@ class DecoderTest extends FunSpec
     }
   }
 
-  def createStream(s: String): FiniteInputStream =
-    new FiniteInputStream(
+  def createStream(s: String): InputStreamWithLength =
+    new InputStreamWithLength(
       IOUtils.toInputStream(s, StandardCharsets.UTF_8),
       length = s.getBytes.length
     )

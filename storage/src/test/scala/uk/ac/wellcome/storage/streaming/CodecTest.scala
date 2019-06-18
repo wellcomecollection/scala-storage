@@ -46,14 +46,6 @@ class CodecTest extends FunSpec with Matchers with EitherValues with RandomThing
           val stream = typeCodec[NamedThing].toStream(thing).right.value
           typeCodec[NamedThing].fromStream(stream).right.value shouldBe thing
         }
-
-        it("a stream as itself") {
-          val randomString = Random.nextString(8)
-          val originalStream = stringCodec.toStream(randomString).right.value
-
-          val stream = streamCodec.toStream(originalStream).right.value
-          streamCodec.fromStream(stream).right.value shouldBe originalStream
-        }
       }
     }
 

@@ -20,6 +20,7 @@ case class BackendWriteError(e: Throwable) extends WriteError with BackendError
 
 case class IncorrectStreamLengthError(e: Throwable = new Error())
     extends DecoderError
+    with EncoderError
 
 case class JsonEncodingError(e: Throwable) extends EncoderError
 
@@ -39,7 +40,7 @@ sealed trait DecoderError extends ReadError
 
 case class DaoReadError(e: Throwable) extends ReadError with DaoError
 
-case class DoesNotExistError(e: Throwable)
+case class DoesNotExistError(e: Throwable = new Error())
     extends ReadError
     with DaoError
     with BackendError

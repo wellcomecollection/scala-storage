@@ -55,13 +55,6 @@ class EncoderTest
       // len( {"name":"Michael J. Fox","age":14"} ) ~> 34
       assertStreamEquals(stream.right.value, toJson(michael).get, expectedLength = 34)
     }
-
-    it("a stream as itself") {
-      val randomString = Random.nextString(8)
-      val stream = stringEncoder.toStream(randomString).right.value
-
-      streamEncoder.toStream(stream).right.value shouldBe stream
-    }
   }
 
   it("fails to encode if the Circe encoder is broken") {
