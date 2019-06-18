@@ -2,9 +2,7 @@ package uk.ac.wellcome.storage.store
 
 import uk.ac.wellcome.storage._
 
-trait Store[Ident, T]
-  extends Readable[Ident, T]
-  with Writable[Ident, T]
+trait Store[Ident, T] extends Readable[Ident, T] with Writable[Ident, T]
 
 trait Readable[Ident, T] {
   type ReadEither = Either[ReadError, Identified[Ident, T]]

@@ -33,9 +33,11 @@ object DecoderInstances {
         case Failure(err) => Left(ByteDecodingError(err))
     }
 
-  private def checkLengthIsCorrect(originalStream: InputStream, bytes: Array[Byte]): Either[DecoderError, Array[Byte]] =
+  private def checkLengthIsCorrect(
+    originalStream: InputStream,
+    bytes: Array[Byte]): Either[DecoderError, Array[Byte]] =
     originalStream match {
-      case is : InputStream with HasLength => {
+      case is: InputStream with HasLength => {
         if (bytes.length == is.length)
           Right(bytes)
         else

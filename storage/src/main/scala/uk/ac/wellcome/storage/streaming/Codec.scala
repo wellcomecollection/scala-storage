@@ -5,7 +5,12 @@ import java.nio.charset.{Charset, StandardCharsets}
 
 import io.circe
 import io.circe.Json
-import uk.ac.wellcome.storage.{CharsetDecodingError, CharsetEncodingError, CodecError, LossyEncodingDetected}
+import uk.ac.wellcome.storage.{
+  CharsetDecodingError,
+  CharsetEncodingError,
+  CodecError,
+  LossyEncodingDetected
+}
 
 import scala.util.{Failure, Success, Try}
 
@@ -53,8 +58,7 @@ object Codec {
   implicit def stringCodec(
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Codec[String] = new Codec[String] {
-    override def fromStream(
-      inputStream: InputStream): DecoderResult[String] =
+    override def fromStream(inputStream: InputStream): DecoderResult[String] =
       stringDecoder.fromStream(inputStream)
 
     override def toStream(t: String): EncoderResult =
@@ -62,8 +66,7 @@ object Codec {
   }
 
   implicit def jsonCodec: Codec[Json] = new Codec[Json] {
-    override def fromStream(
-      inputStream: InputStream): DecoderResult[Json] =
+    override def fromStream(inputStream: InputStream): DecoderResult[Json] =
       jsonDecoder.fromStream(inputStream)
 
     override def toStream(t: Json): EncoderResult =
