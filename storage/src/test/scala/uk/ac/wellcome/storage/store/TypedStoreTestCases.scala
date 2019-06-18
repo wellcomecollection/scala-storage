@@ -1,13 +1,18 @@
 package uk.ac.wellcome.storage.store
 
+import java.io.{FilterInputStream, InputStream}
+
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.StoreReadError
+import uk.ac.wellcome.storage.generators.RandomThings
 import uk.ac.wellcome.storage.store.fixtures.TypedStoreFixtures
 import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
+import uk.ac.wellcome.storage.streaming.Codec._
 
 trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata], StreamStoreContext]
   extends StoreTestCases[Ident, TypedStoreEntry[T], Namespace, StreamStoreContext]
-  with TypedStoreFixtures[Ident, T, StreamStoreImpl, StreamStoreContext] {
+  with TypedStoreFixtures[Ident, T, StreamStoreImpl, StreamStoreContext]
+  with RandomThings {
 
   override def withStoreImpl[R](storeContext: StreamStoreContext, initialEntries: Map[Ident, TypedStoreEntry[T]])(testWith: TestWith[StoreImpl, R]): R =
     withTypedStoreImpl(storeContext, initialEntries) { typedStore =>
@@ -19,13 +24,24 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
       testWith(context)
     }
 
-  def withBrokenStreamingStore[R](testWith: TestWith[StreamStoreImpl, R]): R
+  def withBrokenStreamStore[R](testWith: TestWith[StreamStoreImpl, R]): R
+
+  class CloseDetectionStream(bytes: Array[Byte]) extends FilterInputStream(bytesCodec.toStream(bytes).right.value) {
+    var isClosed = false
+
+    override def close(): Unit = {
+      isClosed = true
+      super.close()
+    }
+  }
+
+  def withSingleValueStreamStore[R](rawStream: InputStream)(testWith: TestWith[StreamStoreImpl, R]): R
 
   describe("behaves as a TypedStore") {
     describe("get") {
       it("errors if the streaming store has an error") {
-        withNamespace { implicit identContext =>
-          withBrokenStreamingStore { brokenStreamStore =>
+        withNamespace { implicit namespace =>
+          withBrokenStreamStore { brokenStreamStore =>
             withTypedStore(brokenStreamStore, initialEntries = Map.empty) { typedStore =>
               val result = typedStore.get(createId).left.value
 
@@ -34,21 +50,24 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
           }
         }
       }
+
+      it("if we're getting the raw stream, we don't close it") {
+        withNamespace { implicit namespace =>
+          val closeDetectionStream = new CloseDetectionStream(randomBytes())
+
+          withSingleValueStreamStore(closeDetectionStream) { streamingStore =>
+            withTypedStore(streamingStore, initialEntries = Map.empty) { typedStore =>
+              typedStore.get(createId)
+
+              closeDetectionStream.isClosed shouldBe true
+            }
+          }
+        }
+      }
     }
   }
-//
-//      it("if we're getting the raw stream, we don't close it") {
-//        withNamespace { implicit identContext =>
-//          val rawStream = new CloseDetectionStream(randomUTF16String)
-//          withCustomInputStream(rawStream) { streamingStore =>
-//            withInputStreamStoreImpl { store =>
-//              store.get(createId)
-//
-//              rawStream.isClosed shouldBe false
-//            }(streamingStore)
-//          }
-//        }
-//      }
+
+
 //
 //      it("if we're interpreting the stream, we close the raw stream") {
 //        withNamespace { implicit identContext =>
@@ -227,14 +246,6 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
 ////
 ////  def withInputStreamStoreImpl[R](testWith: TestWith[ObjectStore[FiniteInputStream], R])(implicit streamingStore: StreamingStoreImpl): R
 ////
-////  class CloseDetectionStream(string: String) extends FilterInputStream(stringCodec.toStream(string).right.value) {
-////    var isClosed = false
-////
-////    override def close(): Unit = {
-////      isClosed = true
-////      super.close()
-////    }
-////  }
 ////
 ////  def withCustomInputStream[R](rawStream: InputStream)(testWith: TestWith[StreamingStoreImpl, R]): R
 ////
