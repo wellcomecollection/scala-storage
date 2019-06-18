@@ -4,7 +4,7 @@ import org.scalatest.{EitherValues, FunSpec}
 import uk.ac.wellcome.storage.{DoesNotExistError, Identified}
 
 trait StoreTestCases[Id, T, Namespace, StoreContext] extends FunSpec with EitherValues with StoreFixtures[Id, T, Namespace, StoreContext] {
-  describe("behaves as a store") {
+  describe("it behaves as a store") {
     describe("get") {
       it("fails to get a non-existent location") {
         withNamespace { implicit namespace =>
@@ -36,7 +36,7 @@ trait StoreTestCases[Id, T, Namespace, StoreContext] extends FunSpec with Either
           val id = createId
           val t = createT
 
-          withStoreImpl(initialEntries = Map(id -> t)) { store =>
+          withStoreImpl(initialEntries = Map.empty) { store =>
             store.put(id)(t) shouldBe a[Right[_, _]]
           }
         }

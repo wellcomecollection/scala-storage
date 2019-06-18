@@ -88,7 +88,7 @@ object Codec {
         inputStream: InputStream with FiniteStream): DecoderResult[InputStream with FiniteStream] =
         streamDecoder.fromStream(inputStream)
 
-      override def toStream(t: FiniteInputStream): EncoderResult =
+      override def toStream(t: InputStream with FiniteStream): EncoderResult =
         streamEncoder.toStream(t)
     }
 }

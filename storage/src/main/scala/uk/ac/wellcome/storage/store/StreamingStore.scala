@@ -1,5 +1,7 @@
 package uk.ac.wellcome.storage.store
 
-import uk.ac.wellcome.storage.streaming.FiniteInputStream
+import java.io.InputStream
 
-trait StreamingStore[Ident, IS <: FiniteInputStream] extends Store[Ident, IS]
+import uk.ac.wellcome.storage.streaming.FiniteStream
+
+trait StreamingStore[Ident, IS <: InputStream with FiniteStream] extends Store[Ident, IS]

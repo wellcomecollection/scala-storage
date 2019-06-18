@@ -1,12 +1,14 @@
 package uk.ac.wellcome.storage.store.memory
 
+import java.io.InputStream
+
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.store.StreamingStore
 import uk.ac.wellcome.storage.streaming.Codec._
-import uk.ac.wellcome.storage.streaming.FiniteInputStreamWithMetadata
+import uk.ac.wellcome.storage.streaming.{FiniteInputStreamWithMetadata, FiniteStream, HasMetadata}
 
-class MemoryStreamingStore[Ident]()(implicit val memoryStore: MemoryStore[Ident, MemoryStoreEntry]) extends StreamingStore[Ident, FiniteInputStreamWithMetadata] with Logging {
+class MemoryStreamingStore[Ident](memoryStore: MemoryStore[Ident, MemoryStoreEntry]) extends StreamingStore[Ident, InputStream with FiniteStream with HasMetadata] with Logging {
   override def get(id: Ident): ReadEither =
     for {
       entry <- memoryStore.get(id)
@@ -20,7 +22,7 @@ class MemoryStreamingStore[Ident]()(implicit val memoryStore: MemoryStore[Ident,
       result = FiniteInputStreamWithMetadata(inputStream, internalEntry.metadata)
     } yield Identified(id, result)
 
-  override def put(id: Ident)(entry: FiniteInputStreamWithMetadata): WriteEither =
+  override def put(id: Ident)(entry: InputStream with FiniteStream with HasMetadata): WriteEither =
     bytesCodec.fromStream(entry) match {
       case Right(bytes) =>
         val internalEntry = MemoryStoreEntry(bytes, metadata = entry.metadata)
