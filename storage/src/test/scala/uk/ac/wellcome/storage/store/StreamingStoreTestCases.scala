@@ -2,21 +2,14 @@ package uk.ac.wellcome.storage.store
 
 import java.io.InputStream
 
-import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
+import org.scalatest.{Assertion, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.IncorrectStreamLengthError
-import uk.ac.wellcome.storage.generators.{MetadataGenerators, RandomThings}
+import uk.ac.wellcome.storage.generators.MetadataGenerators
+import uk.ac.wellcome.storage.store.fixtures.StringNamespaceFixtures
 import uk.ac.wellcome.storage.store.memory.{MemoryStore, MemoryStoreEntry, MemoryStreamingStore}
 import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming._
-
-trait StringNamespaceFixtures extends RandomThings {
-  def withNamespace[R](testWith: TestWith[String, R]): R =
-    testWith(randomAlphanumeric)
-
-  def createId(implicit namespace: String): String =
-    s"$namespace/$randomAlphanumeric"
-}
 
 class MemoryStreamingStoreTest extends StreamingStoreWithMetadataTestCases[String, FiniteInputStreamWithMetadata, MemoryStore[String, MemoryStoreEntry]] with MetadataGenerators with StringNamespaceFixtures {
   override def withStoreImpl[R](storeContext: MemoryStore[String, MemoryStoreEntry], initialEntries: Map[String, InputStream with FiniteStream with HasMetadata])(testWith: TestWith[StoreImpl, R]): R = {
