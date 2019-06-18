@@ -6,25 +6,11 @@ import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGenerators}
-import uk.ac.wellcome.storage.store.fixtures.{BucketNamespaceFixtures, TypedStoreFixtures}
-import uk.ac.wellcome.storage.store.{TypedStore, TypedStoreEntry, TypedStoreTestCases}
-import uk.ac.wellcome.storage.streaming.{Codec, InputStreamWithLengthAndMetadata}
+import uk.ac.wellcome.storage.store.fixtures.BucketNamespaceFixtures
+import uk.ac.wellcome.storage.store.{TypedStoreEntry, TypedStoreTestCases}
+import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 
-trait S3TypedStoreFixtures[T] extends TypedStoreFixtures[ObjectLocation, T, S3StreamStore, Unit] with S3StreamStoreFixtures {
-  override def withTypedStore[R](streamStore: S3StreamStore, initialEntries: Map[ObjectLocation, TypedStoreEntry[T]])(testWith: TestWith[TypedStore[ObjectLocation, T], R])(implicit codec: Codec[T]): R = {
-    implicit val s3StreamStore: S3StreamStore = streamStore
-
-    initialEntries.map { case (location, entry) =>
-      val stream = codec.toStream(entry.t).right.value
-
-      val uploadStream = new InputStreamWithLengthAndMetadata(stream, stream.length, entry.metadata)
-
-      putStream(location, uploadStream)
-    }
-
-    testWith(new S3TypedStore[T]())
-  }
-}
+import scala.util.Random
 
 class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucket, S3StreamStore, Unit] with S3TypedStoreFixtures[Record] with MetadataGenerators with RecordGenerators with BucketNamespaceFixtures {
   override def withBrokenStreamStore[R](testWith: TestWith[S3StreamStore, R]): R = {
@@ -55,4 +41,31 @@ class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucke
   }
 
   override def createT: TypedStoreEntry[Record] = TypedStoreEntry(createRecord, metadata = createValidMetadata)
+
+  it("errors when given metadata that cannot be stored in S3") {
+    withLocalS3Bucket { bucket =>
+      withStoreImpl(initialEntries = Map.empty) { store: StoreImpl =>
+        val location = createId(bucket)
+        val entry = createT
+
+        // The S3 API will only accept metadata strings
+        // that can be represented in US-ASCII
+        // See: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html#UserMetadata
+        val invalidMetadata =
+          (1 to 10)
+            .map { _ =>
+              (
+                Random.nextString(8),
+                Random.nextString(8)
+              )
+            }
+            .toMap
+
+        val invalidEntry = entry.copy(metadata = invalidMetadata)
+        val result = store.put(location)(invalidEntry)
+
+        result.left.value shouldBe a[MetadataCoercionFailure]
+      }
+    }
+  }
 }
