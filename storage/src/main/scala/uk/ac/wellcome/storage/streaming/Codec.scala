@@ -43,7 +43,7 @@ object Codec {
 
   implicit val bytesCodec: Codec[Array[Byte]] = new Codec[Array[Byte]] {
     override def fromStream(
-      inputStream: InputStream with HasLength): DecoderResult[Array[Byte]] =
+      inputStream: InputStream): DecoderResult[Array[Byte]] =
       bytesDecoder.fromStream(inputStream)
 
     override def toStream(bytes: Array[Byte]): EncoderResult =
@@ -54,7 +54,7 @@ object Codec {
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Codec[String] = new Codec[String] {
     override def fromStream(
-      inputStream: InputStream with HasLength): DecoderResult[String] =
+      inputStream: InputStream): DecoderResult[String] =
       stringDecoder.fromStream(inputStream)
 
     override def toStream(t: String): EncoderResult =
@@ -63,7 +63,7 @@ object Codec {
 
   implicit def jsonCodec: Codec[Json] = new Codec[Json] {
     override def fromStream(
-      inputStream: InputStream with HasLength): DecoderResult[Json] =
+      inputStream: InputStream): DecoderResult[Json] =
       jsonDecoder.fromStream(inputStream)
 
     override def toStream(t: Json): EncoderResult =
@@ -75,20 +75,10 @@ object Codec {
     dec: circe.Decoder[T],
     enc: circe.Encoder[T]
   ): Codec[T] = new Codec[T] {
-    override def fromStream(inputStream: InputStream with HasLength): DecoderResult[T] =
+    override def fromStream(inputStream: InputStream): DecoderResult[T] =
       typeDecoder.fromStream(inputStream)
 
     override def toStream(t: T): EncoderResult =
       typeEncoder.toStream(t)
   }
-
-  implicit val streamCodec: Codec[InputStream with HasLength] =
-    new Codec[InputStream with HasLength] {
-      override def fromStream(
-        inputStream: InputStream with HasLength): DecoderResult[InputStream with HasLength] =
-        streamDecoder.fromStream(inputStream)
-
-      override def toStream(t: InputStream with HasLength): EncoderResult =
-        streamEncoder.toStream(t)
-    }
 }

@@ -1,6 +1,6 @@
 package uk.ac.wellcome.storage.streaming
 
-import java.io.{ByteArrayInputStream, InputStream}
+import java.io.ByteArrayInputStream
 import java.nio.charset.{Charset, StandardCharsets}
 
 import grizzled.slf4j.Logging
@@ -12,7 +12,7 @@ import uk.ac.wellcome.storage.{EncoderError, JsonEncodingError}
 import scala.util.{Failure, Success}
 
 trait Encoder[T] {
-  type EncoderResult = Either[EncoderError, InputStream with HasLength]
+  type EncoderResult = Either[EncoderError, InputStreamWithLength]
 
   def toStream(t: T): EncoderResult
 }
@@ -46,7 +46,4 @@ object EncoderInstances extends Logging {
         case Success(jsonString) => stringEncoder.toStream(jsonString)
         case Failure(err)        => Left(JsonEncodingError(err))
     }
-
-  implicit val streamEncoder: Encoder[InputStream with HasLength] =
-    (t: InputStream with HasLength) => Right(t)
 }

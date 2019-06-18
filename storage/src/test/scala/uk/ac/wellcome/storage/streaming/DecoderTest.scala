@@ -36,6 +36,12 @@ class DecoderTest extends FunSpec
       bytesDecoder.fromStream(stream).right.value shouldBe byteArray
     }
 
+    it("a byte array without a specified length") {
+      val byteArray = randomBytes()
+
+      bytesDecoder.fromStream(new ByteArrayInputStream(byteArray)).right.value shouldBe byteArray
+    }
+
     it("a string") {
       val randomString = Random.nextString(8)
       val randomStream = createStream(randomString)
@@ -71,13 +77,6 @@ class DecoderTest extends FunSpec
       val jsonStream = createStream(jsonString)
 
       typeDecoder[Vehicle].fromStream(jsonStream) shouldBe Right(vehicle)
-    }
-
-    it("a stream as itself") {
-      val randomString = Random.nextString(8)
-      val randomStream = createStream(randomString)
-
-      streamDecoder.fromStream(randomStream).right.value shouldBe randomStream
     }
   }
 

@@ -14,7 +14,7 @@ import scala.util.{Failure, Success, Try}
 trait Decoder[T] {
   type DecoderResult[S] = Either[DecoderError, S]
 
-  def fromStream(inputStream: InputStream with HasLength): DecoderResult[T]
+  def fromStream(inputStream: InputStream): DecoderResult[T]
 }
 
 object DecoderInstances {
@@ -23,25 +23,37 @@ object DecoderInstances {
   type ParseJson[T] = String => Either[JsonDecodingError, T]
 
   implicit val bytesDecoder: Decoder[Array[Byte]] =
-    (inputStream: InputStream with HasLength) =>
+    (inputStream: InputStream) =>
       Try {
         IOUtils.toByteArray(inputStream)
       } match {
-        case Success(bytes) if bytes.length == inputStream.length =>
-          Right(bytes)
         case Success(bytes) =>
+          checkLengthIsCorrect(inputStream, bytes = bytes)
+
+        case Failure(err) => Left(ByteDecodingError(err))
+    }
+
+  private def checkLengthIsCorrect(originalStream: InputStream, bytes: Array[Byte]): Either[DecoderError, Array[Byte]] =
+    originalStream match {
+      case is : InputStream with HasLength => {
+        if (bytes.length == is.length)
+          Right(bytes)
+        else
           Left(
             IncorrectStreamLengthError(
               new Throwable(
-                s"Expected length ${inputStream.length}, actually had length ${bytes.length}")
-            ))
-        case Failure(err) => Left(ByteDecodingError(err))
+                s"Expected length ${is.length}, actually had length ${bytes.length}"
+              )
+            )
+          )
+      }
+      case _ => Right(bytes)
     }
 
   implicit def stringDecoder(
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Decoder[String] =
-    (inputStream: InputStream with HasLength) =>
+    (inputStream: InputStream) =>
       bytesDecoder.fromStream(inputStream).flatMap { bytes =>
         // TODO: We don't have a test for this String construction failing, because
         // we can't find a sequence of bugs that triggers an exception!
@@ -55,7 +67,7 @@ object DecoderInstances {
     }
 
   implicit val jsonDecoder: Decoder[Json] =
-    (inputStream: InputStream with HasLength) => {
+    (inputStream: InputStream) => {
       val parseJson: ParseJson[Json] = parse(_) match {
         case Left(err)   => Left(JsonDecodingError(err))
         case Right(json) => Right(json)
@@ -68,7 +80,7 @@ object DecoderInstances {
     }
 
   implicit def typeDecoder[T](implicit dec: circe.Decoder[T]): Decoder[T] =
-    (inputStream: InputStream with HasLength) => {
+    (inputStream: InputStream) => {
       val parseJson: ParseJson[T] = fromJson[T](_) match {
         case Failure(err) => Left(JsonDecodingError(err))
         case Success(t)   => Right(t)
@@ -80,6 +92,6 @@ object DecoderInstances {
       } yield result
     }
 
-  implicit val streamDecoder: Decoder[InputStream with HasLength] =
-    (inputStream: InputStream with HasLength) => Right(inputStream)
+  implicit val streamDecoder: Decoder[InputStream] =
+    (inputStream: InputStream) => Right(inputStream)
 }
