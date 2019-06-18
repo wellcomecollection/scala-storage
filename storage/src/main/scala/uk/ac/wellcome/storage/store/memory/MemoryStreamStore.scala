@@ -25,7 +25,8 @@ class MemoryStreamStore[Ident](
         internalEntry.metadata)
     } yield Identified(id, result)
 
-  override def put(id: Ident)(entry: InputStreamWithLengthAndMetadata): WriteEither =
+  override def put(id: Ident)(
+    entry: InputStreamWithLengthAndMetadata): WriteEither =
     bytesCodec.fromStream(entry) match {
       case Right(bytes) =>
         val internalEntry = MemoryStoreEntry(bytes, metadata = entry.metadata)

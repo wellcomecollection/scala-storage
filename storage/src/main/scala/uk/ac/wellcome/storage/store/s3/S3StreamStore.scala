@@ -4,7 +4,12 @@ import java.nio.charset.StandardCharsets
 
 import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.{AmazonS3Exception, ObjectMetadata, PutObjectRequest, S3Object}
+import com.amazonaws.services.s3.model.{
+  AmazonS3Exception,
+  ObjectMetadata,
+  PutObjectRequest,
+  S3Object
+}
 import com.amazonaws.services.s3.transfer.{TransferManagerBuilder, Upload}
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.store.StreamStore
@@ -13,33 +18,44 @@ import uk.ac.wellcome.storage.streaming._
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
-class S3StreamingStore()(implicit s3Client: AmazonS3) extends StreamStore[ObjectLocation, InputStreamWithLengthAndMetadata] {
+class S3StreamingStore()(implicit s3Client: AmazonS3)
+    extends StreamStore[ObjectLocation, InputStreamWithLengthAndMetadata] {
   type Metadata = Map[String, String]
 
   override def get(location: ObjectLocation): ReadEither = {
     Try(s3Client.getObject(location.namespace, location.key)) match {
-      case Success(retrievedObject: S3Object) => Right(
-        Identified(location, buildStoreEntry(retrievedObject))
-      )
+      case Success(retrievedObject: S3Object) =>
+        Right(
+          Identified(location, buildStoreEntry(retrievedObject))
+        )
       case Failure(err) => Left(buildGetError(err))
     }
   }
 
   private def buildGetError(throwable: Throwable): ReadError =
     throwable match {
-      case exc: AmazonS3Exception if exc.getMessage.startsWith("The specified key does not exist") => DoesNotExistError()
-      case exc: AmazonS3Exception if exc.getMessage.startsWith("The specified bucket is not valid") => DoesNotExistError()
+      case exc: AmazonS3Exception
+          if exc.getMessage.startsWith("The specified key does not exist") =>
+        DoesNotExistError()
+      case exc: AmazonS3Exception
+          if exc.getMessage.startsWith("The specified bucket is not valid") =>
+        DoesNotExistError()
       case _ => StoreReadError(throwable)
     }
 
-  private def buildStoreEntry(s3Object: S3Object): InputStreamWithLengthAndMetadata = {
+  private def buildStoreEntry(
+    s3Object: S3Object): InputStreamWithLengthAndMetadata = {
 
     // We get a mutable.Map from the S3 SDK, but we want an immutable Map to pass
     // out to the codebase, hence this slightly odd construction!
     val userMetadata = s3Object.getObjectMetadata.getUserMetadata
-    val metadata = userMetadata.keySet().asScala.map { k =>
-      (k, userMetadata.get(k))
-    }.toMap
+    val metadata = userMetadata
+      .keySet()
+      .asScala
+      .map { k =>
+        (k, userMetadata.get(k))
+      }
+      .toMap
 
     new InputStreamWithLengthAndMetadata(
       s3Object.getObjectContent,
@@ -75,19 +91,21 @@ class S3StreamingStore()(implicit s3Client: AmazonS3) extends StreamStore[Object
   private val MB: Int = 1024 * 1024
   private val bufferReadLimit: Int = 100 * MB
 
-  private def coerceMetadata(metadata: Metadata): Either[MetadataCoercionFailure, Metadata] = {
-    val results = metadata.map { case (k, v) =>
-      for {
-        key <- Codec.coerce(StandardCharsets.US_ASCII)(k)
-        value <- Codec.coerce(StandardCharsets.US_ASCII)(v)
-      } yield (key, value)
+  private def coerceMetadata(
+    metadata: Metadata): Either[MetadataCoercionFailure, Metadata] = {
+    val results = metadata.map {
+      case (k, v) =>
+        for {
+          key <- Codec.coerce(StandardCharsets.US_ASCII)(k)
+          value <- Codec.coerce(StandardCharsets.US_ASCII)(v)
+        } yield (key, value)
     }
 
-    val failure = results.collect { case Left(e) => e } toList
+    val failure = results.collect { case Left(e)   => e } toList
     val success = results.collect { case Right(kv) => kv } toList
 
     val mappedSuccess = success.map {
-      case (k,v) => k -> v
+      case (k, v) => k -> v
     }.toMap
 
     Either.cond(
@@ -98,9 +116,9 @@ class S3StreamingStore()(implicit s3Client: AmazonS3) extends StreamStore[Object
   }
 
   private def createPutObjectRequest(
-                                      location: ObjectLocation,
-                                      stream: InputStreamWithLengthAndMetadata,
-                                      metadataMap: Map[String, String]
+    location: ObjectLocation,
+    stream: InputStreamWithLengthAndMetadata,
+    metadataMap: Map[String, String]
   ): PutObjectRequest = {
     val metadata = new ObjectMetadata()
 
@@ -123,25 +141,41 @@ class S3StreamingStore()(implicit s3Client: AmazonS3) extends StreamStore[Object
     putObjectRequest: PutObjectRequest,
     location: ObjectLocation,
     inputStream: InputStreamWithLengthAndMetadata
-  ): Either[WriteError, Identified[ObjectLocation, InputStreamWithLengthAndMetadata]] = Try {
-    val upload: Upload = transferManager
-      .upload(putObjectRequest)
+  ): Either[WriteError,
+            Identified[ObjectLocation, InputStreamWithLengthAndMetadata]] =
+    Try {
+      val upload: Upload = transferManager
+        .upload(putObjectRequest)
 
-    upload.waitForUploadResult()
-  } match {
-    case Success(_) => Right(Identified(location, inputStream))
-    case Failure(err) => Left(buildPutError(err))
-  }
+      upload.waitForUploadResult()
+    } match {
+      case Success(_)   => Right(Identified(location, inputStream))
+      case Failure(err) => Left(buildPutError(err))
+    }
 
-  override def put(location: ObjectLocation)(inputStream: InputStreamWithLengthAndMetadata): WriteEither = for {
-    metadataMap <- coerceMetadata(inputStream.metadata)
-    putObjectRequest = createPutObjectRequest(location, inputStream, metadataMap)
-    result <- uploadWithTransferManager(putObjectRequest, location, inputStream)
-  } yield result
+  override def put(location: ObjectLocation)(
+    inputStream: InputStreamWithLengthAndMetadata): WriteEither =
+    for {
+      metadataMap <- coerceMetadata(inputStream.metadata)
+      putObjectRequest = createPutObjectRequest(
+        location,
+        inputStream,
+        metadataMap)
+      result <- uploadWithTransferManager(
+        putObjectRequest,
+        location,
+        inputStream)
+    } yield result
 
-  private def buildPutError(throwable: Throwable): WriteError = throwable match {
-    case exc: SdkClientException if exc.getMessage.startsWith("Data read has a different length than the expected") => IncorrectStreamLengthError(exc)
-    case exc: SdkClientException if exc.getMessage.startsWith("More data read than expected") => IncorrectStreamLengthError(exc)
-    case _ => StoreWriteError(throwable)
-  }
+  private def buildPutError(throwable: Throwable): WriteError =
+    throwable match {
+      case exc: SdkClientException
+          if exc.getMessage.startsWith(
+            "Data read has a different length than the expected") =>
+        IncorrectStreamLengthError(exc)
+      case exc: SdkClientException
+          if exc.getMessage.startsWith("More data read than expected") =>
+        IncorrectStreamLengthError(exc)
+      case _ => StoreWriteError(throwable)
+    }
 }
