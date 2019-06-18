@@ -1,5 +1,6 @@
 package uk.ac.wellcome.storage.streaming
 
+import java.io.InputStream
 import java.nio.charset.{Charset, StandardCharsets}
 
 import io.circe
@@ -13,7 +14,7 @@ import scala.util.{Failure, Success, Try}
 trait Decoder[T] {
   type DecoderResult[S] = Either[DecoderError, S]
 
-  def fromStream(inputStream: FiniteInputStream): DecoderResult[T]
+  def fromStream(inputStream: InputStream with FiniteStream): DecoderResult[T]
 }
 
 object DecoderInstances {
@@ -22,7 +23,7 @@ object DecoderInstances {
   type ParseJson[T] = String => Either[JsonDecodingError, T]
 
   implicit val bytesDecoder: Decoder[Array[Byte]] =
-    (inputStream: FiniteInputStream) =>
+    (inputStream: InputStream with FiniteStream) =>
       Try {
         IOUtils.toByteArray(inputStream)
       } match {
@@ -40,7 +41,7 @@ object DecoderInstances {
   implicit def stringDecoder(
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Decoder[String] =
-    (inputStream: FiniteInputStream) =>
+    (inputStream: InputStream with FiniteStream) =>
       bytesDecoder.fromStream(inputStream).flatMap { bytes =>
         // TODO: We don't have a test for this String construction failing, because
         // we can't find a sequence of bugs that triggers an exception!
@@ -54,7 +55,7 @@ object DecoderInstances {
     }
 
   implicit val jsonDecoder: Decoder[Json] =
-    (inputStream: FiniteInputStream) => {
+    (inputStream: InputStream with FiniteStream) => {
       val parseJson: ParseJson[Json] = parse(_) match {
         case Left(err)   => Left(JsonDecodingError(err))
         case Right(json) => Right(json)
@@ -67,7 +68,7 @@ object DecoderInstances {
     }
 
   implicit def typeDecoder[T](implicit dec: circe.Decoder[T]): Decoder[T] =
-    (inputStream: FiniteInputStream) => {
+    (inputStream: InputStream with FiniteStream) => {
       val parseJson: ParseJson[T] = fromJson[T](_) match {
         case Failure(err) => Left(JsonDecodingError(err))
         case Success(t)   => Right(t)
@@ -79,6 +80,6 @@ object DecoderInstances {
       } yield result
     }
 
-  implicit val streamDecoder: Decoder[FiniteInputStream] =
-    (inputStream: FiniteInputStream) => Right(inputStream)
+  implicit val streamDecoder: Decoder[InputStream with FiniteStream] =
+    (inputStream: InputStream with FiniteStream) => Right(inputStream)
 }

@@ -1,15 +1,11 @@
 package uk.ac.wellcome.storage.streaming
 
+import java.io.InputStream
 import java.nio.charset.{Charset, StandardCharsets}
 
 import io.circe
 import io.circe.Json
-import uk.ac.wellcome.storage.{
-  CharsetDecodingError,
-  CharsetEncodingError,
-  CodecError,
-  LossyEncodingDetected
-}
+import uk.ac.wellcome.storage.{CharsetDecodingError, CharsetEncodingError, CodecError, LossyEncodingDetected}
 
 import scala.util.{Failure, Success, Try}
 
@@ -47,7 +43,7 @@ object Codec {
 
   implicit val bytesCodec: Codec[Array[Byte]] = new Codec[Array[Byte]] {
     override def fromStream(
-      inputStream: FiniteInputStream): DecoderResult[Array[Byte]] =
+      inputStream: InputStream with FiniteStream): DecoderResult[Array[Byte]] =
       bytesDecoder.fromStream(inputStream)
 
     override def toStream(bytes: Array[Byte]): EncoderResult =
@@ -58,7 +54,7 @@ object Codec {
     implicit charset: Charset = StandardCharsets.UTF_8
   ): Codec[String] = new Codec[String] {
     override def fromStream(
-      inputStream: FiniteInputStream): DecoderResult[String] =
+      inputStream: InputStream with FiniteStream): DecoderResult[String] =
       stringDecoder.fromStream(inputStream)
 
     override def toStream(t: String): EncoderResult =
@@ -67,7 +63,7 @@ object Codec {
 
   implicit def jsonCodec: Codec[Json] = new Codec[Json] {
     override def fromStream(
-      inputStream: FiniteInputStream): DecoderResult[Json] =
+      inputStream: InputStream with FiniteStream): DecoderResult[Json] =
       jsonDecoder.fromStream(inputStream)
 
     override def toStream(t: Json): EncoderResult =
@@ -79,17 +75,17 @@ object Codec {
     dec: circe.Decoder[T],
     enc: circe.Encoder[T]
   ): Codec[T] = new Codec[T] {
-    override def fromStream(inputStream: FiniteInputStream): DecoderResult[T] =
+    override def fromStream(inputStream: InputStream with FiniteStream): DecoderResult[T] =
       typeDecoder.fromStream(inputStream)
 
     override def toStream(t: T): EncoderResult =
       typeEncoder.toStream(t)
   }
 
-  implicit val streamCodec: Codec[FiniteInputStream] =
-    new Codec[FiniteInputStream] {
+  implicit val streamCodec: Codec[InputStream with FiniteStream] =
+    new Codec[InputStream with FiniteStream] {
       override def fromStream(
-        inputStream: FiniteInputStream): DecoderResult[FiniteInputStream] =
+        inputStream: InputStream with FiniteStream): DecoderResult[InputStream with FiniteStream] =
         streamDecoder.fromStream(inputStream)
 
       override def toStream(t: FiniteInputStream): EncoderResult =
