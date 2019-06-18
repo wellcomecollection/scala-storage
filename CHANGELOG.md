@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.7.0 - 2019-06-18
+
+Adds the S3 implementation of a StreamStore.
+
 ## v7.6.0 - 2019-06-18
 
 -   Remove the codec, decoder and encoder for `java.io.InputStream`.

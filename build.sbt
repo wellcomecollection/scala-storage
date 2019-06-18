@@ -1,5 +1,5 @@
 val projectName = "storage"
-val projectVersion = "7.6.0"
+val projectVersion = "7.7.0"
 
 enablePlugins(DockerComposePlugin)
 
