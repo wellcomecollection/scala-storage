@@ -1,6 +1,7 @@
 package uk.ac.wellcome.storage.store
 
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.StoreReadError
 import uk.ac.wellcome.storage.store.fixtures.TypedStoreFixtures
 import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 
@@ -18,26 +19,23 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
       testWith(context)
     }
 
-//  def withBrokenStreamingStore[R](testWith: TestWith[StreamStore[Ident, InputStreamWithLengthAndMetadata], R]): R
-//
-//  describe("behaves as a TypedStore") {
-//    describe("get") {
-//      it("errors if the streaming store has an error") {
-//        withNamespace { implicit identContext =>
-//          withStoreContext { storeContext =>
-//            withBrokenStreamingStore { brokenStreamingStore =>
-//
-//              val brokenContext = storeContext.copy(context = brokenStreamingStore)
-//
-//              withStoreImpl(brokenContext, Map.empty) { store =>
-//                val result = store.get(createId).left.value
-//
-//                result shouldBe a[BackendReadError]
-//              }
-//            }
-//          }
-//        }
-//      }
+  def withBrokenStreamingStore[R](testWith: TestWith[StreamStoreImpl, R]): R
+
+  describe("behaves as a TypedStore") {
+    describe("get") {
+      it("errors if the streaming store has an error") {
+        withNamespace { implicit identContext =>
+          withBrokenStreamingStore { brokenStreamStore =>
+            withTypedStore(brokenStreamStore, initialEntries = Map.empty) { typedStore =>
+              val result = typedStore.get(createId).left.value
+
+              result shouldBe a[StoreReadError]
+            }
+          }
+        }
+      }
+    }
+  }
 //
 //      it("if we're getting the raw stream, we don't close it") {
 //        withNamespace { implicit identContext =>

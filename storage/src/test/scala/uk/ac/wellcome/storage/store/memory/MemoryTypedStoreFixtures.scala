@@ -5,7 +5,7 @@ import uk.ac.wellcome.storage.store.fixtures.TypedStoreFixtures
 import uk.ac.wellcome.storage.store.{TypedStore, TypedStoreEntry}
 
 trait MemoryTypedStoreFixtures[Ident, T] extends MemoryStreamStoreFixtures[Ident] with TypedStoreFixtures[Ident, T, MemoryStreamStore[Ident], MemoryStore[Ident, MemoryStoreEntry]] {
-  def withTypedStoreImpl[R](streamStore: MemoryStreamStore[Ident], initialEntries: Map[Ident, TypedStoreEntry[T]])(testWith: TestWith[TypedStore[Ident, T], R]): R = {
+  def withTypedStore[R](streamStore: MemoryStreamStore[Ident], initialEntries: Map[Ident, TypedStoreEntry[T]])(testWith: TestWith[TypedStore[Ident, T], R]): R = {
     implicit val memoryStreamStore: MemoryStreamStore[Ident] = streamStore
 
     testWith(
