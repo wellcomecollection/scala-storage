@@ -3,35 +3,12 @@ package uk.ac.wellcome.storage.store
 import java.io.InputStream
 
 import org.scalatest.{Assertion, FunSpec, Matchers}
-import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.IncorrectStreamLengthError
 import uk.ac.wellcome.storage.generators.MetadataGenerators
-import uk.ac.wellcome.storage.store.fixtures.StringNamespaceFixtures
-import uk.ac.wellcome.storage.store.memory.{MemoryStore, MemoryStoreEntry, MemoryStreamingStore}
 import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming._
 
-class MemoryStreamingStoreTest extends StreamingStoreWithMetadataTestCases[String, FiniteInputStreamWithMetadata, MemoryStore[String, MemoryStoreEntry]] with MetadataGenerators with StringNamespaceFixtures {
-  override def withStoreImpl[R](storeContext: MemoryStore[String, MemoryStoreEntry], initialEntries: Map[String, InputStream with FiniteStream with HasMetadata])(testWith: TestWith[StoreImpl, R]): R = {
-    val memoryStoreEntries =
-      initialEntries.map { case (id, inputStream) =>
-        (id, MemoryStoreEntry(bytes = bytesCodec.fromStream(inputStream).right.value, metadata = inputStream.metadata))
-      }
-
-    storeContext.entries = storeContext.entries ++ memoryStoreEntries
-
-    testWith(
-      new MemoryStreamingStore[String](storeContext)
-    )
-  }
-
-  override def withStoreContext[R](testWith: TestWith[MemoryStore[String, MemoryStoreEntry], R]): R =
-    testWith(
-      new MemoryStore[String, MemoryStoreEntry](initialEntries = Map.empty)
-    )
-}
-
-trait StreamingStoreWithMetadataTestCases[Ident, IS <: InputStream with FiniteStream with HasMetadata, StoreContext]
+trait StreamingStoreTestCases[Ident, IS <: InputStream with FiniteStream with HasMetadata, StoreContext]
   extends FunSpec
     with Matchers
     with StreamAssertions
