@@ -7,18 +7,23 @@ import uk.ac.wellcome.storage.streaming.Codec.bytesCodec
 import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 
 trait MemoryStreamStoreFixtures[Ident] extends StreamStoreFixtures[Ident, MemoryStore[Ident, MemoryStoreEntry]] {
-  override def withStreamStoreImpl[R](storeContext: MemoryStore[Ident, MemoryStoreEntry], initialEntries: Map[Ident, InputStreamWithLengthAndMetadata])(testWith: TestWith[StreamStore[Ident, InputStreamWithLengthAndMetadata], R]): R = {
+  def withMemoryStreamStoreImpl[R](underlying: MemoryStore[Ident, MemoryStoreEntry], initialEntries: Map[Ident, InputStreamWithLengthAndMetadata])(testWith: TestWith[MemoryStreamStore[Ident], R]): R = {
     val memoryStoreEntries =
       initialEntries.map { case (id, inputStream) =>
         (id, MemoryStoreEntry(bytes = bytesCodec.fromStream(inputStream).right.value, metadata = inputStream.metadata))
       }
 
-    storeContext.entries = storeContext.entries ++ memoryStoreEntries
+    underlying.entries = underlying.entries ++ memoryStoreEntries
 
     testWith(
-      new MemoryStreamStore[Ident](storeContext)
+      new MemoryStreamStore[Ident](underlying)
     )
   }
+
+  override def withStreamStoreImpl[R](storeContext: MemoryStore[Ident, MemoryStoreEntry], initialEntries: Map[Ident, InputStreamWithLengthAndMetadata])(testWith: TestWith[StreamStore[Ident, InputStreamWithLengthAndMetadata], R]): R =
+    withMemoryStreamStoreImpl(storeContext, initialEntries) { streamStore =>
+      testWith(streamStore)
+    }
 
   override def withStreamStoreContext[R](testWith: TestWith[MemoryStore[Ident, MemoryStoreEntry], R]): R =
     testWith(
