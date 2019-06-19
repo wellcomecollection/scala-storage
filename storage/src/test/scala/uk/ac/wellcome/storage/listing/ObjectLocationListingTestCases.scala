@@ -7,14 +7,16 @@ import uk.ac.wellcome.storage.generators.{ObjectLocationGenerators, RandomThings
 import uk.ac.wellcome.storage.listing.memory.MemoryObjectLocationListing
 import uk.ac.wellcome.storage.store.memory.MemoryStore
 
-trait ObjectLocationListingTestCases[StoreContext] extends FunSpec with Matchers with EitherValues with ObjectLocationGenerators {
-  def withStoreContext[R](entries: Seq[ObjectLocation])(testWith: TestWith[StoreContext, R]): R
+trait ListingFixtures[Ident, ListingContext] extends {
+  def withListingContext[R](entries: Seq[Ident])(testWith: TestWith[ListingContext, R]): R
 
-  def withListing[R](context: StoreContext)(testWith: TestWith[ObjectLocationListing, R]): R
+  def withListing[R](context: ListingContext)(testWith: TestWith[ObjectLocationListing, R]): R
+}
 
+trait ObjectLocationListingTestCases[ListingContext] extends FunSpec with Matchers with EitherValues with ObjectLocationGenerators with ListingFixtures[ObjectLocation, ListingContext] {
   describe("behaves as an object location listing") {
     it("doesn't find anything in an empty store") {
-      withStoreContext(entries = Seq.empty) { context =>
+      withListingContext(entries = Seq.empty) { context =>
         withListing(context) { listing =>
           listing.list(createObjectLocationPrefix).right.value shouldBe empty
         }
@@ -25,7 +27,7 @@ trait ObjectLocationListingTestCases[StoreContext] extends FunSpec with Matchers
       val location = createObjectLocation
       val prefix = location.asPrefix
 
-      withStoreContext(entries = Seq(location)) { context =>
+      withListingContext(entries = Seq(location)) { context =>
         withListing(context) { listing =>
           listing.list(prefix).right.value.toSeq shouldBe Seq(location)
         }
@@ -37,7 +39,7 @@ trait ObjectLocationListingTestCases[StoreContext] extends FunSpec with Matchers
       val entries = Seq("1.txt", "2.txt", "3.txt").map { filename => location.join(filename) }
       val prefix = location.asPrefix
 
-      withStoreContext(entries = entries) { context =>
+      withListingContext(entries = entries) { context =>
         withListing(context) { listing =>
           listing.list(prefix).right.value.toSeq should contain theSameElementsAs entries
         }
@@ -51,7 +53,7 @@ trait ObjectLocationListingTestCases[StoreContext] extends FunSpec with Matchers
 
       val extraEntries = Seq(createObjectLocation, createObjectLocation)
 
-      withStoreContext(entries = entries ++ extraEntries) { context =>
+      withListingContext(entries = entries ++ extraEntries) { context =>
         withListing(context) { listing =>
           listing.list(prefix).right.value.toSeq should contain theSameElementsAs entries
         }
@@ -65,7 +67,7 @@ trait ObjectLocationListingTestCases[StoreContext] extends FunSpec with Matchers
         path = location.path + "/filename.txt"
       )
 
-      withStoreContext(entries = Seq(location)) { context =>
+      withListingContext(entries = Seq(location)) { context =>
         withListing(context) { listing =>
           listing.list(prefix).right.value shouldBe empty
         }
@@ -79,7 +81,7 @@ trait ObjectLocationListingTestCases[StoreContext] extends FunSpec with Matchers
         path = "directory/ " + location.path
       )
 
-      withStoreContext(entries = Seq(location)) { context =>
+      withListingContext(entries = Seq(location)) { context =>
         withListing(context) { listing =>
           listing.list(prefix).right.value shouldBe empty
         }
@@ -88,8 +90,8 @@ trait ObjectLocationListingTestCases[StoreContext] extends FunSpec with Matchers
   }
 }
 
-class MemoryObjectLocationListingTest extends ObjectLocationListingTestCases[MemoryStore[ObjectLocation, String]] with RandomThings {
-  override def withStoreContext[R](entries: Seq[ObjectLocation])(testWith: TestWith[MemoryStore[ObjectLocation, String], R]): R = {
+trait MemoryListingFixtures extends ListingFixtures[ObjectLocation, MemoryStore[ObjectLocation, String]] with RandomThings {
+  override def withListingContext[R](entries: Seq[ObjectLocation])(testWith: TestWith[MemoryStore[ObjectLocation, String], R]): R = {
     val underlying = new MemoryStore[ObjectLocation, String](
       initialEntries = entries
         .map { loc => (loc, randomAlphanumeric) }
@@ -106,3 +108,5 @@ class MemoryObjectLocationListingTest extends ObjectLocationListingTestCases[Mem
       }
     )
 }
+
+class MemoryObjectLocationListingTest extends ObjectLocationListingTestCases[MemoryStore[ObjectLocation, String]] with MemoryListingFixtures
