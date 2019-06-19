@@ -1,24 +1,9 @@
 package uk.ac.wellcome.storage.transfer
 
 import org.scalatest.{EitherValues, FunSpec, Matchers}
-import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.Identified
-import uk.ac.wellcome.storage.generators.RandomThings
 import uk.ac.wellcome.storage.store.Store
-import uk.ac.wellcome.storage.store.memory.MemoryStore
-import uk.ac.wellcome.storage.transfer.memory.MemoryTransfer
-
-trait TransferFixtures[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] {
-  def createSrcLocation(implicit context: StoreContext): Ident
-  def createDstLocation(implicit context: StoreContext): Ident
-  def createT: T
-
-  def withTransferStoreContext[R](testWith: TestWith[StoreContext, R]): R
-
-  def withTransferStore[R](initialEntries: Map[Ident, T])(testWith: TestWith[StoreImpl, R])(implicit context: StoreContext): R
-
-  def withTransfer[R](testWith: TestWith[Transfer[Ident], R])(implicit context: StoreContext): R
-}
+import uk.ac.wellcome.storage.transfer.fixtures.TransferFixtures
 
 trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] extends FunSpec with Matchers with EitherValues with TransferFixtures[Ident, T, StoreImpl, StoreContext] {
   describe("behaves as a Transfer") {
@@ -101,23 +86,4 @@ trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] ex
   }
 }
 
-trait MemoryTransferFixtures[Ident, T] extends TransferFixtures[Ident, T, MemoryStore[Ident, T], MemoryStore[Ident, T]] {
-  override def withTransferStoreContext[R](testWith: TestWith[MemoryStore[Ident, T], R]): R =
-    testWith(new MemoryStore[Ident, T](initialEntries = Map.empty))
 
-  override def withTransferStore[R](initialEntries: Map[Ident, T])(testWith: TestWith[MemoryStore[Ident, T], R])(implicit store: MemoryStore[Ident, T]): R = {
-    store.entries = store.entries ++ initialEntries
-    testWith(store)
-  }
-
-  override def withTransfer[R](testWith: TestWith[Transfer[Ident], R])(implicit underlying: MemoryStore[Ident, T]): R =
-    testWith(new MemoryTransfer[Ident, T](underlying))
-}
-
-class MemoryTransferTestCases extends TransferTestCases[String, Array[Byte], MemoryStore[String, Array[Byte]], MemoryStore[String, Array[Byte]]] with MemoryTransferFixtures[String, Array[Byte]] with RandomThings {
-  override def createSrcLocation(implicit context: MemoryStore[String, Array[Byte]]): String = randomAlphanumeric
-
-  override def createDstLocation(implicit context: MemoryStore[String, Array[Byte]]): String = randomAlphanumeric
-
-  override def createT: Array[Byte] = randomBytes()
-}
