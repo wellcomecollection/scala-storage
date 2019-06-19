@@ -4,7 +4,7 @@ import uk.ac.wellcome.storage.listing.Listing
 import uk.ac.wellcome.storage.store.memory.MemoryStoreBase
 
 trait MemoryListing[Ident, Prefix, T]
-  extends Listing[Ident, Prefix]
+  extends Listing[Prefix, Ident]
     with MemoryStoreBase[Ident, T] {
 
   override def list(prefix: Prefix): ListingResult = {

@@ -6,13 +6,13 @@ import uk.ac.wellcome.storage.generators.{ObjectLocationGenerators, RandomThings
 import uk.ac.wellcome.storage.listing.memory.MemoryListing
 import uk.ac.wellcome.storage.store.memory.MemoryStore
 
-trait ListingFixtures[Ident, Prefix, ListingContext] extends {
+trait ListingFixtures[Ident, Prefix, ListingResult, ListingContext] extends {
   def withListingContext[R](entries: Seq[Ident])(testWith: TestWith[ListingContext, R]): R
 
-  def withListing[R](context: ListingContext)(testWith: TestWith[Listing[Ident, Prefix], R]): R
+  def withListing[R](context: ListingContext)(testWith: TestWith[Listing[Prefix, ListingResult], R]): R
 }
 
-trait ListingTestCases[Ident, Prefix, ListingContext] extends FunSpec with Matchers with EitherValues with ObjectLocationGenerators with ListingFixtures[Ident, Prefix, ListingContext] {
+trait ListingTestCases[Ident, Prefix, ListingResult, ListingContext] extends FunSpec with Matchers with EitherValues with ObjectLocationGenerators with ListingFixtures[Ident, Prefix, ListingResult, ListingContext] {
   def createIdent: Ident
   def extendIdent(id: Ident, extension: String): Ident
   def createPrefix: Prefix
@@ -78,7 +78,7 @@ trait ListingTestCases[Ident, Prefix, ListingContext] extends FunSpec with Match
   }
 }
 
-trait MemoryListingFixtures[T] extends ListingFixtures[String, String, MemoryStore[String, T]] {
+trait MemoryListingFixtures[T] extends ListingFixtures[String, String, String, MemoryStore[String, T]] {
   def createT: T
 
   override def withListingContext[R](entries: Seq[String])(testWith: TestWith[MemoryStore[String, T], R]): R = {
@@ -101,7 +101,7 @@ trait MemoryListingFixtures[T] extends ListingFixtures[String, String, MemorySto
     )
 }
 
-class MemoryListingTest extends ListingTestCases[String, String, MemoryStore[String, Array[Byte]]] with MemoryListingFixtures[Array[Byte]] with RandomThings {
+class MemoryListingTest extends ListingTestCases[String, String, String, MemoryStore[String, Array[Byte]]] with MemoryListingFixtures[Array[Byte]] with RandomThings {
   def createT: Array[Byte] = randomBytes()
 
   override def createIdent: String = randomAlphanumeric
