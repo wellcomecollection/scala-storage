@@ -9,9 +9,9 @@ import uk.ac.wellcome.storage.store.fixtures.TypedStoreFixtures
 import uk.ac.wellcome.storage.streaming.{Codec, InputStreamWithLength, InputStreamWithLengthAndMetadata}
 import uk.ac.wellcome.storage.streaming.Codec._
 
-trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata], StreamStoreContext]
+trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata], TypedStoreImpl <: TypedStore[Ident, T], StreamStoreContext]
   extends StoreTestCases[Ident, TypedStoreEntry[T], Namespace, StreamStoreContext]
-  with TypedStoreFixtures[Ident, T, StreamStoreImpl, StreamStoreContext]
+  with TypedStoreFixtures[Ident, T, StreamStoreImpl, TypedStoreImpl, StreamStoreContext]
   with RandomThings {
 
   override def withStoreImpl[R](storeContext: StreamStoreContext, initialEntries: Map[Ident, TypedStoreEntry[T]])(testWith: TestWith[StoreImpl, R]): R =

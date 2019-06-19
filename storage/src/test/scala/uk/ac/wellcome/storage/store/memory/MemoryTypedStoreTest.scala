@@ -9,7 +9,7 @@ import uk.ac.wellcome.storage.store.fixtures.StringNamespaceFixtures
 import uk.ac.wellcome.storage.store.{TypedStoreEntry, TypedStoreTestCases}
 import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 
-class MemoryTypedStoreTest extends TypedStoreTestCases[String, Record, String, MemoryStreamStore[String], MemoryStore[String, MemoryStoreEntry]] with MemoryTypedStoreFixtures[String, Record] with MetadataGenerators with RecordGenerators with StringNamespaceFixtures {
+class MemoryTypedStoreTest extends TypedStoreTestCases[String, Record, String, MemoryStreamStore[String], MemoryTypedStore[String, Record], MemoryStore[String, MemoryStoreEntry]] with MemoryTypedStoreFixtures[String, Record] with MetadataGenerators with RecordGenerators with StringNamespaceFixtures {
   override def createT: TypedStoreEntry[Record] = TypedStoreEntry(createRecord, metadata = createValidMetadata)
 
   override def withBrokenStreamStore[R](testWith: TestWith[MemoryStreamStore[String], R]): R = {
