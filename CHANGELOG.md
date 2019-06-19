@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.10.0 - 2019-06-19
+
+This adds a `Transfer` trait, for coyping objects between stores, including memory and S3 implementations.
+
 ## v7.9.0 - 2019-06-19
 
 This adds an S3 implementation of TypedStore.
