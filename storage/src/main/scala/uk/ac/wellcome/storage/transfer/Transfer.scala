@@ -1,5 +1,5 @@
 package uk.ac.wellcome.storage.transfer
 
-trait Transfer[Source, Destination] {
-  def transfer(src: Source, dst: Destination): Either[TransferFailure, TransferSuccess]
+trait Transfer[Location] {
+  def transfer(src: Location, dst: Location): Either[TransferFailure, TransferSuccess]
 }

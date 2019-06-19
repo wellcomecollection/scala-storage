@@ -1,6 +1,6 @@
 package uk.ac.wellcome.storage.transfer
 
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.Identified
 import uk.ac.wellcome.storage.generators.RandomThings
@@ -17,10 +17,10 @@ trait TransferFixtures[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] {
 
   def withTransferStore[R](initialEntries: Map[Ident, T])(testWith: TestWith[StoreImpl, R])(implicit context: StoreContext): R
 
-  def withTransfer[R](testWith: TestWith[Transfer[Ident, Ident], R])(implicit context: StoreContext): R
+  def withTransfer[R](testWith: TestWith[Transfer[Ident], R])(implicit context: StoreContext): R
 }
 
-trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] extends FunSpec with Matchers with TransferFixtures[Ident, T, StoreImpl, StoreContext] {
+trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] extends FunSpec with Matchers with EitherValues with TransferFixtures[Ident, T, StoreImpl, StoreContext] {
   describe("behaves as a Transfer") {
     it("copies an object from a source to a destination") {
       withTransferStoreContext { implicit context =>
@@ -30,11 +30,25 @@ trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] ex
 
         withTransferStore(initialEntries = Map(src -> t)) { store =>
           withTransfer { transfer =>
-            transfer.transfer(src, dst)
+            transfer.transfer(src, dst).right.value shouldBe TransferPerformed(src, dst)
 
             store.get(src) shouldBe Right(Identified(src, t))
             store.get(dst) shouldBe Right(Identified(dst, t))
           }
+        }
+      }
+    }
+
+    it("errors if the source object does not exist") {
+      withTransferStoreContext { implicit context =>
+        val src = createSrcLocation
+        val dst = createDstLocation
+
+        withTransfer { transfer =>
+          val err = transfer.transfer(src, dst).left.get
+          err shouldBe a[TransferSourceFailure[_]]
+          err.asInstanceOf[TransferSourceFailure[Ident]].source shouldBe src
+          err.asInstanceOf[TransferSourceFailure[Ident]].destination shouldBe dst
         }
       }
     }
@@ -50,7 +64,7 @@ trait MemoryTransferFixtures[Ident, T] extends TransferFixtures[Ident, T, Memory
     testWith(store)
   }
 
-  override def withTransfer[R](testWith: TestWith[Transfer[Ident, Ident], R])(implicit underlying: MemoryStore[Ident, T]): R =
+  override def withTransfer[R](testWith: TestWith[Transfer[Ident], R])(implicit underlying: MemoryStore[Ident, T]): R =
     testWith(new MemoryTransfer[Ident, T](underlying))
 }
 
