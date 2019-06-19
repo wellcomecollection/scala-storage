@@ -76,7 +76,7 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
     )
 
   def getContentFromS3(location: ObjectLocation): String = {
-    val s3Object = s3Client.getObject(location.namespace, location.key)
+    val s3Object = s3Client.getObject(location.namespace, location.path)
 
     val inputStream = new InputStreamWithLength(
       s3Object.getObjectContent,
@@ -107,7 +107,7 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
   ): ObjectLocation =
     ObjectLocation(
       namespace = bucket.name,
-      key = randomAlphanumeric
+      path = randomAlphanumeric
     )
 
   def createObjectLocationWith(
@@ -116,7 +116,7 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
   ): ObjectLocation =
     ObjectLocation(
       namespace = bucket.name,
-      key = key
+      path = key
     )
 
   def putStream(location: ObjectLocation, inputStream: InputStream with HasLength with HasMetadata): PutObjectResult = {
@@ -127,7 +127,7 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
 
     val putObjectRequest = new PutObjectRequest(
       location.namespace,
-      location.key,
+      location.path,
       inputStream,
       metadata
     )

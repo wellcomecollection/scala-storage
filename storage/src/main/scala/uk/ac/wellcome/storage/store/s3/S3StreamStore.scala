@@ -23,7 +23,7 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
   type Metadata = Map[String, String]
 
   override def get(location: ObjectLocation): ReadEither = {
-    Try(s3Client.getObject(location.namespace, location.key)) match {
+    Try(s3Client.getObject(location.namespace, location.path)) match {
       case Success(retrievedObject: S3Object) =>
         Right(
           Identified(location, buildStoreEntry(retrievedObject))
@@ -127,7 +127,7 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
 
     val request = new PutObjectRequest(
       location.namespace,
-      location.key,
+      location.path,
       stream,
       metadata
     )
