@@ -12,7 +12,7 @@ import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 
 import scala.util.Random
 
-class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucket, S3StreamStore, Unit] with S3TypedStoreFixtures[Record] with MetadataGenerators with RecordGenerators with BucketNamespaceFixtures {
+class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucket, S3StreamStore, S3TypedStore[Record], Unit] with S3TypedStoreFixtures[Record] with MetadataGenerators with RecordGenerators with BucketNamespaceFixtures {
   override def withBrokenStreamStore[R](testWith: TestWith[S3StreamStore, R]): R = {
     val brokenS3StreamStore = new S3StreamStore {
       override def get(location: ObjectLocation): ReadEither = Left(
