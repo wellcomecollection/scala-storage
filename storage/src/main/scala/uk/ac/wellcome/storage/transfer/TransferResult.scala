@@ -15,7 +15,13 @@ case class TransferDestinationFailure[Location](source: Location, destination: L
 case class TransferOverwriteFailure[Location](source: Location, destination: Location, e: Throwable = new Error())
   extends TransferFailure
 
-sealed trait TransferSuccess extends TransferResult
+sealed trait TransferSuccess[Location] extends TransferResult {
+  val source: Location
+  val destination: Location
+}
+
+case class TransferNoOp[Location](source: Location, destination: Location)
+  extends TransferSuccess[Location]
 
 case class TransferPerformed[Location](source: Location, destination: Location)
-  extends TransferSuccess
+  extends TransferSuccess[Location]

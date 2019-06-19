@@ -4,10 +4,10 @@ import uk.ac.wellcome.storage.store.memory.MemoryStore
 import uk.ac.wellcome.storage.transfer._
 
 class MemoryTransfer[Ident, T](underlying: MemoryStore[Ident, T]) extends Transfer[Ident] {
-  override def transfer(src: Ident, dst: Ident): Either[TransferFailure, TransferSuccess] =
+  override def transfer(src: Ident, dst: Ident): Either[TransferFailure, TransferSuccess[Ident]] =
     (underlying.get(src), underlying.get(dst)) match {
       case (Right(srcT), Right(dstT)) if srcT.identifiedT == dstT.identifiedT =>
-        Right(TransferPerformed(src, dst))
+        Right(TransferNoOp(src, dst))
       case (Right(_), Right(_)) =>
         Left(TransferOverwriteFailure(src, dst))
       case (Right(srcT), _) => put(src, dst, srcT.identifiedT)

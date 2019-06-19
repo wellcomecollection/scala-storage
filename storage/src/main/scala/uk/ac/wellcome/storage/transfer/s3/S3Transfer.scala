@@ -4,28 +4,25 @@ import java.io.InputStream
 
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
-import grizzled.slf4j.Logging
 import org.apache.commons.io.IOUtils
 import uk.ac.wellcome.storage.ObjectLocation
-import uk.ac.wellcome.storage.s3.S3Urls
 import uk.ac.wellcome.storage.store.s3.S3StreamStore
 import uk.ac.wellcome.storage.transfer._
 
 import scala.util.{Failure, Success, Try}
 
-class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] with Logging {
+class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
   private val transferManager = TransferManagerBuilder.standard
     .withS3Client(s3Client)
     .build
 
   private val streamStore = new S3StreamStore()
 
-  override def transfer(src: ObjectLocation, dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
+  override def transfer(src: ObjectLocation, dst: ObjectLocation): Either[TransferFailure, TransferSuccess[ObjectLocation]] = {
     def compare(srcStream: InputStream,
-                dstStream: InputStream): Either[TransferFailure, Unit] = {
+                dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation], TransferNoOp[ObjectLocation]] = {
       if (IOUtils.contentEquals(srcStream, dstStream)) {
-        debug(s"No-op copy: ${S3Urls.encode(src)} == ${S3Urls.encode(dst)}")
-        Right(())
+        Right(TransferNoOp(src, dst))
       } else {
         Left(TransferOverwriteFailure(src, dst))
       }
@@ -51,7 +48,7 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] w
             srcStream.identifiedT.close()
             dstStream.identifiedT.close()
 
-            result.map { _ => TransferPerformed(src, dst) }
+            result
 
           case Left(err) =>
             dstStream.identifiedT.close()
@@ -62,14 +59,13 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] w
     }
   }
 
-  private def runTransfer(src: ObjectLocation, dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
+  private def runTransfer(src: ObjectLocation, dst: ObjectLocation): Either[TransferFailure, TransferSuccess[ObjectLocation]] = {
     val transfer = transferManager.copy(
       src.namespace,
       src.key,
       dst.namespace,
       dst.key
     )
-
 
     Try { transfer.waitForCopyResult() } match {
       case Success(_) => Right(TransferPerformed(src, dst))
