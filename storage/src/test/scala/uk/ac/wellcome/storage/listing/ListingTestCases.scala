@@ -160,7 +160,7 @@ trait S3ListingFixtures[ListingResult] extends ObjectLocationGenerators with S3F
       .map { loc => s3Client.putObject(loc.namespace, loc.path, "hello world") }
 }
 
-trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation, ObjectLocationPrefix, S3ObjectSummary, Bucket] with S3ListingFixtures[ListingResult] {
+trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation, ObjectLocationPrefix, ListingResult, Bucket] with S3ListingFixtures[ListingResult] {
   def withListing[R](bucket: Bucket, initialEntries: Seq[ObjectLocation])(testWith: TestWith[Listing[ObjectLocationPrefix, ListingResult], R]): R = {
     createInitialEntries(bucket, initialEntries)
 
@@ -210,6 +210,21 @@ trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation,
 
         val prefix = createObjectLocationWith(bucket).asPrefix
         listing.list(prefix).right.value shouldBe empty
+      }
+    }
+
+    it("fetches all the objects, not just the batch size") {
+      withLocalS3Bucket { bucket =>
+        val location = createObjectLocationWith(bucket)
+
+        val locations = (1 to 10).map { i => location.join(s"file_$i.txt") }
+        createInitialEntries(bucket, locations)
+
+        val smallBatchListing = createS3Listing(batchSize = 5)
+        assertResultCorrect(
+          smallBatchListing.list(location.asPrefix).right.value,
+          entries = locations
+        )
       }
     }
   }
