@@ -18,9 +18,12 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
 
   private val streamStore = new S3StreamStore()
 
-  override def transfer(src: ObjectLocation, dst: ObjectLocation): Either[TransferFailure, TransferSuccess[ObjectLocation]] = {
-    def compare(srcStream: InputStream,
-                dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation], TransferNoOp[ObjectLocation]] = {
+  override def transfer(src: ObjectLocation, dst: ObjectLocation)
+    : Either[TransferFailure, TransferSuccess[ObjectLocation]] = {
+    def compare(
+      srcStream: InputStream,
+      dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation],
+                                      TransferNoOp[ObjectLocation]] = {
       if (IOUtils.contentEquals(srcStream, dstStream)) {
         Right(TransferNoOp(src, dst))
       } else {
@@ -58,7 +61,8 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
     }
   }
 
-  private def runTransfer(src: ObjectLocation, dst: ObjectLocation): Either[TransferFailure, TransferSuccess[ObjectLocation]] = {
+  private def runTransfer(src: ObjectLocation, dst: ObjectLocation)
+    : Either[TransferFailure, TransferSuccess[ObjectLocation]] = {
     val transfer = transferManager.copy(
       src.namespace,
       src.key,
@@ -67,7 +71,7 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
     )
 
     Try { transfer.waitForCopyResult() } match {
-      case Success(_) => Right(TransferPerformed(src, dst))
+      case Success(_)   => Right(TransferPerformed(src, dst))
       case Failure(err) => Left(TransferDestinationFailure(src, dst, err))
     }
   }
