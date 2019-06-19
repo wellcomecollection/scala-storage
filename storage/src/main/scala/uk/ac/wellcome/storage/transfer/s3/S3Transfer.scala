@@ -28,34 +28,33 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
       }
     }
 
-    streamStore.get(dst) match {
+    (streamStore.get(src), streamStore.get(dst)) match {
       // If the destination object exists and is the same as the source
       // object, we can skip the copy operation.
-      case Right(dstStream) =>
-        streamStore.get(src) match {
-          case Right(srcStream) =>
-            val result = compare(srcStream.identifiedT, dstStream.identifiedT)
+      case (Right(srcStream), Right(dstStream)) =>
+        val result = compare(srcStream.identifiedT, dstStream.identifiedT)
 
-            // Remember to close the streams afterwards, or we might get
-            // errors like
-            //
-            //    Unable to execute HTTP request: Timeout waiting for
-            //    connection from pool
-            //
-            // See: https://github.com/wellcometrust/platform/issues/3600
-            //      https://github.com/aws/aws-sdk-java/issues/269
-            //
-            srcStream.identifiedT.close()
-            dstStream.identifiedT.close()
+        // Remember to close the streams afterwards, or we might get
+        // errors like
+        //
+        //    Unable to execute HTTP request: Timeout waiting for
+        //    connection from pool
+        //
+        // See: https://github.com/wellcometrust/platform/issues/3600
+        //      https://github.com/aws/aws-sdk-java/issues/269
+        //
+        srcStream.identifiedT.close()
+        dstStream.identifiedT.close()
 
-            result
+        result
 
-          case Left(err) =>
-            dstStream.identifiedT.close()
-            Left(TransferSourceFailure(src, dst, err.e))
-        }
+      case (Right(srcStream), _) =>
+        srcStream.identifiedT.close()
 
-      case _ => runTransfer(src, dst)
+        runTransfer(src, dst)
+
+      case (Left(err), _) =>
+        Left(TransferSourceFailure(src, dst, err.e))
     }
   }
 
