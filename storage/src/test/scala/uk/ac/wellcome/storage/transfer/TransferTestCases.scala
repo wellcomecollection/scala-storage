@@ -62,7 +62,7 @@ trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] ex
 
         withTransferStore(initialEntries = Map(src -> t, dst -> t)) { store =>
           withTransfer { transfer =>
-            transfer.transfer(src, dst).right.value shouldBe TransferPerformed(src, dst)
+            transfer.transfer(src, dst).right.value shouldBe TransferNoOp(src, dst)
 
             store.get(src) shouldBe Right(Identified(src, t))
             store.get(dst) shouldBe Right(Identified(dst, t))
@@ -78,7 +78,7 @@ trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] ex
 
         withTransferStore(initialEntries = Map(src -> t)) { store =>
           withTransfer { transfer =>
-            transfer.transfer(src, src).right.value shouldBe TransferPerformed(src, src)
+            transfer.transfer(src, src).right.value shouldBe TransferNoOp(src, src)
           }
         }
       }
