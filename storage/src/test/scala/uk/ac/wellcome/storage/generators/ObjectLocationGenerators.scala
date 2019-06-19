@@ -9,7 +9,7 @@ trait ObjectLocationGenerators extends RandomThings {
   ): ObjectLocation =
     ObjectLocation(
       namespace = namespace,
-      key = key
+      path = key
     )
 
   def createObjectLocation: ObjectLocation =

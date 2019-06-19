@@ -29,6 +29,6 @@ trait BucketNamespaceFixtures extends NamespaceFixtures[ObjectLocation, Bucket] 
   override def createId(implicit namespace: Bucket): ObjectLocation =
     ObjectLocation(
       namespace = namespace.name,
-      key = randomAlphanumeric
+      path = randomAlphanumeric
     )
 }

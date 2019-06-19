@@ -2,11 +2,11 @@ package uk.ac.wellcome.storage
 
 import java.nio.file.Paths
 
-case class ObjectLocation(namespace: String, key: String) {
-  override def toString = s"$namespace/$key"
+case class ObjectLocation(namespace: String, path: String) {
+  override def toString = s"$namespace/$path"
 
   def join(parts: String*): ObjectLocation = this.copy(
-    key = Paths.get(this.key, parts: _*).toString
+    path = Paths.get(this.path, parts: _*).toString
   )
 }
 
