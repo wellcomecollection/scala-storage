@@ -9,7 +9,7 @@ import uk.ac.wellcome.storage.fixtures.S3Fixtures
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.generators.{ObjectLocationGenerators, RandomThings}
 import uk.ac.wellcome.storage.listing.memory.MemoryListing
-import uk.ac.wellcome.storage.listing.s3.S3ObjectSummaryListing
+import uk.ac.wellcome.storage.listing.s3.{S3ObjectLocationListing, S3ObjectSummaryListing}
 import uk.ac.wellcome.storage.store.memory.MemoryStore
 import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
 
@@ -241,4 +241,12 @@ class S3ObjectSummaryListingTest extends S3ListingTestCases[S3ObjectSummary] {
   }
 
   override def createS3Listing(batchSize: Int = 1000)(implicit s3Client: AmazonS3 = s3Client): Listing[ObjectLocationPrefix, S3ObjectSummary] = new S3ObjectSummaryListing(batchSize)
+}
+
+class S3ObjectLocationListingTest extends S3ListingTestCases[ObjectLocation] {
+  override def assertResultCorrect(result: Iterable[ObjectLocation], entries: Seq[ObjectLocation]): Assertion =
+    result.toSeq should contain theSameElementsAs entries
+
+  override def createS3Listing(batchSize: Int = 1000)(implicit s3Client: AmazonS3 = s3Client): Listing[ObjectLocationPrefix, ObjectLocation] =
+    S3ObjectLocationListing(batchSize)
 }
