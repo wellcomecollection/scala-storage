@@ -8,6 +8,12 @@ case class ObjectLocation(namespace: String, path: String) {
   def join(parts: String*): ObjectLocation = this.copy(
     path = Paths.get(this.path, parts: _*).toString
   )
+
+  def asPrefix: ObjectLocationPrefix =
+    ObjectLocationPrefix(
+      namespace = namespace,
+      path = path
+    )
 }
 
 case class ObjectLocationPrefix(namespace: String, path: String)
