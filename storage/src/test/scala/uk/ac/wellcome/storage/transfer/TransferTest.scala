@@ -39,7 +39,7 @@ trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] ex
       }
     }
 
-    it("errors if the source object does not exist") {
+    it("errors if the source does not exist") {
       withTransferStoreContext { implicit context =>
         val src = createSrcLocation
         val dst = createDstLocation
@@ -49,6 +49,22 @@ trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] ex
           err shouldBe a[TransferSourceFailure[_]]
           err.asInstanceOf[TransferSourceFailure[Ident]].source shouldBe src
           err.asInstanceOf[TransferSourceFailure[Ident]].destination shouldBe dst
+        }
+      }
+    }
+
+    it("errors if the source and destination both exist and are different") {
+      withTransferStoreContext { implicit context =>
+        val src = createSrcLocation
+        val dst = createDstLocation
+
+        withTransfer { transfer =>
+          withTransferStore(initialEntries = Map(src -> createT, dst -> createT)) { store =>
+            val err = transfer.transfer(src, dst).left.get
+            err shouldBe a[TransferOverwriteFailure[_]]
+            err.asInstanceOf[TransferOverwriteFailure[Ident]].source shouldBe src
+            err.asInstanceOf[TransferOverwriteFailure[Ident]].destination shouldBe dst
+          }
         }
       }
     }
