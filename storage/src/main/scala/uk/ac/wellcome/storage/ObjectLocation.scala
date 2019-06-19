@@ -9,3 +9,5 @@ case class ObjectLocation(namespace: String, key: String) {
     key = Paths.get(this.key, parts: _*).toString
   )
 }
+
+case class ObjectLocationPrefix(namespace: String, path: String)
