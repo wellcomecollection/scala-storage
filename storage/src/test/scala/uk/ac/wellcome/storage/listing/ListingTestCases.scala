@@ -1,6 +1,6 @@
 package uk.ac.wellcome.storage.listing
 
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.generators.{ObjectLocationGenerators, RandomThings}
 import uk.ac.wellcome.storage.listing.memory.MemoryListing
@@ -18,6 +18,8 @@ trait ListingTestCases[Ident, Prefix, ListingResult, ListingContext] extends Fun
   def createPrefix: Prefix
   def createPrefixMatching(id: Ident): Prefix
 
+  def assertResultCorrect(result: Iterable[ListingResult], entries: Seq[Ident]): Assertion
+
   describe("behaves as an object location listing") {
     it("doesn't find anything in an empty store") {
       withListingContext(entries = Seq.empty) { context =>
@@ -30,10 +32,14 @@ trait ListingTestCases[Ident, Prefix, ListingResult, ListingContext] extends Fun
     it("finds a single entry where the prefix matches the ident") {
       val ident = createIdent
       val prefix = createPrefixMatching(ident)
+      val entries = Seq(ident)
 
-      withListingContext(entries = Seq(ident)) { context =>
+      withListingContext(entries = entries) { context =>
         withListing(context) { listing =>
-          listing.list(prefix).right.value.toSeq shouldBe Seq(ident)
+          assertResultCorrect(
+            result = listing.list(prefix).right.value,
+            entries = entries
+          )
         }
       }
     }
@@ -45,7 +51,10 @@ trait ListingTestCases[Ident, Prefix, ListingResult, ListingContext] extends Fun
 
       withListingContext(entries = entries) { context =>
         withListing(context) { listing =>
-          listing.list(prefix).right.value.toSeq shouldBe entries
+          assertResultCorrect(
+            result = listing.list(prefix).right.value,
+            entries = entries
+          )
         }
       }
     }
@@ -57,7 +66,10 @@ trait ListingTestCases[Ident, Prefix, ListingResult, ListingContext] extends Fun
 
       withListingContext(entries = entries) { context =>
         withListing(context) { listing =>
-          listing.list(prefix).right.value.toSeq should contain theSameElementsAs entries
+          assertResultCorrect(
+            result = listing.list(prefix).right.value,
+            entries = entries
+          )
         }
       }
     }
@@ -71,7 +83,10 @@ trait ListingTestCases[Ident, Prefix, ListingResult, ListingContext] extends Fun
 
       withListingContext(entries = entries ++ extraEntries) { context =>
         withListing(context) { listing =>
-          listing.list(prefix).right.value.toSeq should contain theSameElementsAs entries
+          assertResultCorrect(
+            result = listing.list(prefix).right.value,
+            entries = entries
+          )
         }
       }
     }
@@ -111,4 +126,7 @@ class MemoryListingTest extends ListingTestCases[String, String, String, MemoryS
   override def createPrefix: String = randomAlphanumeric
 
   override def createPrefixMatching(id: String): String = id
+
+  override def assertResultCorrect(result: Iterable[String], entries: Seq[String]): Assertion =
+    result.toSeq should contain theSameElementsAs entries
 }
