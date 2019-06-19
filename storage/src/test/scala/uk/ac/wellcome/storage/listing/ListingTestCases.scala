@@ -170,11 +170,8 @@ trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation,
 
   describe("behaves as an S3 listing") {
     it("throws an exception if asked to list from a non-existent bucket") {
-//      val bucket = createBucket
-//      val location = createObjectLocationWith(bucket)
       val prefix = createPrefix
 
-//      println(listing.list(prefix))
       val err = listing.list(prefix).left.value
       err.e.getMessage should startWith("The specified bucket does not exist")
       err.e shouldBe a[AmazonS3Exception]
