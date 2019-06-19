@@ -76,5 +76,6 @@ case class NoMaximaValueError(e: Throwable = new Error())
     extends MaximaError
     with StorageError
 
-case class ListingFailure[Location](source: Location, e: Throwable = new Error())
+case class ListingFailure[Location](source: Location,
+                                    e: Throwable = new Error())
     extends ReadError
