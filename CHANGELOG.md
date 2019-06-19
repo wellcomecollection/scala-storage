@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.9.0 - 2019-06-19
+
+This adds an S3 implementation of TypedStore.
+
 ## v7.8.0 - 2019-06-18
 
 This adds the `TypedStore` class.
