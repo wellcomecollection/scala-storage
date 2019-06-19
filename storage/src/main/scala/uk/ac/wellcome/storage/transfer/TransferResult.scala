@@ -7,3 +7,6 @@ sealed trait TransferFailure extends TransferResult {
 }
 
 sealed trait TransferSuccess extends TransferResult
+
+case class TransferPerformed[Location](source: Location, destination: Location)
+  extends TransferSuccess
