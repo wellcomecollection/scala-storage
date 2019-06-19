@@ -65,9 +65,9 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
     : Either[TransferFailure, TransferSuccess[ObjectLocation]] = {
     val transfer = transferManager.copy(
       src.namespace,
-      src.key,
+      src.path,
       dst.namespace,
-      dst.key
+      dst.path
     )
 
     Try { transfer.waitForCopyResult() } match {
