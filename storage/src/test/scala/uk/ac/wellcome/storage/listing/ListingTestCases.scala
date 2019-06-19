@@ -1,15 +1,16 @@
 package uk.ac.wellcome.storage.listing
 
-import com.amazonaws.services.s3.model.{PutObjectResult, S3ObjectSummary}
+import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.model.{AmazonS3Exception, PutObjectResult, S3ObjectSummary}
 import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.fixtures.S3Fixtures
-import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.generators.{ObjectLocationGenerators, RandomThings}
 import uk.ac.wellcome.storage.listing.memory.MemoryListing
 import uk.ac.wellcome.storage.listing.s3.S3ObjectSummaryListing
 import uk.ac.wellcome.storage.store.memory.MemoryStore
+import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
 
 trait ListingFixtures[Ident, Prefix, ListingResult, ListingContext] extends {
   def withListingContext[R](testWith: TestWith[ListingContext, R]): R
@@ -25,7 +26,7 @@ trait ListingTestCases[Ident, Prefix, ListingResult, ListingContext] extends Fun
 
   def assertResultCorrect(result: Iterable[ListingResult], entries: Seq[Ident]): Assertion
 
-  describe("behaves as an object location listing") {
+  describe("behaves as a listing") {
     it("doesn't find anything in an empty store") {
       withListingContext { implicit context =>
         val ident = createIdent
@@ -136,13 +137,13 @@ class MemoryListingTest extends ListingTestCases[String, String, String, MemoryS
     result.toSeq should contain theSameElementsAs entries
 }
 
-trait S3ListingFixtures extends ObjectLocationGenerators with S3Fixtures {
+trait S3ListingFixtures[ListingResult] extends ObjectLocationGenerators with S3Fixtures {
   def createIdent(implicit bucket: Bucket): ObjectLocation = createObjectLocationWith(namespace = bucket.name)
 
   def extendIdent(location: ObjectLocation, extension: String): ObjectLocation =
     location.join(extension)
 
-  def createPrefix: ObjectLocationPrefix = createObjectLocationPrefix
+  def createPrefix: ObjectLocationPrefix = createObjectLocationPrefixWith(namespace = createBucketName)
 
   def createPrefixMatching(location: ObjectLocation): ObjectLocationPrefix = location.asPrefix
 
@@ -151,12 +152,62 @@ trait S3ListingFixtures extends ObjectLocationGenerators with S3Fixtures {
       testWith(bucket)
     }
 
+  def createS3Listing(batchSize: Int = 1000)(implicit s3Client: AmazonS3 = s3Client): Listing[ObjectLocationPrefix, ListingResult]
+
   def createInitialEntries(bucket: Bucket, initialEntries: Seq[ObjectLocation]): Seq[PutObjectResult] =
     initialEntries
       .map { loc => s3Client.putObject(loc.namespace, loc.path, "hello world") }
 }
 
-class S3ObjectSummaryListingTest extends ListingTestCases[ObjectLocation, ObjectLocationPrefix, S3ObjectSummary, Bucket] with S3ListingFixtures {
+trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation, ObjectLocationPrefix, S3ObjectSummary, Bucket] with S3ListingFixtures[ListingResult] {
+  def withListing[R](bucket: Bucket, initialEntries: Seq[ObjectLocation])(testWith: TestWith[Listing[ObjectLocationPrefix, ListingResult], R]): R = {
+    createInitialEntries(bucket, initialEntries)
+
+    testWith(createS3Listing())
+  }
+
+  val listing: Listing[ObjectLocationPrefix, ListingResult] = createS3Listing()
+
+  describe("behaves as an S3 listing") {
+    it("throws an exception if asked to list from a non-existent bucket") {
+//      val bucket = createBucket
+//      val location = createObjectLocationWith(bucket)
+      val prefix = createPrefix
+
+//      println(listing.list(prefix))
+      val err = listing.list(prefix).left.value
+      err.e.getMessage should startWith("The specified bucket does not exist")
+      err.e shouldBe a[AmazonS3Exception]
+    }
+
+    it("ignores entries with a matching key in a different bucket") {
+      withLocalS3Bucket { bucket =>
+        val location = createObjectLocationWith(bucket)
+        s3Client.putObject(location.namespace, location.path, "hello world")
+
+        // Now create the same keys but in a different bucket
+        withLocalS3Bucket { queryBucket =>
+          val queryLocation = location.copy(namespace = queryBucket.name)
+          val prefix = queryLocation.asPrefix
+
+          listing.list(prefix).right.value shouldBe empty
+        }
+      }
+    }
+//
+//    it("handles an error from S3") {
+//      val prefix = createPrefix
+//
+//      val brokenListing = createS3Listing()(s3Client = brokenS3Client)
+//
+//      val err = brokenListing.list(prefix).left.value
+//      err.e.getMessage should startWith("The specified bucket does not exist")
+//      err.e shouldBe a[AmazonS3Exception]
+//    }
+  }
+}
+
+class S3ObjectSummaryListingTest extends S3ListingTestCases[S3ObjectSummary] {
   override def assertResultCorrect(result: Iterable[S3ObjectSummary], entries: Seq[ObjectLocation]): Assertion = {
     val actualLocations =
       result
@@ -166,11 +217,5 @@ class S3ObjectSummaryListingTest extends ListingTestCases[ObjectLocation, Object
     actualLocations should contain theSameElementsAs entries
   }
 
-  override def withListing[R](bucket: Bucket, initialEntries: Seq[ObjectLocation])(testWith: TestWith[Listing[ObjectLocationPrefix, S3ObjectSummary], R]): R = {
-    createInitialEntries(bucket, initialEntries)
-
-    testWith(
-      new S3ObjectSummaryListing()
-    )
-  }
+  override def createS3Listing(batchSize: Int = 1000)(implicit s3Client: AmazonS3 = s3Client): Listing[ObjectLocationPrefix, S3ObjectSummary] = new S3ObjectSummaryListing(batchSize)
 }

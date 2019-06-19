@@ -15,9 +15,14 @@ trait ObjectLocationGenerators extends RandomThings {
   def createObjectLocation: ObjectLocation =
     createObjectLocationWith()
 
-  def createObjectLocationPrefix: ObjectLocationPrefix =
+  def createObjectLocationPrefixWith(
+    namespace: String = randomAlphanumeric
+  ): ObjectLocationPrefix =
     ObjectLocationPrefix(
-      namespace = randomAlphanumeric,
+      namespace = namespace,
       path = randomAlphanumeric
     )
+
+  def createObjectLocationPrefix: ObjectLocationPrefix =
+    createObjectLocationPrefixWith()
 }
