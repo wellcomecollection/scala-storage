@@ -7,7 +7,7 @@ class MemoryTransfer[Ident, T](underlying: MemoryStore[Ident, T]) extends Transf
   override def transfer(src: Ident, dst: Ident): Either[TransferFailure, TransferSuccess] =
     (underlying.get(src), underlying.get(dst)) match {
       case (Right(srcT), Right(dstT)) if srcT.identifiedT == dstT.identifiedT =>
-        throw new Throwable("BOOM")
+        Right(TransferPerformed(src, dst))
       case (Right(_), Right(_)) =>
         Left(TransferOverwriteFailure(src, dst))
       case (Right(srcT), _) => put(src, dst, srcT.identifiedT)

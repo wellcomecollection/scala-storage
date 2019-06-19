@@ -68,6 +68,36 @@ trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] ex
         }
       }
     }
+
+    it("allows a no-op copy if the source and destination both exist and are the same") {
+      withTransferStoreContext { implicit context =>
+        val src = createSrcLocation
+        val dst = createDstLocation
+        val t = createT
+
+        withTransferStore(initialEntries = Map(src -> t, dst -> t)) { store =>
+          withTransfer { transfer =>
+            transfer.transfer(src, dst).right.value shouldBe TransferPerformed(src, dst)
+
+            store.get(src) shouldBe Right(Identified(src, t))
+            store.get(dst) shouldBe Right(Identified(dst, t))
+          }
+        }
+      }
+    }
+
+    it("allows a no-op copy if the source and destination are the same") {
+      withTransferStoreContext { implicit context =>
+        val src = createSrcLocation
+        val t = createT
+
+        withTransferStore(initialEntries = Map(src -> t)) { store =>
+          withTransfer { transfer =>
+            transfer.transfer(src, src).right.value shouldBe TransferPerformed(src, src)
+          }
+        }
+      }
+    }
   }
 }
 
