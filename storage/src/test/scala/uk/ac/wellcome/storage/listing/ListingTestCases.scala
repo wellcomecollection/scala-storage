@@ -1,5 +1,6 @@
 package uk.ac.wellcome.storage.listing
 
+import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{AmazonS3Exception, PutObjectResult, S3ObjectSummary}
 import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
@@ -191,16 +192,26 @@ trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation,
         }
       }
     }
-//
-//    it("handles an error from S3") {
-//      val prefix = createPrefix
-//
-//      val brokenListing = createS3Listing()(s3Client = brokenS3Client)
-//
-//      val err = brokenListing.list(prefix).left.value
-//      err.e.getMessage should startWith("The specified bucket does not exist")
-//      err.e shouldBe a[AmazonS3Exception]
-//    }
+
+    it("handles an error from S3") {
+      val prefix = createPrefix
+
+      val brokenListing = createS3Listing()(s3Client = brokenS3Client)
+
+      val err = brokenListing.list(prefix).left.value
+      err.e.getMessage should startWith("Unable to execute HTTP request")
+      err.e shouldBe a[SdkClientException]
+    }
+
+    it("ignores objects in the same bucket with a different key") {
+      withLocalS3Bucket { bucket =>
+        val location = createObjectLocationWith(bucket)
+        s3Client.putObject(location.namespace, location.path, "hello world")
+
+        val prefix = createObjectLocationWith(bucket).asPrefix
+        listing.list(prefix).right.value shouldBe empty
+      }
+    }
   }
 }
 
