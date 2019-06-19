@@ -1,6 +1,6 @@
 package uk.ac.wellcome.storage.generators
 
-import uk.ac.wellcome.storage.ObjectLocation
+import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
 
 trait ObjectLocationGenerators extends RandomThings {
   def createObjectLocationWith(
@@ -14,4 +14,10 @@ trait ObjectLocationGenerators extends RandomThings {
 
   def createObjectLocation: ObjectLocation =
     createObjectLocationWith()
+
+  def createObjectLocationPrefix: ObjectLocationPrefix =
+    ObjectLocationPrefix(
+      namespace = randomAlphanumeric,
+      path = randomAlphanumeric
+    )
 }
