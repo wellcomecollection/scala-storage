@@ -6,6 +6,9 @@ import uk.ac.wellcome.storage.store.Store
 import uk.ac.wellcome.storage.transfer.fixtures.TransferFixtures
 
 trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] extends FunSpec with Matchers with EitherValues with TransferFixtures[Ident, T, StoreImpl, StoreContext] {
+  def createSrcLocation(implicit context: StoreContext): Ident
+  def createDstLocation(implicit context: StoreContext): Ident
+
   describe("behaves as a Transfer") {
     it("copies an object from a source to a destination") {
       withTransferStoreContext { implicit context =>

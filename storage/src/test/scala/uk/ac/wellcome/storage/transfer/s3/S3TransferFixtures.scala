@@ -9,10 +9,6 @@ import uk.ac.wellcome.storage.store.s3.S3TypedStore
 import uk.ac.wellcome.storage.transfer.fixtures.TransferFixtures
 
 trait S3TransferFixtures[T] extends TransferFixtures[ObjectLocation, TypedStoreEntry[T], S3TypedStore[T], Bucket] with S3Fixtures {
-  override def createSrcLocation(implicit bucket: Bucket): ObjectLocation = createObjectLocationWith(bucket.name)
-
-  override def createDstLocation(implicit bucket: Bucket): ObjectLocation = createObjectLocationWith(bucket.name)
-
   override def withTransferStoreContext[R](testWith: TestWith[Bucket, R]): R =
     withLocalS3Bucket { bucket =>
       testWith(bucket)

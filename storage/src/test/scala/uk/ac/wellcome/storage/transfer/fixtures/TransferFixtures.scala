@@ -5,8 +5,6 @@ import uk.ac.wellcome.storage.store.Store
 import uk.ac.wellcome.storage.transfer.Transfer
 
 trait TransferFixtures[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] {
-  def createSrcLocation(implicit context: StoreContext): Ident
-  def createDstLocation(implicit context: StoreContext): Ident
   def createT: T
 
   def withTransferStoreContext[R](testWith: TestWith[StoreContext, R]): R
