@@ -2,7 +2,7 @@ package uk.ac.wellcome.storage.transfer
 
 import uk.ac.wellcome.storage.listing.Listing
 
-trait PrefixTransfer[Prefix, Location] extends Transfer[Prefix] {
+trait PrefixTransfer[Prefix, Location] {
   implicit val transfer: Transfer[Location]
   implicit val listing: Listing[Prefix, Location]
 
@@ -41,7 +41,7 @@ trait PrefixTransfer[Prefix, Location] extends Transfer[Prefix] {
     )
   }
 
-  override def transfer(
+  def transfer(
     srcPrefix: Prefix,
     dstPrefix: Prefix
   ): Either[TransferFailure, TransferSuccess] = {
