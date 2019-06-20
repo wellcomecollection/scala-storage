@@ -7,7 +7,7 @@ class MemoryTransfer[Ident, T](underlying: MemoryStore[Ident, T])
     extends Transfer[Ident] {
   override def transfer(
     src: Ident,
-    dst: Ident): Either[TransferFailure, TransferSuccess[Ident]] =
+    dst: Ident): Either[TransferFailure, TransferSuccess] =
     (underlying.get(src), underlying.get(dst)) match {
       case (Right(srcT), Right(dstT)) if srcT.identifiedT == dstT.identifiedT =>
         Right(TransferNoOp(src, dst))
