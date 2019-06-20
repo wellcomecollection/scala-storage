@@ -5,9 +5,9 @@ import uk.ac.wellcome.storage.Identified
 import uk.ac.wellcome.storage.store.Store
 import uk.ac.wellcome.storage.transfer.fixtures.TransferFixtures
 
-trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] extends FunSpec with Matchers with EitherValues with TransferFixtures[Ident, T, StoreImpl, StoreContext] {
-  def createSrcLocation(implicit context: StoreContext): Ident
-  def createDstLocation(implicit context: StoreContext): Ident
+trait TransferTestCases[Location, T, StoreImpl <: Store[Location, T], TransferImpl <: Transfer[Location], StoreContext] extends FunSpec with Matchers with EitherValues with TransferFixtures[Location, T, StoreImpl, TransferImpl, StoreContext] {
+  def createSrcLocation(implicit context: StoreContext): Location
+  def createDstLocation(implicit context: StoreContext): Location
 
   describe("behaves as a Transfer") {
     it("copies an object from a source to a destination") {
@@ -35,8 +35,8 @@ trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] ex
         withTransfer { transfer =>
           val err = transfer.transfer(src, dst).left.get
           err shouldBe a[TransferSourceFailure[_]]
-          err.asInstanceOf[TransferSourceFailure[Ident]].source shouldBe src
-          err.asInstanceOf[TransferSourceFailure[Ident]].destination shouldBe dst
+          err.asInstanceOf[TransferSourceFailure[Location]].source shouldBe src
+          err.asInstanceOf[TransferSourceFailure[Location]].destination shouldBe dst
         }
       }
     }
@@ -50,8 +50,8 @@ trait TransferTestCases[Ident, T, StoreImpl <: Store[Ident, T], StoreContext] ex
           withTransferStore(initialEntries = Map(src -> createT, dst -> createT)) { store =>
             val err = transfer.transfer(src, dst).left.get
             err shouldBe a[TransferOverwriteFailure[_]]
-            err.asInstanceOf[TransferOverwriteFailure[Ident]].source shouldBe src
-            err.asInstanceOf[TransferOverwriteFailure[Ident]].destination shouldBe dst
+            err.asInstanceOf[TransferOverwriteFailure[Location]].source shouldBe src
+            err.asInstanceOf[TransferOverwriteFailure[Location]].destination shouldBe dst
           }
         }
       }

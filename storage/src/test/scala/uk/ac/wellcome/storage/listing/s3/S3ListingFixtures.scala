@@ -8,8 +8,9 @@ import uk.ac.wellcome.storage.fixtures.S3Fixtures
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
 import uk.ac.wellcome.storage.listing.Listing
+import uk.ac.wellcome.storage.listing.fixtures.ListingFixtures
 
-trait S3ListingFixtures[ListingResult] extends ObjectLocationGenerators with S3Fixtures {
+trait S3ListingFixtures[ListingResult] extends ObjectLocationGenerators with S3Fixtures with ListingFixtures[ObjectLocation, ObjectLocationPrefix, ListingResult, S3Listing[ListingResult], Bucket] {
   def createIdent(implicit bucket: Bucket): ObjectLocation = createObjectLocationWith(namespace = bucket.name)
 
   def extendIdent(location: ObjectLocation, extension: String): ObjectLocation =

@@ -14,6 +14,6 @@ trait MemoryTransferFixtures[Ident, T] extends TransferFixtures[Ident, T, Memory
     testWith(store)
   }
 
-  override def withTransfer[R](testWith: TestWith[Transfer[Ident], R])(implicit underlying: MemoryStore[Ident, T]): R =
+  override def withTransfer[R](testWith: TestWith[MemoryTransfer[Ident, T], R])(implicit underlying: MemoryStore[Ident, T]): R =
     testWith(new MemoryTransfer[Ident, T](underlying))
 }

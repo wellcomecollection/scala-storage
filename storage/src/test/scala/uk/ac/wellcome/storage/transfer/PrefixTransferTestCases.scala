@@ -10,8 +10,8 @@ import uk.ac.wellcome.storage.store.memory.MemoryStore
 import uk.ac.wellcome.storage.transfer.fixtures.TransferFixtures
 import uk.ac.wellcome.storage.transfer.memory.{MemoryPrefixTransfer, MemoryTransfer, MemoryTransferFixtures}
 
-trait PrefixTransferFixtures[Location, Prefix, T, StoreImpl <: Store[Location, T], StoreContext]
-  extends TransferFixtures[Location, T, StoreImpl, StoreContext]
+trait PrefixTransferFixtures[Location, Prefix, T, StoreImpl <: Store[Location, T], TransferImpl <: Transfer[Location], StoreContext]
+  extends TransferFixtures[Location, T, StoreImpl, TransferImpl, StoreContext]
     with ListingFixtures[Location, Prefix, Location, StoreContext] {
   def withPrefixTransferContext[R](testWith: TestWith[StoreContext, R]): R =
     withTransferStoreContext { context =>
@@ -23,21 +23,21 @@ trait PrefixTransferFixtures[Location, Prefix, T, StoreImpl <: Store[Location, T
       testWith(context)
     }
 
-  def withPrefixTransfer[R](initialEntries: Map[Location, T])(testWith: PrefixTransfer[Prefix, Location])(implicit context: StoreContext): R
+  def withPrefixTransfer[R](initialEntries: Map[Location, T])(testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit context: StoreContext): R
 }
 
-trait PrefixTransferTestCases[Ident, Prefix, T, StoreImpl <: Store[Ident, T], StoreContext] extends FunSpec with Matchers with PrefixTransferFixtures[Ident, Prefix, T, StoreImpl, StoreContext] {
+trait PrefixTransferTestCases[Location, Prefix, T, StoreImpl <: Store[Location, T], TransferImpl <: Transfer[Location], StoreContext] extends FunSpec with Matchers with PrefixTransferFixtures[Location, Prefix, T, StoreImpl, TransferImpl, StoreContext] {
   it("does nothing if the prefix is empty") {
     true shouldBe false
   }
 }
 
 class MemoryPrefixTransferTest extends
-  PrefixTransferTestCases[String, String, Array[Byte], MemoryStore[String, Array[Byte]], MemoryStore[String, Array[Byte]]] with MemoryListingFixtures[Array[Byte]]
+  PrefixTransferTestCases[String, String, Array[Byte], MemoryStore[String, Array[Byte]], MemoryTransfer[String, Array[Byte]], MemoryStore[String, Array[Byte]]] with MemoryListingFixtures[Array[Byte]]
 with MemoryTransferFixtures[String, Array[Byte]] with RandomThings {
   override def createT: Array[Byte] = randomBytes()
 
-  override def withPrefixTransfer[R](initialEntries: Map[String, Array[Byte]])(testWith: PrefixTransfer[String, String])(implicit context: MemoryStore[String, Array[Byte]]): R =
+  override def withPrefixTransfer[R](initialEntries: Map[String, Array[Byte]])(testWith: TestWith[PrefixTransfer[String, String], R])(implicit context: MemoryStore[String, Array[Byte]]): R =
     withTransfer { memoryTransfer =>
       withListing(context, initialEntries = Seq.empty) { memoryListing =>
         val prefixTransfer = new MemoryPrefixTransfer[String, String, Array[Byte]] {
@@ -45,8 +45,10 @@ with MemoryTransferFixtures[String, Array[Byte]] with RandomThings {
           override implicit val listing: MemoryListing[String, String, Array[Byte]] = memoryListing
 
           override protected def buildDstLocation(srcPrefix: String, dstPrefix: String, srcLocation: String): String =
-
+            srcLocation.replaceAll("^" + srcPrefix, dstPrefix)
         }
+
+        testWith(prefixTransfer)
       }
     }
 }

@@ -8,7 +8,7 @@ import uk.ac.wellcome.storage.store.TypedStoreEntry
 import uk.ac.wellcome.storage.store.s3.{S3TypedStore, S3TypedStoreFixtures}
 import uk.ac.wellcome.storage.transfer.{Transfer, TransferTestCases}
 
-class S3TransferTest extends TransferTestCases[ObjectLocation, TypedStoreEntry[Record], S3TypedStore[Record], Bucket] with S3TransferFixtures[Record] with RecordGenerators {
+class S3TransferTest extends TransferTestCases[ObjectLocation, TypedStoreEntry[Record], S3TypedStore[Record], S3Transfer, Bucket] with S3TransferFixtures[Record] with RecordGenerators {
   override def createSrcLocation(implicit bucket: Bucket): ObjectLocation = createObjectLocationWith(bucket.name)
 
   override def createDstLocation(implicit bucket: Bucket): ObjectLocation = createObjectLocationWith(bucket.name)

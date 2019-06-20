@@ -2,10 +2,9 @@ package uk.ac.wellcome.storage.listing.s3
 
 import com.amazonaws.services.s3.AmazonS3
 import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
-import uk.ac.wellcome.storage.listing.Listing
 
 class S3ObjectLocationListing(implicit summaryListing: S3ObjectSummaryListing)
-    extends Listing[ObjectLocationPrefix, ObjectLocation] {
+    extends S3Listing[ObjectLocation] {
   override def list(prefix: ObjectLocationPrefix): ListingResult =
     summaryListing
       .list(prefix)

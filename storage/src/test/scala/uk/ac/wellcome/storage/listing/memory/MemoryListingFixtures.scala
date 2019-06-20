@@ -5,7 +5,7 @@ import uk.ac.wellcome.storage.listing.Listing
 import uk.ac.wellcome.storage.listing.fixtures.ListingFixtures
 import uk.ac.wellcome.storage.store.memory.MemoryStore
 
-trait MemoryListingFixtures[T] extends ListingFixtures[String, String, String, MemoryStore[String, T]] {
+trait MemoryListingFixtures[T] extends ListingFixtures[String, String, String, MemoryListing[String, String, T], MemoryStore[String, T]] {
   def createT: T
 
   override def withListingContext[R](testWith: TestWith[MemoryStore[String, T], R]): R =
