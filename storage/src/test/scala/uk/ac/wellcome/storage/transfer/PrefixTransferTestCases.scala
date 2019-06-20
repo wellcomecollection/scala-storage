@@ -30,13 +30,54 @@ trait PrefixTransferFixtures[Location, Prefix, T, StoreImpl <: Store[Location, T
 trait PrefixTransferTestCases[Location, Prefix, T, StoreImpl <: Store[Location, T], TransferImpl <: Transfer[Location], ListingImpl <: Listing[Prefix, Location], StoreContext] extends FunSpec with Matchers with PrefixTransferFixtures[Location, Prefix, T, StoreImpl, ListingImpl, TransferImpl, StoreContext] with EitherValues {
   def createPrefix(implicit context: StoreContext): Prefix
 
+  def createLocationFrom(prefix: Prefix, suffix: String): Location
+
   it("does nothing if the prefix is empty") {
-    withPrefixTransfer(initialEntries = Map.empty) { prefixTransfer =>
-      prefixTransfer.transfer(
-        srcPrefix = createPrefix,
-        dstPrefix = createPrefix
-      ).right.value shouldBe PrefixTransferSuccess(Seq.empty)
+    withPrefixTransferContext { implicit context =>
+      withPrefixTransfer(initialEntries = Map.empty) { prefixTransfer =>
+        prefixTransfer.transfer(
+          srcPrefix = createPrefix,
+          dstPrefix = createPrefix
+        ).right.value shouldBe PrefixTransferSuccess(Seq.empty)
+      }
     }
+  }
+
+  it("copies a single item") {
+    withPrefixTransferContext { implicit context =>
+      val srcPrefix = createPrefix
+      val dstPrefix = createPrefix
+
+      val srcLocation = createLocationFrom(srcPrefix, suffix = "1.txt")
+      val dstLocation = createLocationFrom(dstPrefix, suffix = "1.txt")
+
+      val t = createT
+
+      withPrefixTransfer(initialEntries = Map(srcLocation -> t)) { prefixTransfer =>
+        prefixTransfer.transfer(
+          srcPrefix = createPrefix,
+          dstPrefix = createPrefix
+        ).right.value shouldBe PrefixTransferSuccess(
+          Seq(TransferPerformed(srcLocation, dstLocation))
+        )
+      }
+    }
+  }
+
+  it("copies multiple items") {
+    true shouldBe false
+  }
+
+  it("fails if a single item fails to copy") {
+    true shouldBe false
+  }
+
+  it("fails if the underlying transfer is broken") {
+    true shouldBe false
+  }
+
+  it("fails if the underlying listing is broken") {
+    true shouldBe false
   }
 }
 
@@ -46,6 +87,8 @@ with MemoryTransferFixtures[String, Array[Byte]] with RandomThings {
   override def createT: Array[Byte] = randomBytes()
 
   def createPrefix(implicit context: MemoryStore[String, Array[Byte]]): String = randomAlphanumeric
+
+  override def createLocationFrom(prefix: String, suffix: String): String = prefix + "/" + suffix
 
   override def withPrefixTransfer[R](initialEntries: Map[String, Array[Byte]])(testWith: TestWith[PrefixTransfer[String, String], R]): R = {
     implicit val store: MemoryStore[String, Array[Byte]] = new MemoryStore[String, Array[Byte]](initialEntries)
