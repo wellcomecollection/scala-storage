@@ -3,18 +3,18 @@ package uk.ac.wellcome.storage.listing.s3
 import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
-import uk.ac.wellcome.storage.listing.{Listing, ListingTestCases}
+import uk.ac.wellcome.storage.listing.ListingTestCases
+import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
 
-trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation, ObjectLocationPrefix, ListingResult, Bucket] with S3ListingFixtures[ListingResult] {
-  def withListing[R](bucket: Bucket, initialEntries: Seq[ObjectLocation])(testWith: TestWith[Listing[ObjectLocationPrefix, ListingResult], R]): R = {
+trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation, ObjectLocationPrefix, ListingResult, S3Listing[ListingResult], Bucket] with S3ListingFixtures[ListingResult] {
+  def withListing[R](bucket: Bucket, initialEntries: Seq[ObjectLocation])(testWith: TestWith[S3Listing[ListingResult], R]): R = {
     createInitialEntries(bucket, initialEntries)
 
     testWith(createS3Listing())
   }
 
-  val listing: Listing[ObjectLocationPrefix, ListingResult] = createS3Listing()
+  val listing: S3Listing[ListingResult] = createS3Listing()
 
   describe("behaves as an S3 listing") {
     it("throws an exception if asked to list from a non-existent bucket") {
