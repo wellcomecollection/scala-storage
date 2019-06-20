@@ -5,7 +5,7 @@ import uk.ac.wellcome.storage.store.memory.MemoryStore
 import uk.ac.wellcome.storage.transfer.Transfer
 import uk.ac.wellcome.storage.transfer.fixtures.TransferFixtures
 
-trait MemoryTransferFixtures[Ident, T] extends TransferFixtures[Ident, T, MemoryStore[Ident, T], MemoryStore[Ident, T]] {
+trait MemoryTransferFixtures[Ident, T] extends TransferFixtures[Ident, T, MemoryStore[Ident, T], MemoryTransfer[Ident, T], MemoryStore[Ident, T]] {
   override def withTransferStoreContext[R](testWith: TestWith[MemoryStore[Ident, T], R]): R =
     testWith(new MemoryStore[Ident, T](initialEntries = Map.empty))
 
