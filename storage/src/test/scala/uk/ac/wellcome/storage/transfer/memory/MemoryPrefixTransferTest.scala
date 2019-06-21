@@ -27,8 +27,8 @@ class MemoryPrefixTransferTest extends
     testWith(new InnerMemoryPrefixTransfer(initialEntries))
 
   override def withPrefixTransfer[R](
-                                      testWith: TestWith[PrefixTransfer[String, String], R])(
-                                      implicit store: MemoryStore[String, Array[Byte]] with MemoryPrefixTransfer[String, String, Array[Byte]]): R =
+    testWith: TestWith[PrefixTransfer[String, String], R])(
+    implicit store: MemoryStore[String, Array[Byte]] with MemoryPrefixTransfer[String, String, Array[Byte]]): R =
     testWith(store)
 
   override def withExtraListingTransfer[R](testWith: TestWith[PrefixTransfer[String, String], R])(implicit store: MemoryStore[String, Array[Byte]] with MemoryPrefixTransfer[String, String, Array[Byte]]): R =
