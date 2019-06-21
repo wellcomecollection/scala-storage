@@ -6,7 +6,7 @@ import uk.ac.wellcome.storage.store.Store
 import uk.ac.wellcome.storage.store.fixtures.NamespaceFixtures
 import uk.ac.wellcome.storage.transfer.fixtures.TransferFixtures
 
-trait TransferTestCases[Location, T, Namespace, StoreImpl <: Store[Location, T], TransferImpl <: Transfer[Location]] extends FunSpec with Matchers with EitherValues with TransferFixtures[Location, T, StoreImpl, TransferImpl] with NamespaceFixtures[Location, Namespace] {
+trait TransferTestCases[Location, T, Namespace, StoreImpl <: Store[Location, T]] extends FunSpec with Matchers with EitherValues with TransferFixtures[Location, T, StoreImpl] with NamespaceFixtures[Location, Namespace] {
   def createSrcLocation(implicit namespace: Namespace): Location
   def createDstLocation(implicit namespace: Namespace): Location
 
