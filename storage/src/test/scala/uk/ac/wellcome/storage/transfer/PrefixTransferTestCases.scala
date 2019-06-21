@@ -2,7 +2,7 @@ package uk.ac.wellcome.storage.transfer
 
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.Identified
+import uk.ac.wellcome.storage.{Identified, ListingFailure}
 import uk.ac.wellcome.storage.listing.memory.MemoryListingFixtures
 import uk.ac.wellcome.storage.store.Store
 import uk.ac.wellcome.storage.store.fixtures.{NamespaceFixtures, StringNamespaceFixtures}
@@ -15,6 +15,8 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
   def withPrefixTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
 
   def withExtraListingTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
+  def withBrokenListingTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
+  def withBrokenTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
 
   def createPrefix(implicit namespace: Namespace): Prefix
 
@@ -157,11 +159,38 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
   }
 
   it("fails if the underlying transfer is broken") {
-    true shouldBe false
+    withNamespace { implicit namespace =>
+      val srcPrefix = createPrefix
+      val srcLocation = createLocationFrom(srcPrefix, suffix = "1.txt")
+
+      val t = createT
+
+      withPrefixTransferStore(initialEntries = Map(srcLocation -> t)) { implicit store =>
+        withBrokenTransfer { prefixTransfer =>
+          val result = prefixTransfer.transferPrefix(
+            srcPrefix = srcPrefix,
+            dstPrefix = createPrefix
+          ).left.value
+
+          result shouldBe a[PrefixTransferFailure]
+        }
+      }
+    }
   }
 
   it("fails if the underlying listing is broken") {
-    true shouldBe false
+    withNamespace { implicit namespace =>
+      withPrefixTransferStore(initialEntries = Map.empty) { implicit store =>
+        withBrokenListingTransfer { prefixTransfer =>
+          val result = prefixTransfer.transferPrefix(
+            srcPrefix = createPrefix,
+            dstPrefix = createPrefix
+          ).left.value
+
+          result shouldBe a[PrefixTransferListingFailure[_]]
+        }
+      }
+    }
   }
 }
 
@@ -174,15 +203,15 @@ with MemoryTransferFixtures[String, Array[Byte]] with StringNamespaceFixtures {
 
   override def createT: Array[Byte] = randomBytes()
 
-  override def withPrefixTransferStore[R](initialEntries: Map[String, Array[Byte]])(testWith: TestWith[MemoryStore[String, Array[Byte]] with MemoryPrefixTransfer[String, String, Array[Byte]], R]): R =
-    testWith(
-      new MemoryStore[String, Array[Byte]](initialEntries) with MemoryPrefixTransfer[String, String, Array[Byte]] {
-        override protected def startsWith(id: String, prefix: String): Boolean = id.startsWith(prefix)
+  class InnerMemoryPrefixTransfer(initialEntries: Map[String, Array[Byte]]) extends MemoryStore[String, Array[Byte]](initialEntries) with MemoryPrefixTransfer[String, String, Array[Byte]] {
+    override protected def startsWith(id: String, prefix: String): Boolean = id.startsWith(prefix)
 
-        override protected def buildDstLocation(srcPrefix: String, dstPrefix: String, srcLocation: String): String =
-          srcLocation.replaceAll("^" + srcPrefix, dstPrefix)
-      }
-    )
+    override protected def buildDstLocation(srcPrefix: String, dstPrefix: String, srcLocation: String): String =
+      srcLocation.replaceAll("^" + srcPrefix, dstPrefix)
+  }
+
+  override def withPrefixTransferStore[R](initialEntries: Map[String, Array[Byte]])(testWith: TestWith[MemoryStore[String, Array[Byte]] with MemoryPrefixTransfer[String, String, Array[Byte]], R]): R =
+    testWith(new InnerMemoryPrefixTransfer(initialEntries))
 
   override def withPrefixTransfer[R](
     testWith: TestWith[PrefixTransfer[String, String], R])(
@@ -191,12 +220,7 @@ with MemoryTransferFixtures[String, Array[Byte]] with StringNamespaceFixtures {
 
   override def withExtraListingTransfer[R](testWith: TestWith[PrefixTransfer[String, String], R])(implicit store: MemoryStore[String, Array[Byte]] with MemoryPrefixTransfer[String, String, Array[Byte]]): R =
     testWith(
-      new MemoryStore[String, Array[Byte]](store.entries) with MemoryPrefixTransfer[String, String, Array[Byte]] {
-        override protected def startsWith(id: String, prefix: String): Boolean = id.startsWith(prefix)
-
-        override protected def buildDstLocation(srcPrefix: String, dstPrefix: String, srcLocation: String): String =
-          srcLocation.replaceAll("^" + srcPrefix, dstPrefix)
-
+      new InnerMemoryPrefixTransfer(store.entries) {
         override def list(prefix: String): ListingResult = {
           val matchingIdentifiers = entries
             .filter { case (ident, _) => startsWith(ident, prefix) }
@@ -204,6 +228,22 @@ with MemoryTransferFixtures[String, Array[Byte]] with StringNamespaceFixtures {
 
           Right(matchingIdentifiers ++ Seq(randomAlphanumeric))
         }
+      }
+    )
+
+  override def withBrokenListingTransfer[R](testWith: TestWith[PrefixTransfer[String, String], R])(implicit store: MemoryStore[String, Array[Byte]] with MemoryPrefixTransfer[String, String, Array[Byte]]): R =
+    testWith(
+      new InnerMemoryPrefixTransfer(store.entries) {
+        override def list(prefix: String): ListingResult =
+          Left(ListingFailure(prefix))
+      }
+    )
+
+  override def withBrokenTransfer[R](testWith: TestWith[PrefixTransfer[String, String], R])(implicit store: MemoryStore[String, Array[Byte]] with MemoryPrefixTransfer[String, String, Array[Byte]]): R =
+    testWith(
+      new InnerMemoryPrefixTransfer(store.entries) {
+        override def transfer(src: String, dst: String): Either[TransferFailure, TransferSuccess] =
+          Left(TransferSourceFailure(src, dst))
       }
     )
 }
