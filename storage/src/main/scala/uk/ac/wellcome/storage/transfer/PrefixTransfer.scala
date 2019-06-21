@@ -41,7 +41,7 @@ trait PrefixTransfer[Prefix, Location] {
     )
   }
 
-  def transfer(
+  def transferPrefix(
     srcPrefix: Prefix,
     dstPrefix: Prefix
   ): Either[TransferFailure, TransferSuccess] = {

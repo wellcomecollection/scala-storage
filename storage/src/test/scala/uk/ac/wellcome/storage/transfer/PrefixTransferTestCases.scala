@@ -25,7 +25,7 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
     withNamespace { implicit namespace =>
       withPrefixTransferStore(initialEntries = Map.empty) { implicit store =>
         withPrefixTransfer { prefixTransfer =>
-          prefixTransfer.transfer(
+          prefixTransfer.transferPrefix(
             srcPrefix = createPrefix,
             dstPrefix = createPrefix
           ).right.value shouldBe PrefixTransferSuccess(Seq.empty)
@@ -46,7 +46,7 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
 
       withPrefixTransferStore(initialEntries = Map(srcLocation -> t)) { implicit store =>
         withPrefixTransfer { prefixTransfer =>
-          prefixTransfer.transfer(
+          prefixTransfer.transferPrefix(
             srcPrefix = createPrefix,
             dstPrefix = createPrefix
           ).right.value shouldBe PrefixTransferSuccess(
