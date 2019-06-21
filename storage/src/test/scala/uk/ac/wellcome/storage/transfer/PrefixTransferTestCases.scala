@@ -62,6 +62,39 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
   }
 
   it("copies multiple items") {
+    withNamespace { implicit namespace =>
+      val srcPrefix = createPrefix
+      val dstPrefix = createPrefix
+
+      val srcLocations = (1 to 5).map { i => createLocationFrom(srcPrefix, suffix = s"$i.txt") }
+      val dstLocations = (1 to 5).map { i => createLocationFrom(dstPrefix, suffix = s"$i.txt") }
+
+      val valuesT = (1 to 5).map { _ => createT }
+
+      val expectedResults: Seq[TransferPerformed[Location]] = srcLocations.zip(dstLocations).map { case (src, dst) =>
+        TransferPerformed(src, dst)
+      }
+
+      withPrefixTransferStore(initialEntries = srcLocations.zip(valuesT).toMap) { implicit store =>
+        withPrefixTransfer { prefixTransfer =>
+          val result = prefixTransfer.transferPrefix(
+            srcPrefix = srcPrefix,
+            dstPrefix = dstPrefix
+          ).right.value
+
+          result shouldBe a[PrefixTransferSuccess]
+          result.asInstanceOf[PrefixTransferSuccess].successes should contain theSameElementsAs expectedResults
+
+          expectedResults.zip(valuesT).map { case (result, t) =>
+            store.get(result.source).right.value shouldBe Identified(result.source, t)
+            store.get(result.destination).right.value shouldBe Identified(result.destination, t)
+          }
+        }
+      }
+    }
+  }
+
+  it("does not copy items from outside the prefix") {
     true shouldBe false
   }
 
