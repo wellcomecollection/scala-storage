@@ -2,6 +2,7 @@ package uk.ac.wellcome.storage.transfer
 
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.Identified
 import uk.ac.wellcome.storage.listing.memory.MemoryListingFixtures
 import uk.ac.wellcome.storage.store.Store
 import uk.ac.wellcome.storage.store.fixtures.{NamespaceFixtures, StringNamespaceFixtures}
@@ -47,14 +48,14 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
       withPrefixTransferStore(initialEntries = Map(srcLocation -> t)) { implicit store =>
         withPrefixTransfer { prefixTransfer =>
           prefixTransfer.transferPrefix(
-            srcPrefix = createPrefix,
-            dstPrefix = createPrefix
+            srcPrefix = srcPrefix,
+            dstPrefix = dstPrefix
           ).right.value shouldBe PrefixTransferSuccess(
             Seq(TransferPerformed(srcLocation, dstLocation))
           )
 
-          store.get(srcLocation).right.value shouldBe t
-          store.get(dstLocation).right.value shouldBe t
+          store.get(srcLocation).right.value shouldBe Identified(srcLocation, t)
+          store.get(dstLocation).right.value shouldBe Identified(dstLocation, t)
         }
       }
     }
