@@ -9,13 +9,13 @@ import uk.ac.wellcome.storage.store.fixtures.{NamespaceFixtures, StringNamespace
 import uk.ac.wellcome.storage.store.memory.MemoryStore
 import uk.ac.wellcome.storage.transfer.memory.{MemoryPrefixTransfer, MemoryTransferFixtures}
 
-trait PrefixTransferFixtures[Location, Prefix, T, StoreImpl <: Store[Location, T]] {
+trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store[Location, T]] extends FunSpec with Matchers with EitherValues with NamespaceFixtures[Location, Namespace] {
   def withPrefixTransferStore[R](initialEntries: Map[Location, T])(testWith: TestWith[StoreImpl, R]): R
 
   def withPrefixTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
-}
 
-trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store[Location, T]] extends FunSpec with Matchers with PrefixTransferFixtures[Location, Prefix, T, StoreImpl] with EitherValues with NamespaceFixtures[Location, Namespace] {
+  def withExtraListingTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
+
   def createPrefix(implicit namespace: Namespace): Prefix
 
   def createLocationFrom(prefix: Prefix, suffix: String): Location
@@ -132,8 +132,28 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
     }
   }
 
-  it("fails if a single item fails to copy") {
-    true shouldBe false
+  it("fails if the listing includes an item that doesn't exist") {
+    withNamespace { implicit namespace =>
+      val srcPrefix = createPrefix
+
+      val srcLocations = (1 to 5).map { i => createLocationFrom(srcPrefix, suffix = s"$i.txt") }
+
+      val valuesT = (1 to 5).map { _ => createT }
+
+      withPrefixTransferStore(initialEntries = srcLocations.zip(valuesT).toMap) { implicit store =>
+        withExtraListingTransfer { prefixTransfer =>
+          val result = prefixTransfer.transferPrefix(
+            srcPrefix = srcPrefix,
+            dstPrefix = createPrefix
+          ).left.value
+
+          result shouldBe a[PrefixTransferFailure]
+          val failure = result.asInstanceOf[PrefixTransferFailure]
+          failure.successes.size shouldBe 5
+          failure.failures.size shouldBe 1
+        }
+      }
+    }
   }
 
   it("fails if the underlying transfer is broken") {
@@ -168,4 +188,22 @@ with MemoryTransferFixtures[String, Array[Byte]] with StringNamespaceFixtures {
     testWith: TestWith[PrefixTransfer[String, String], R])(
     implicit store: MemoryStore[String, Array[Byte]] with MemoryPrefixTransfer[String, String, Array[Byte]]): R =
     testWith(store)
+
+  override def withExtraListingTransfer[R](testWith: TestWith[PrefixTransfer[String, String], R])(implicit store: MemoryStore[String, Array[Byte]] with MemoryPrefixTransfer[String, String, Array[Byte]]): R =
+    testWith(
+      new MemoryStore[String, Array[Byte]](store.entries) with MemoryPrefixTransfer[String, String, Array[Byte]] {
+        override protected def startsWith(id: String, prefix: String): Boolean = id.startsWith(prefix)
+
+        override protected def buildDstLocation(srcPrefix: String, dstPrefix: String, srcLocation: String): String =
+          srcLocation.replaceAll("^" + srcPrefix, dstPrefix)
+
+        override def list(prefix: String): ListingResult = {
+          val matchingIdentifiers = entries
+            .filter { case (ident, _) => startsWith(ident, prefix) }
+            .map { case (ident, _) => ident }
+
+          Right(matchingIdentifiers ++ Seq(randomAlphanumeric))
+        }
+      }
+    )
 }
