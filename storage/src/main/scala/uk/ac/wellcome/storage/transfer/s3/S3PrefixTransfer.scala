@@ -10,7 +10,10 @@ class S3PrefixTransfer()(
   val transfer: S3Transfer,
   val listing: S3ObjectLocationListing
 ) extends PrefixTransfer[ObjectLocationPrefix, ObjectLocation] {
-  override protected def buildDstLocation(srcPrefix: ObjectLocationPrefix, dstPrefix: ObjectLocationPrefix, srcLocation: ObjectLocation): ObjectLocation =
+  override protected def buildDstLocation(
+    srcPrefix: ObjectLocationPrefix,
+    dstPrefix: ObjectLocationPrefix,
+    srcLocation: ObjectLocation): ObjectLocation =
     dstPrefix.asLocation(
       srcLocation.path.stripPrefix(srcPrefix.path)
     )

@@ -31,7 +31,7 @@ trait PrefixTransfer[Prefix, Location] {
     // TODO: This accumulates all the results in memory.
     // Can we cope with copying a very large prefix?
 
-    val failures = results.collect { case Left(error) => error }
+    val failures = results.collect { case Left(error)     => error }
     val successes = results.collect { case Right(success) => success }
 
     Either.cond(
@@ -47,7 +47,8 @@ trait PrefixTransfer[Prefix, Location] {
   ): Either[TransferFailure, TransferSuccess] = {
     for {
       iterable <- listing.list(srcPrefix) match {
-        case Left(error) => Left(PrefixTransferListingFailure(srcPrefix, error.e))
+        case Left(error) =>
+          Left(PrefixTransferListingFailure(srcPrefix, error.e))
         case Right(iterable) => Right(iterable)
       }
       result <- copyPrefix(iterable, srcPrefix, dstPrefix)

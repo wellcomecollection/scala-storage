@@ -18,8 +18,9 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
 
   private val streamStore = new S3StreamStore()
 
-  override def transfer(src: ObjectLocation, dst: ObjectLocation)
-    : Either[TransferFailure, TransferSuccess] = {
+  override def transfer(
+    src: ObjectLocation,
+    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
     def compare(
       srcStream: InputStream,
       dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation],
@@ -61,8 +62,9 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
     }
   }
 
-  private def runTransfer(src: ObjectLocation, dst: ObjectLocation)
-    : Either[TransferFailure, TransferSuccess] = {
+  private def runTransfer(
+    src: ObjectLocation,
+    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
     val transfer = transferManager.copy(
       src.namespace,
       src.path,
