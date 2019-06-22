@@ -5,15 +5,15 @@ import uk.ac.wellcome.storage.store.memory.MemoryStore
 import uk.ac.wellcome.storage.transfer.Transfer
 import uk.ac.wellcome.storage.transfer.fixtures.TransferFixtures
 
-trait MemoryTransferFixtures[Ident, T] extends TransferFixtures[Ident, T, MemoryStore[Ident, T], MemoryStore[Ident, T]] {
-  override def withTransferStoreContext[R](testWith: TestWith[MemoryStore[Ident, T], R]): R =
-    testWith(new MemoryStore[Ident, T](initialEntries = Map.empty))
+trait MemoryTransferFixtures[Ident, T] extends TransferFixtures[Ident, T, MemoryStore[Ident, T] with MemoryTransfer[Ident, T]] {
+  type MemoryStoreImpl = MemoryStore[Ident, T] with MemoryTransfer[Ident, T]
 
-  override def withTransferStore[R](initialEntries: Map[Ident, T])(testWith: TestWith[MemoryStore[Ident, T], R])(implicit store: MemoryStore[Ident, T]): R = {
-    store.entries = store.entries ++ initialEntries
+  override def withTransfer[R](testWith: TestWith[Transfer[Ident], R])(implicit store: MemoryStoreImpl): R =
+    testWith(store)
+
+  override def withTransferStore[R](initialEntries: Map[Ident, T])(testWith: TestWith[MemoryStoreImpl, R]): R = {
+    val store = new MemoryStore[Ident, T](initialEntries) with MemoryTransfer[Ident, T]
+
     testWith(store)
   }
-
-  override def withTransfer[R](testWith: TestWith[Transfer[Ident], R])(implicit underlying: MemoryStore[Ident, T]): R =
-    testWith(new MemoryTransfer[Ident, T](underlying))
 }
