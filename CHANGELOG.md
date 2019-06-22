@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.12.0 - 2019-06-22
+
+Adds the `PrefixTransfer` trait, along with in-memory and S3 implementations.
+
 ## v7.11.0 - 2019-06-19
 
 This adds a `Listing` trait, for finding instances of something in a store, along with in-memory and S3 implementations.
