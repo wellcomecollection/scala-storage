@@ -2,7 +2,7 @@ package uk.ac.wellcome.storage.store
 
 import org.scalatest.{EitherValues, FunSpec}
 import uk.ac.wellcome.storage.store.fixtures.StoreFixtures
-import uk.ac.wellcome.storage.{DoesNotExistError, Identified}
+import uk.ac.wellcome.storage.{DoesNotExistError, Identified, StoreWriteError}
 
 trait StoreTestCases[Id, T, Namespace, StoreContext]
   extends FunSpec
@@ -46,19 +46,6 @@ trait StoreTestCases[Id, T, Namespace, StoreContext]
           }
         }
       }
-
-      it("can overwrite an existing entry") {
-        withNamespace { implicit namespace =>
-          val id = createId
-          val t1 = createT
-          val t2 = createT
-
-          withEmptyStoreImpl { store =>
-            store.put(id)(t1) shouldBe a[Right[_, _]]
-            store.put(id)(t2) shouldBe a[Right[_, _]]
-          }
-        }
-      }
     }
 
     it("persists entries over instances of the store") {
@@ -80,8 +67,27 @@ trait StoreTestCases[Id, T, Namespace, StoreContext]
         }
       }
     }
+  }
+}
 
-    it("is internally consistent") {
+trait StoreWithOverwritesTestCases[Id, T, Namespace, StoreContext]
+  extends StoreTestCases[Id, T, Namespace, StoreContext] {
+
+  describe("it behaves as a store with overwrites") {
+    it("can overwrite an existing entry") {
+      withNamespace { implicit namespace =>
+        val id = createId
+        val t1 = createT
+        val t2 = createT
+
+        withEmptyStoreImpl { store =>
+          store.put(id)(t1) shouldBe a[Right[_, _]]
+          store.put(id)(t2) shouldBe a[Right[_, _]]
+        }
+      }
+    }
+
+    it("is internally consistent across updates") {
       withNamespace { implicit namespace =>
         val id = createId
 
@@ -104,6 +110,27 @@ trait StoreTestCases[Id, T, Namespace, StoreContext]
           storedEntry2 shouldBe a[Identified[_, _]]
           storedEntry2.id shouldBe id
           assertEqualT(t2, storedEntry2.identifiedT)
+        }
+      }
+    }
+  }
+}
+
+trait StoreWithoutOverwritesTestCases[Id, T, Namespace, StoreContext]
+  extends StoreTestCases[Id, T, Namespace, StoreContext] {
+
+  describe("it behaves as a store that blocks overwrites") {
+    it("does not allow overwriting an existing entry") {
+      withNamespace { implicit namespace =>
+        val id = createId
+        val t1 = createT
+        val t2 = createT
+
+        withEmptyStoreImpl { store =>
+          store.put(id)(t1) shouldBe a[Right[_, _]]
+
+          val overwriteResult = store.put(id)(t2)
+          overwriteResult.left.value shouldBe a[StoreWriteError]
         }
       }
     }

@@ -8,9 +8,9 @@ import uk.ac.wellcome.storage.dynamo.DynamoHashEntry
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
-import uk.ac.wellcome.storage.store.StoreTestCases
+import uk.ac.wellcome.storage.store.StoreWithoutOverwritesTestCases
 
-class DynamoHashStoreTest extends StoreTestCases[Version[String, Int], Record, String, Table] with RecordGenerators with DynamoFixtures {
+class DynamoHashStoreTest extends StoreWithoutOverwritesTestCases[Version[String, Int], Record, String, Table] with RecordGenerators with DynamoFixtures {
   override def withStoreImpl[R](table: Table, initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[StoreImpl, R]): R = {
     val dynamoEntries = initialEntries.map { case (id, record) =>
       DynamoHashEntry(id.id, id.version, record)
@@ -37,12 +37,6 @@ class DynamoHashStoreTest extends StoreTestCases[Version[String, Int], Record, S
 
   override def createTable(table: Table): Table = createTableWithHashKey(table, keyName = "hashKey")
 
-  // The StoreTestCases assert that you
-  var allocatedVersion = 10
-
-  override def createId(implicit namespace: String): Version[String, Int] = {
-    println(allocatedVersion)
-    allocatedVersion += 1
-    Version(id = randomAlphanumeric, version = allocatedVersion)
-  }
+  override def createId(implicit namespace: String): Version[String, Int] =
+    Version(id = randomAlphanumeric, version = 1)
 }

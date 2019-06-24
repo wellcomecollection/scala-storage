@@ -3,7 +3,10 @@ package uk.ac.wellcome.storage.store
 import org.scalatest.{Assertion, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.IncorrectStreamLengthError
-import uk.ac.wellcome.storage.store.fixtures.{ReplayableStreamFixtures, StreamStoreFixtures}
+import uk.ac.wellcome.storage.store.fixtures.{
+  ReplayableStreamFixtures,
+  StreamStoreFixtures
+}
 import uk.ac.wellcome.storage.streaming._
 
 
@@ -18,7 +21,7 @@ trait StreamStoreTestCases[Ident, Namespace, StreamStoreImpl <: StreamStore[Iden
     with StreamAssertions
     with ReplayableStreamFixtures
     with StreamStoreFixtures[Ident, StreamStoreImpl, StreamStoreContext]
-    with StoreTestCases[Ident, InputStreamWithLengthAndMetadata, Namespace, StreamStoreContext] {
+    with StoreWithOverwritesTestCases[Ident, InputStreamWithLengthAndMetadata, Namespace, StreamStoreContext] {
 
   override def withStoreImpl[R](storeContext: StreamStoreContext, initialEntries: Map[Ident, InputStreamWithLengthAndMetadata])(testWith: TestWith[StoreImpl, R]): R =
     withStreamStoreImpl(storeContext, initialEntries) { streamStore =>
