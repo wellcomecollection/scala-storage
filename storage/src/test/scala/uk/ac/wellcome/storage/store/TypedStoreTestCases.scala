@@ -6,11 +6,11 @@ import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.generators.RandomThings
 import uk.ac.wellcome.storage.store.fixtures.TypedStoreFixtures
-import uk.ac.wellcome.storage.streaming.{Codec, InputStreamWithLength, InputStreamWithLengthAndMetadata}
 import uk.ac.wellcome.storage.streaming.Codec._
+import uk.ac.wellcome.storage.streaming.{Codec, InputStreamWithLength, InputStreamWithLengthAndMetadata}
 
 trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata], TypedStoreImpl <: TypedStore[Ident, T], StreamStoreContext]
-  extends StoreTestCases[Ident, TypedStoreEntry[T], Namespace, StreamStoreContext]
+  extends StoreWithOverwritesTestCases[Ident, TypedStoreEntry[T], Namespace, StreamStoreContext]
   with TypedStoreFixtures[Ident, T, StreamStoreImpl, TypedStoreImpl, StreamStoreContext]
   with RandomThings {
 

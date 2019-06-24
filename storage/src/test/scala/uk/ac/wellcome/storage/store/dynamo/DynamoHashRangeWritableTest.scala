@@ -3,33 +3,37 @@ package uk.ac.wellcome.storage.store.dynamo
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType
 import org.scalatest.OptionValues
-import uk.ac.wellcome.storage.dynamo.DynamoHashRangeEntry
-import uk.ac.wellcome.storage.generators.Record
 import org.scanamo.{DynamoFormat, Table => ScanamoTable}
-import org.scanamo.syntax._
 import org.scanamo.auto._
+import org.scanamo.syntax._
+import uk.ac.wellcome.storage.dynamo.DynamoHashRangeEntry
+import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 import uk.ac.wellcome.storage.Version
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 
 class DynamoHashRangeWritableTest
-  extends DynamoWritableTestCases[DynamoHashRangeEntry[String, Int, Record]]
-    with OptionValues {
+  extends DynamoWritableTestCases[String, Record, DynamoHashRangeEntry[String, Int, Record]]
+    with OptionValues
+    with RecordGenerators {
   type HashRangeEntry = DynamoHashRangeEntry[String, Int, Record]
 
-  class TestHashRangeWritable(
-                               val client: AmazonDynamoDB,
-                               val table: ScanamoTable[HashRangeEntry]
-                             )(
-                               implicit val formatRangeKey: DynamoFormat[Int]
-                             ) extends DynamoHashRangeWritable[HashKey, Int, Record]
+  def createId: String = randomAlphanumeric
+  def createT: Record = createRecord
+
+  class HashRangeWritableImpl(
+    val client: AmazonDynamoDB,
+    val table: ScanamoTable[HashRangeEntry]
+  )(
+    implicit val formatRangeKey: DynamoFormat[Int]
+  ) extends DynamoHashRangeWritable[String, Int, Record]
 
   override def createDynamoWritableWith(table: Table, initialEntries: Set[HashRangeEntry] = Set.empty): DynamoWritableStub =  {
     scanamo.exec(ScanamoTable[HashRangeEntry](table.name).putAll(initialEntries))
 
-    new TestHashRangeWritable(dynamoClient, ScanamoTable[HashRangeEntry](table.name))
+    new HashRangeWritableImpl(dynamoClient, ScanamoTable[HashRangeEntry](table.name))
   }
 
-  override def getRecord(table: Table)(hashKey: String, v: Int): Record =
+  override def getT(table: Table)(hashKey: String, v: Int): Record =
   scanamo.exec(
     ScanamoTable[HashRangeEntry](table.name).get('hashKey -> hashKey and 'rangeKey -> v)
   ).value.right.value.payload
