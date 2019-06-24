@@ -10,37 +10,37 @@ class MemoryLockDao[MemoryIdent, MemoryContextId]
 
   var locks: Map[MemoryIdent, MemoryLock] = Map.empty
 
-  var history: List[MemoryLock] = List.empty
+  override def lock(id: MemoryIdent, contextId: MemoryContextId): LockResult =
+    synchronized {
+      info(s"Locking ID <$id> in context <$contextId>")
 
-  override def lock(id: MemoryIdent, contextId: MemoryContextId): LockResult = {
-    info(s"Locking ID <$id> in context <$contextId>")
-
-    locks.get(id) match {
-      case Some(r @ PermanentLock(_, existingContextId))
-          if contextId == existingContextId =>
-        Right(r)
-      case Some(PermanentLock(_, existingContextId))
-          if contextId != existingContextId =>
-        Left(
-          LockFailure(
-            id,
-            new Throwable(
-              s"Failed to lock <$id> in context <$contextId>; already locked as <$existingContextId>")
+      locks.get(id) match {
+        case Some(r @ PermanentLock(_, existingContextId))
+            if contextId == existingContextId =>
+          Right(r)
+        case Some(PermanentLock(_, existingContextId))
+            if contextId != existingContextId =>
+          Left(
+            LockFailure(
+              id,
+              new Throwable(
+                s"Failed to lock <$id> in context <$contextId>; already locked as <$existingContextId>")
+            )
           )
-        )
-      case _ =>
-        val rowLock = PermanentLock(
-          id = id,
-          contextId = contextId
-        )
-        locks = locks ++ Map(id -> rowLock)
-        history = history :+ rowLock
-        Right(rowLock)
-    }
-  }
+        case _ =>
+          val rowLock = PermanentLock(
+            id = id,
+            contextId = contextId
+          )
+          locks = locks ++ Map(id -> rowLock)
 
-  override def unlock(contextId: MemoryContextId): UnlockResult = {
+          Right(rowLock)
+      }
+    }
+
+  override def unlock(contextId: MemoryContextId): UnlockResult = synchronized {
     info(s"Unlocking for context <$contextId>")
+
     locks = locks.filter {
       case (id, PermanentLock(_, lockContextId)) =>
         debug(s"Inspecting $id")
