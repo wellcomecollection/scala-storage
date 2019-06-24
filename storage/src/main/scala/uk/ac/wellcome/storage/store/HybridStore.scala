@@ -1,0 +1,67 @@
+package uk.ac.wellcome.storage.store
+
+import grizzled.slf4j.Logging
+import uk.ac.wellcome.storage._
+import uk.ac.wellcome.storage.streaming.Codec
+
+
+case class HybridStoreEntry[T, Metadata](t: T, metadata: Metadata)
+case class HybridIndexedStoreEntry[IndexedStoreId, TypeStoreId, Metadata](
+                                          indexedStoreId: IndexedStoreId,
+                                          typeStoreId: TypeStoreId,
+                                          metadata: Metadata
+                                        )
+
+trait HybridStore[IndexedStoreId, TypeStoreId, T, Metadata]
+  extends Store[IndexedStoreId, HybridStoreEntry[T, Metadata]]
+    with Logging {
+
+  implicit protected val codec: Codec[T]
+
+  type IndexEntry = HybridIndexedStoreEntry[IndexedStoreId, TypeStoreId, Metadata]
+
+  implicit protected val indexedStore: Store[IndexedStoreId, IndexEntry]
+  implicit protected val typeStore: TypedStore[TypeStoreId, T]
+
+  protected def createTypeStoreId(id: IndexedStoreId): TypeStoreId
+
+  override def get(id: IndexedStoreId): ReadEither = for {
+    indexResult <- indexedStore.get(id)
+
+    indexedStoreEntry = indexResult.identifiedT
+
+    typeStoreEntry <- typeStore.get(indexedStoreEntry.typeStoreId)
+
+    typeStoreId = indexedStoreEntry.typeStoreId
+    metadata    = indexedStoreEntry.metadata
+    hybridEntry: HybridStoreEntry[T, Metadata] = HybridStoreEntry(typeStoreEntry.identifiedT.t, metadata)
+
+  } yield Identified(id, hybridEntry)
+
+  override def put(id: IndexedStoreId)(t: HybridStoreEntry[T, Metadata]): WriteEither = {
+    val typeStoreId = createTypeStoreId(id)
+
+     for {
+       putTypeResult <- typeStore.put(typeStoreId)(TypedStoreEntry(t.t, Map.empty))
+
+       locationEntry = HybridIndexedStoreEntry(
+         indexedStoreId = id,
+         typeStoreId = putTypeResult.id,
+         metadata = t.metadata
+       )
+
+       putVersionedResult <- indexedStore
+         .put(id)(locationEntry) match {
+            case Left(error) => Left(StoreWriteError(error.e))
+            case Right(result) => Right(result)
+          }
+
+       hybridEntry = HybridStoreEntry(
+         putTypeResult.identifiedT.t,
+         putVersionedResult.identifiedT.metadata
+       )
+
+    } yield Identified(putVersionedResult.id, hybridEntry)
+  }
+}
+
