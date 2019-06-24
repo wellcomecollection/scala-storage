@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.13.0 - 2019-06-24
+
+Adds the VersionedStore with in-memory & DynamoDB implementations.
+
 ## v7.12.1 - 2019-06-24
 
 Makes MemoryLockDao thread-safe.
