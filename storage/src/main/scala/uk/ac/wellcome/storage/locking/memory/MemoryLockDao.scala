@@ -12,7 +12,7 @@ class MemoryLockDao[MemoryIdent, MemoryContextId]
 
   var history: List[MemoryLock] = List.empty
 
-  override def lock(id: MemoryIdent, contextId: MemoryContextId): LockResult = {
+  override def lock(id: MemoryIdent, contextId: MemoryContextId): LockResult = synchronized {
     info(s"Locking ID <$id> in context <$contextId>")
 
     locks.get(id) match {
@@ -33,19 +33,21 @@ class MemoryLockDao[MemoryIdent, MemoryContextId]
           id = id,
           contextId = contextId
         )
-        locks = locks ++ Map(id -> rowLock)
-        history = history :+ rowLock
+          locks = locks ++ Map(id -> rowLock)
+          history = history :+ rowLock
+
         Right(rowLock)
     }
   }
 
-  override def unlock(contextId: MemoryContextId): UnlockResult = {
+  override def unlock(contextId: MemoryContextId): UnlockResult = synchronized {
     info(s"Unlocking for context <$contextId>")
-    locks = locks.filter {
-      case (id, PermanentLock(_, lockContextId)) =>
-        debug(s"Inspecting $id")
-        contextId != lockContextId
-    }
+
+      locks = locks.filter {
+        case (id, PermanentLock(_, lockContextId)) =>
+          debug(s"Inspecting $id")
+          contextId != lockContextId
+      }
 
     Right(())
   }
