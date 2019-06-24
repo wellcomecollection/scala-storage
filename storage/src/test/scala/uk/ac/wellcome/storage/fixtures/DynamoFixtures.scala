@@ -27,14 +27,14 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
   private val accessKey = "access"
   private val secretKey = "secret"
 
-  val dynamoClient: AmazonDynamoDB = DynamoClientFactory.create(
+  implicit val dynamoClient: AmazonDynamoDB = DynamoClientFactory.create(
     region = regionName,
     endpoint = dynamoDBEndPoint,
     accessKey = accessKey,
     secretKey = secretKey
   )
 
-  val scanamo = Scanamo(dynamoClient)
+  implicit val scanamo = Scanamo(dynamoClient)
 
   def nonExistentTable: Table =
     Table(
