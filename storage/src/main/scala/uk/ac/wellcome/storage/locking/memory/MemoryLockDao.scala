@@ -4,23 +4,21 @@ import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.locking.{Lock, LockDao, LockFailure}
 
 class MemoryLockDao[MemoryIdent, MemoryContextId]
-    extends LockDao[MemoryIdent, MemoryContextId]
+  extends LockDao[MemoryIdent, MemoryContextId]
     with Logging {
   type MemoryLock = PermanentLock[MemoryIdent, MemoryContextId]
 
   var locks: Map[MemoryIdent, MemoryLock] = Map.empty
 
-  var history: List[MemoryLock] = List.empty
-
   override def lock(id: MemoryIdent, contextId: MemoryContextId): LockResult = synchronized {
     info(s"Locking ID <$id> in context <$contextId>")
 
     locks.get(id) match {
-      case Some(r @ PermanentLock(_, existingContextId))
-          if contextId == existingContextId =>
+      case Some(r@PermanentLock(_, existingContextId))
+        if contextId == existingContextId =>
         Right(r)
       case Some(PermanentLock(_, existingContextId))
-          if contextId != existingContextId =>
+        if contextId != existingContextId =>
         Left(
           LockFailure(
             id,
@@ -33,8 +31,7 @@ class MemoryLockDao[MemoryIdent, MemoryContextId]
           id = id,
           contextId = contextId
         )
-          locks = locks ++ Map(id -> rowLock)
-          history = history :+ rowLock
+        locks = locks ++ Map(id -> rowLock)
 
         Right(rowLock)
     }
@@ -43,11 +40,11 @@ class MemoryLockDao[MemoryIdent, MemoryContextId]
   override def unlock(contextId: MemoryContextId): UnlockResult = synchronized {
     info(s"Unlocking for context <$contextId>")
 
-      locks = locks.filter {
-        case (id, PermanentLock(_, lockContextId)) =>
-          debug(s"Inspecting $id")
-          contextId != lockContextId
-      }
+    locks = locks.filter {
+      case (id, PermanentLock(_, lockContextId)) =>
+        debug(s"Inspecting $id")
+        contextId != lockContextId
+    }
 
     Right(())
   }
@@ -57,4 +54,4 @@ class MemoryLockDao[MemoryIdent, MemoryContextId]
 }
 
 case class PermanentLock[Ident, ContextId](id: Ident, contextId: ContextId)
-    extends Lock[Ident, ContextId]
+  extends Lock[Ident, ContextId]
