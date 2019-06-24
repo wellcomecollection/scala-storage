@@ -12,8 +12,8 @@ class VersionedStore[Id, V, T](
 
   type UpdateEither = Either[UpdateError, Identified[Version[Id, V], T]]
 
-  val zero = N.zero
-  def increment(v: V): V = N.plus(v, N.one)
+  private val zero = N.zero
+  private def increment(v: V): V = N.plus(v, N.one)
 
   private def nextVersionFor(id: Id): Either[ReadError, V] =
     store.max(id).map(increment)
