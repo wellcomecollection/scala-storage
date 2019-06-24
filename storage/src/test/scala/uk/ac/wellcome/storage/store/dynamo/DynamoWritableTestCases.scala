@@ -1,67 +1,70 @@
 package uk.ac.wellcome.storage.store.dynamo
 
-import com.amazonaws.services.dynamodbv2.model.{AmazonDynamoDBException, ConditionalCheckFailedException, ResourceNotFoundException}
+import com.amazonaws.services.dynamodbv2.model.{
+  AmazonDynamoDBException,
+  ConditionalCheckFailedException,
+  ResourceNotFoundException
+}
 import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.Version
 import uk.ac.wellcome.storage.dynamo.DynamoEntry
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
-import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 
-trait DynamoWritableTestCases[EntryType <: DynamoEntry[String, Record]]
+trait DynamoWritableTestCases[Ident, T, EntryType <: DynamoEntry[Ident, T]]
   extends FunSpec
     with Matchers
     with DynamoFixtures
-    with EitherValues
-    with RecordGenerators {
+    with EitherValues {
 
-  type HashKey = String
+  def createId: Ident
+  def createT: T
 
-  type DynamoWritableStub = DynamoWritable[Version[HashKey, Int], EntryType, Record]
+  type DynamoWritableStub = DynamoWritable[Version[Ident, Int], EntryType, T]
 
   def createDynamoWritableWith(table: Table, initialEntries: Set[EntryType] = Set.empty): DynamoWritableStub
 
-  def createEntry(hashKey: String, v: Int, record: Record): EntryType
+  def createEntry(hashKey: Ident, v: Int, t: T): EntryType
 
-  def getRecord(table: Table)(hashKey: HashKey, v: Int): Record
+  def getT(table: Table)(hashKey: Ident, v: Int): T
 
   it("puts an entry in an empty table") {
     withLocalDynamoDbTable { table =>
       val writable = createDynamoWritableWith(table)
 
-      val hashKey = randomAlphanumeric
-      val record = createRecord
+      val hashKey = createId
+      val t = createT
 
-      writable.put(id = Version(hashKey, 1))(record) shouldBe a[Right[_, _]]
+      writable.put(id = Version(hashKey, 1))(t) shouldBe a[Right[_, _]]
 
-      getRecord(table)(hashKey, 1) shouldBe record
+      getT(table)(hashKey, 1) shouldBe t
     }
   }
 
   describe("conditional puts") {
-    val hashKey = randomAlphanumeric
-    val olderRecord = createRecord
-    val newerRecord = createRecord
+    val hashKey = createId
+    val olderT = createT
+    val newerT = createT
 
     it("overwrites an old version with a new version") {
       withLocalDynamoDbTable { table =>
         val writable = createDynamoWritableWith(table, initialEntries = Set(
-          createEntry(hashKey, 1, olderRecord)
+          createEntry(hashKey, 1, olderT)
         ))
 
-        writable.put(id = Version(hashKey, 2))(newerRecord) shouldBe a[Right[_, _]]
+        writable.put(id = Version(hashKey, 2))(newerT) shouldBe a[Right[_, _]]
 
-        getRecord(table)(hashKey, 2) shouldBe newerRecord
+        getT(table)(hashKey, 2) shouldBe newerT
       }
     }
 
     it("fails to overwrite the same version if it is already stored") {
       withLocalDynamoDbTable { table =>
         val writable = createDynamoWritableWith(table, initialEntries = Set(
-          createEntry(hashKey, 2, newerRecord)
+          createEntry(hashKey, 2, newerT)
         ))
 
-        val result = writable.put(id = Version(hashKey, 2))(newerRecord)
+        val result = writable.put(id = Version(hashKey, 2))(newerT)
 
         val err = result.left.value
         err.e shouldBe a[ConditionalCheckFailedException]
@@ -73,10 +76,7 @@ trait DynamoWritableTestCases[EntryType <: DynamoEntry[String, Record]]
   it("fails if DynamoDB fails") {
     val writable = createDynamoWritableWith(nonExistentTable)
 
-    val hashKey = randomAlphanumeric
-    val record = createRecord
-
-    val result = writable.put(id = Version(hashKey, 1))(record)
+    val result = writable.put(id = Version(createId, 1))(createT)
 
     val err = result.left.value
     err.e shouldBe a[ResourceNotFoundException]
@@ -87,10 +87,7 @@ trait DynamoWritableTestCases[EntryType <: DynamoEntry[String, Record]]
     withSpecifiedTable(createWrongTable) { table =>
       val writable = createDynamoWritableWith(table)
 
-      val hashKey = randomAlphanumeric
-      val record = createRecord
-
-      val result = writable.put(id = Version(hashKey, 1))(record)
+      val result = writable.put(id = Version(createId, 1))(createT)
 
       val err = result.left.value
       err.e shouldBe a[AmazonDynamoDBException]

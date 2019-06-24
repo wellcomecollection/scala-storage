@@ -3,24 +3,26 @@ package uk.ac.wellcome.storage.store.dynamo
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.{ConditionalCheckFailedException, ScalarAttributeType}
 import org.scalatest.OptionValues
+import org.scanamo.auto._
+import org.scanamo.syntax._
 import uk.ac.wellcome.storage.dynamo.DynamoHashEntry
-import uk.ac.wellcome.storage.generators.Record
+import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 import org.scanamo.{DynamoFormat, Table => ScanamoTable}
 import uk.ac.wellcome.storage.Version
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
-import org.scanamo.syntax._
 
-import org.scanamo.auto._
-
-class DynamoHashWritableTest extends DynamoWritableTestCases[DynamoHashEntry[String, Int, Record]] with OptionValues {
+class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, DynamoHashEntry[String, Int, Record]] with OptionValues with RecordGenerators {
   type HashEntry = DynamoHashEntry[String, Int, Record]
 
+  def createId: String = randomAlphanumeric
+  def createT: Record = createRecord
+
   class TestHashWritable(
-                          val client: AmazonDynamoDB,
-                          val table: ScanamoTable[HashEntry]
-                        )(
-                          implicit val formatV: DynamoFormat[Int]
-                        ) extends DynamoHashWritable[HashKey, Int, Record]
+    val client: AmazonDynamoDB,
+    val table: ScanamoTable[HashEntry]
+  )(
+    implicit val formatV: DynamoFormat[Int]
+  ) extends DynamoHashWritable[String, Int, Record]
 
   override def createDynamoWritableWith(table: Table, initialEntries: Set[HashEntry] = Set.empty): DynamoWritableStub =  {
     scanamo.exec(ScanamoTable[HashEntry](table.name).putAll(initialEntries))
@@ -28,7 +30,7 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[DynamoHashEntry[Str
     new TestHashWritable(dynamoClient, ScanamoTable[HashEntry](table.name))
   }
 
-  override def getRecord(table: Table)(hashKey: HashKey, v: Int): Record =
+  override def getT(table: Table)(hashKey: String, v: Int): Record =
     scanamo.exec(
       ScanamoTable[HashEntry](table.name).get('hashKey -> hashKey)
     ).value.right.value.payload
