@@ -9,7 +9,7 @@ import uk.ac.wellcome.storage.streaming.Codec._
 case class Record(name: String)
 
 trait RecordGenerators extends RandomThings with Logging {
-  implicit val codec: Codec[Record] = typeCodec[Record]
+  implicit lazy val codec: Codec[Record] = typeCodec[Record]
 
   val recordCount: (Int, Int) = (100, 200)
 
