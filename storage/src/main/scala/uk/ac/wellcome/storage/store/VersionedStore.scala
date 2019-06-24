@@ -5,9 +5,9 @@ import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.maxima.Maxima
 
 class VersionedStore[Id, V, T](
-                                store: Store[Version[Id, V], T] with Maxima[Id, V]
-                              )(implicit N: Numeric[V], O: Ordering[V])
-  extends Store[Version[Id, V], T]
+  store: Store[Version[Id, V], T] with Maxima[Id, V]
+)(implicit N: Numeric[V], O: Ordering[V])
+    extends Store[Version[Id, V], T]
     with Logging {
 
   type UpdateEither = Either[UpdateError, Identified[Version[Id, V], T]]
@@ -21,11 +21,11 @@ class VersionedStore[Id, V, T](
   private val matchErrors: PartialFunction[
     Either[StorageError, Identified[Version[Id, V], T]],
     Either[UpdateError, Identified[Version[Id, V], T]],
-    ] = {
+  ] = {
     case Left(err: NoVersionExistsError) => Left(UpdateNoSourceError(err.e))
-    case Left(err: ReadError) => Left(UpdateReadError(err.e))
-    case Left(err: WriteError) => Left(UpdateWriteError(err.e))
-    case Right(r) => Right(r)
+    case Left(err: ReadError)            => Left(UpdateReadError(err.e))
+    case Left(err: WriteError)           => Left(UpdateWriteError(err.e))
+    case Right(r)                        => Right(r)
   }
 
   def init(id: Id)(t: T): WriteEither =
@@ -38,15 +38,15 @@ class VersionedStore[Id, V, T](
       case default => default
     }
 
-  def update(id: Id)(f: T => T): UpdateEither = matchErrors.apply(
-    getLatest(id).flatMap { identified =>
+  def update(id: Id)(f: T => T): UpdateEither =
+    matchErrors.apply(getLatest(id).flatMap { identified =>
       val v = N.plus(identified.id.version, N.one)
       put(Version(id, v))(f(identified.identifiedT))
     })
 
   def get(id: Version[Id, V]): ReadEither =
     store.get(id) match {
-      case r@Right(_) => r
+      case r @ Right(_) => r
       case Left(DoesNotExistError(_)) =>
         Left(NoVersionExistsError())
       case Left(err) => Left(err)
@@ -66,8 +66,9 @@ class VersionedStore[Id, V, T](
         Left(HigherVersionExistsError())
       case Right(latestV) if latestV == id.version =>
         Left(VersionAlreadyExistsError())
-      case _ => store
-        .put(id)(t)
+      case _ =>
+        store
+          .put(id)(t)
     }
 
   def putLatest(id: Id)(t: T): WriteEither =
