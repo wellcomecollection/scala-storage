@@ -46,7 +46,7 @@ class DynamoVersionedStoreTest
     withLocalDynamoDbTable { table =>
       val store = new DynamoStoreStub(
         client = dynamoClient,
-        dynamoConfig = createDynamoConfigWith(table)
+        config = createDynamoConfigWith(table)
       )
 
       insertEntries(table)(initialEntries)
@@ -58,7 +58,7 @@ class DynamoVersionedStoreTest
     withLocalDynamoDbTable { table =>
       val store = new DynamoStoreStub(
         client = dynamoClient,
-        dynamoConfig = createDynamoConfigWith(table)
+        config = createDynamoConfigWith(table)
       ) {
         override def get(id: Version[String, Int]): ReadEither = {
           Left(StoreReadError(new Error("BOOM!")))
@@ -74,7 +74,7 @@ class DynamoVersionedStoreTest
     withLocalDynamoDbTable { table =>
       val store = new DynamoStoreStub(
         client = dynamoClient,
-        dynamoConfig = createDynamoConfigWith(table)
+        config = createDynamoConfigWith(table)
       ) {
         override def put(id: Version[String, Int])(t: Record): WriteEither = {
           Left(StoreWriteError(new Error("BOOM!")))

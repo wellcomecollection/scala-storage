@@ -13,7 +13,7 @@ import uk.ac.wellcome.storage.maxima.dynamo.DynamoHashRangeMaxima
 import uk.ac.wellcome.storage.store._
 
 class DynamoHashRangeStore[HashKey, RangeKey, T](val client: AmazonDynamoDB,
-                                                 dynamoConfig: DynamoConfig)(
+                                                 val config: DynamoConfig)(
   implicit
   val formatHashKey: DynamoFormat[HashKey],
   val formatRangeKey: DynamoFormat[RangeKey],
@@ -26,11 +26,11 @@ class DynamoHashRangeStore[HashKey, RangeKey, T](val client: AmazonDynamoDB,
       RangeKey,
       DynamoHashRangeEntry[HashKey, RangeKey, T]] {
   override protected val table =
-    Table[DynamoHashRangeEntry[HashKey, RangeKey, T]](dynamoConfig.tableName)
+    Table[DynamoHashRangeEntry[HashKey, RangeKey, T]](config.tableName)
 }
 
 class DynamoHashStore[HashKey, V, T](val client: AmazonDynamoDB,
-                                     dynamoConfig: DynamoConfig)(
+                                     val config: DynamoConfig)(
   implicit
   val formatHashKey: DynamoFormat[HashKey],
   val formatV: DynamoFormat[V],
@@ -43,5 +43,5 @@ class DynamoHashStore[HashKey, V, T](val client: AmazonDynamoDB,
     getEntry(hashKey).map { _.version }
 
   override protected val table =
-    Table[DynamoHashEntry[HashKey, V, T]](dynamoConfig.tableName)
+    Table[DynamoHashEntry[HashKey, V, T]](config.tableName)
 }

@@ -2,7 +2,6 @@ package uk.ac.wellcome.storage.store
 
 import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage._
-import uk.ac.wellcome.storage.streaming.Codec
 
 
 case class HybridStoreEntry[T, Metadata](t: T, metadata: Metadata)
@@ -15,8 +14,6 @@ case class HybridIndexedStoreEntry[IndexedStoreId, TypeStoreId, Metadata](
 trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
   extends Store[IndexedStoreId, HybridStoreEntry[T, Metadata]]
     with Logging {
-
-  implicit protected val codec: Codec[T]
 
   type IndexEntry = HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]
 
