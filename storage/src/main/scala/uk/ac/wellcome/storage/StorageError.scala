@@ -5,16 +5,17 @@ sealed trait StorageError {
 }
 
 sealed trait CodecError
-sealed trait DaoError
-sealed trait ObjectStoreError
 sealed trait BackendError
+
+sealed trait UpdateError extends StorageError
+
+case class UpdateNoSourceError(e: Throwable) extends UpdateError
+case class UpdateReadError(e: Throwable) extends UpdateError
+case class UpdateWriteError(e: Throwable) extends UpdateError
+
 
 sealed trait WriteError extends StorageError
 sealed trait EncoderError extends WriteError
-
-case class DaoWriteError(e: Throwable) extends WriteError with DaoError
-
-case class ConditionalWriteError(e: Throwable) extends WriteError with DaoError
 
 case class StoreWriteError(e: Throwable) extends WriteError with BackendError
 
@@ -36,9 +37,14 @@ case class LossyEncodingDetected(
     with WriteError
 
 sealed trait ReadError extends StorageError
-sealed trait DecoderError extends ReadError
 
-case class DaoReadError(e: Throwable) extends ReadError with DaoError
+sealed trait VersionError extends StorageError
+
+case class NoVersionExistsError(e: Throwable = new Error()) extends VersionError with ReadError
+case class HigherVersionExistsError(e: Throwable = new Error()) extends VersionError with WriteError
+case class VersionAlreadyExistsError(e: Throwable = new Error()) extends VersionError with WriteError
+
+sealed trait DecoderError extends ReadError
 
 case class MetadataCoercionFailure(
   failure: List[CodecError],
@@ -48,14 +54,12 @@ case class MetadataCoercionFailure(
 
 case class DoesNotExistError(e: Throwable = new Error())
     extends ReadError
-    with DaoError
     with BackendError
 
 case class StoreReadError(e: Throwable) extends ReadError with BackendError
 
 case class CannotCloseStreamError(e: Throwable)
     extends ReadError
-    with ObjectStoreError
 
 case class CharsetDecodingError(e: Throwable = new Error())
     extends CodecError
