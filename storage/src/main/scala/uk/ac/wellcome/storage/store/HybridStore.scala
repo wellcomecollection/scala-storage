@@ -12,25 +12,25 @@ case class HybridIndexedStoreEntry[IndexedStoreId, TypeStoreId, Metadata](
                                           metadata: Metadata
                                         )
 
-trait HybridStore[IndexedStoreId, TypeStoreId, T, Metadata]
+trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
   extends Store[IndexedStoreId, HybridStoreEntry[T, Metadata]]
     with Logging {
 
   implicit protected val codec: Codec[T]
 
-  type IndexEntry = HybridIndexedStoreEntry[IndexedStoreId, TypeStoreId, Metadata]
+  type IndexEntry = HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]
 
   implicit protected val indexedStore: Store[IndexedStoreId, IndexEntry]
-  implicit protected val typeStore: TypedStore[TypeStoreId, T]
+  implicit protected val typedStore: TypedStore[TypedStoreId, T]
 
-  protected def createTypeStoreId(id: IndexedStoreId): TypeStoreId
+  protected def createTypeStoreId(id: IndexedStoreId): TypedStoreId
 
   override def get(id: IndexedStoreId): ReadEither = for {
     indexResult <- indexedStore.get(id)
 
     indexedStoreEntry = indexResult.identifiedT
 
-    typeStoreEntry <- typeStore.get(indexedStoreEntry.typeStoreId)
+    typeStoreEntry <- typedStore.get(indexedStoreEntry.typeStoreId)
 
     typeStoreId = indexedStoreEntry.typeStoreId
     metadata    = indexedStoreEntry.metadata
@@ -42,7 +42,7 @@ trait HybridStore[IndexedStoreId, TypeStoreId, T, Metadata]
     val typeStoreId = createTypeStoreId(id)
 
      for {
-       putTypeResult <- typeStore.put(typeStoreId)(TypedStoreEntry(t.t, Map.empty))
+       putTypeResult <- typedStore.put(typeStoreId)(TypedStoreEntry(t.t, Map.empty))
 
        locationEntry = HybridIndexedStoreEntry(
          indexedStoreId = id,
