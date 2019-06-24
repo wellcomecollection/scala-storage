@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.12.1 - 2019-06-24
+
+Makes MemoryLockDao thread-safe.
+
 ## v7.12.0 - 2019-06-22
 
 Adds the `PrefixTransfer` trait, along with in-memory and S3 implementations.
