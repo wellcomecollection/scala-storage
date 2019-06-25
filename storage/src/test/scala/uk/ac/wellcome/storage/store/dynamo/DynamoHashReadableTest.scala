@@ -31,47 +31,49 @@ class DynamoHashReadableTest extends DynamoReadableTestCases[String, DynamoHashE
   override def createEntry(hashKey: String, v: Int, record: Record): HashEntry =
     DynamoHashEntry(hashKey, v, record)
 
-  describe("fails if the table definition is wrong") {
-    it("hash key name is wrong") {
-      assertErrorsOnBadKeyName(table =>
-        createTableWithHashKey(table, keyName = "wrong", keyType = ScalarAttributeType.S)
+  describe("DynamoHashReadable") {
+    describe("fails if the table definition is wrong") {
+      it("hash key name is wrong") {
+        assertErrorsOnBadKeyName(table =>
+          createTableWithHashKey(table, keyName = "wrong", keyType = ScalarAttributeType.S)
+        )
+      }
+
+      it("hash key is the wrong type") {
+        assertErrorsOnBadKeyType(table =>
+          createTableWithHashKey(table, keyName = "hashKey", keyType = ScalarAttributeType.N)
+        )
+      }
+    }
+
+    it("finds a row with matching hashKey and version") {
+      val id = randomAlphanumeric
+      val record = createRecord
+
+      val initialEntries = Set(
+        createEntry(id, v = 1, record),
       )
+
+      withLocalDynamoDbTable { table =>
+        val readable = createDynamoReadableWith(table, initialEntries)
+
+        readable.get(Version(id, 1)).right.value shouldBe Identified(Version(id, 1), record)
+      }
     }
 
-    it("hash key is the wrong type") {
-      assertErrorsOnBadKeyType(table =>
-        createTableWithHashKey(table, keyName = "hashKey", keyType = ScalarAttributeType.N)
+    it("fails if there is a row with matching hashKey but wrong version") {
+      val id = randomAlphanumeric
+      val record = createRecord
+
+      val initialEntries = Set(
+        createEntry(id, v = 2, record),
       )
-    }
-  }
 
-  it("finds a row with matching hashKey and version") {
-    val id = randomAlphanumeric
-    val record = createRecord
+      withLocalDynamoDbTable { table =>
+        val readable = createDynamoReadableWith(table, initialEntries)
 
-    val initialEntries = Set(
-      createEntry(id, v = 1, record),
-    )
-
-    withLocalDynamoDbTable { table =>
-      val readable = createDynamoReadableWith(table, initialEntries)
-
-      readable.get(Version(id, 1)).right.value shouldBe Identified(Version(id, 1), record)
-    }
-  }
-
-  it("fails if there is a row with matching hashKey but wrong version") {
-    val id = randomAlphanumeric
-    val record = createRecord
-
-    val initialEntries = Set(
-      createEntry(id, v = 2, record),
-    )
-
-    withLocalDynamoDbTable { table =>
-      val readable = createDynamoReadableWith(table, initialEntries)
-
-      readable.get(Version(id, 1)).left.value shouldBe a[NoVersionExistsError]
+        readable.get(Version(id, 1)).left.value shouldBe a[NoVersionExistsError]
+      }
     }
   }
 }

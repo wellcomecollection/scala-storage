@@ -6,6 +6,7 @@ import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import org.scanamo.error.DynamoReadError
+import org.scanamo.query.UniqueKey
 import org.scanamo.syntax._
 import org.scanamo.{DynamoFormat, Scanamo, Table => ScanamoTable}
 import uk.ac.wellcome.fixtures._
@@ -83,6 +84,11 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
   def getTableItem[T: DynamoFormat](id: String, table: Table): Option[Either[DynamoReadError, T]] =
     scanamo.exec(
       ScanamoTable[T](table.name).get('id -> id)
+    )
+
+  def deleteTableItem(key: UniqueKey[_], table: Table): DeleteItemResult =
+    scanamo.exec(
+      ScanamoTable(table.name).delete(key)
     )
 
   def getExistingTableItem[T: DynamoFormat](id: String, table: Table): T = {

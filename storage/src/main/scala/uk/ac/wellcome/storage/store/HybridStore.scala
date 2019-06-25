@@ -6,9 +6,9 @@ import uk.ac.wellcome.storage._
 
 case class HybridStoreEntry[T, Metadata](t: T, metadata: Metadata)
 case class HybridIndexedStoreEntry[IndexedStoreId, TypeStoreId, Metadata](
-                                          indexedStoreId: IndexedStoreId,
-                                          typeStoreId: TypeStoreId,
-                                          metadata: Metadata
+                                                                           indexedStoreId: IndexedStoreId,
+                                                                           typedStoreId: TypeStoreId,
+                                                                           metadata: Metadata
                                         )
 
 trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
@@ -27,9 +27,9 @@ trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
 
     indexedStoreEntry = indexResult.identifiedT
 
-    typeStoreEntry <- getTypedStoreEntry(indexedStoreEntry.typeStoreId)
+    typeStoreEntry <- getTypedStoreEntry(indexedStoreEntry.typedStoreId)
 
-    typeStoreId = indexedStoreEntry.typeStoreId
+    typeStoreId = indexedStoreEntry.typedStoreId
     metadata    = indexedStoreEntry.metadata
     hybridEntry: HybridStoreEntry[T, Metadata] = HybridStoreEntry(typeStoreEntry.identifiedT.t, metadata)
 
@@ -53,7 +53,7 @@ trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
 
        locationEntry = HybridIndexedStoreEntry(
          indexedStoreId = id,
-         typeStoreId = putTypeResult.id,
+         typedStoreId = putTypeResult.id,
          metadata = t.metadata
        )
 

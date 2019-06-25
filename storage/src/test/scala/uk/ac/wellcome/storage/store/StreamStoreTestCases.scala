@@ -43,7 +43,7 @@ trait StreamStoreTestCases[Ident, Namespace, StreamStoreImpl <: StreamStore[Iden
     assertStreamEquals(stored, originalBytes, expectedLength = originalBytes.length)
   }
 
-  describe("it behaves as a streaming store") {
+  describe("it behaves as a StreamStore") {
     describe("get") {
       it("can get a stream without metadata") {
         withNamespace { implicit namespace =>

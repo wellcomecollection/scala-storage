@@ -53,104 +53,106 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
       rangeKeyType = ScalarAttributeType.N
     )
 
-  it("fails if DynamoDB has an error") {
-    withMaxima(nonExistentTable) { maxima =>
-      val result = maxima.max(createIdentityKey)
+  describe("DynamoHashRangeMaxima") {
+    it("fails if DynamoDB has an error") {
+      withMaxima(nonExistentTable) { maxima =>
+        val result = maxima.max(createIdentityKey)
 
-      val err = result.left.value
-      err shouldBe a[MaximaReadError]
-      err.e shouldBe a[ResourceNotFoundException]
-    }
-  }
-
-  describe("if the table has the wrong structure") {
-    it("when the hash key name is wrong") {
-      def createWrongTable(table: Table): Table =
-        createTableWithHashKey(table, keyName = "wrong")
-
-      withSpecifiedTable(createWrongTable) { table =>
-        withMaxima(table) { maxima =>
-          val result = maxima.max(createIdentityKey)
-
-          val err = result.left.value
-          err shouldBe a[MaximaReadError]
-          err.e shouldBe a[AmazonDynamoDBException]
-          err.e.getMessage should startWith("Query condition missed key schema element")
-        }
+        val err = result.left.value
+        err shouldBe a[MaximaReadError]
+        err.e shouldBe a[ResourceNotFoundException]
       }
     }
 
-    it("when the hash key type is wrong") {
-      def createWrongTable(table: Table): Table =
-        createTableWithHashKey(table, keyName = "hashKey", keyType = ScalarAttributeType.N)
+    describe("if the table has the wrong structure") {
+      it("when the hash key name is wrong") {
+        def createWrongTable(table: Table): Table =
+          createTableWithHashKey(table, keyName = "wrong")
 
-      withSpecifiedTable(createWrongTable) { table =>
-        withMaxima(table) { maxima =>
-          val result = maxima.max(createIdentityKey)
+        withSpecifiedTable(createWrongTable) { table =>
+          withMaxima(table) { maxima =>
+            val result = maxima.max(createIdentityKey)
 
-          val err = result.left.value
-          err shouldBe a[MaximaReadError]
-          err.e shouldBe a[AmazonDynamoDBException]
-          err.e.getMessage should include("Condition parameter type does not match schema type")
+            val err = result.left.value
+            err shouldBe a[MaximaReadError]
+            err.e shouldBe a[AmazonDynamoDBException]
+            err.e.getMessage should startWith("Query condition missed key schema element")
+          }
         }
       }
-    }
 
-    it("when the range key name is wrong") {
-      def createWrongTable(table: Table): Table =
-        createTableWithHashRangeKey(
-          table,
-          hashKeyName = "hashKey",
-          rangeKeyName = "wrong",
-          rangeKeyType = ScalarAttributeType.N
-        )
+      it("when the hash key type is wrong") {
+        def createWrongTable(table: Table): Table =
+          createTableWithHashKey(table, keyName = "hashKey", keyType = ScalarAttributeType.N)
 
-      case class WrongEntry(hashKey: IdentityKey, wrong: Int, record: Record)
+        withSpecifiedTable(createWrongTable) { table =>
+          withMaxima(table) { maxima =>
+            val result = maxima.max(createIdentityKey)
 
-      val id = createIdentityKey
+            val err = result.left.value
+            err shouldBe a[MaximaReadError]
+            err.e shouldBe a[AmazonDynamoDBException]
+            err.e.getMessage should include("Condition parameter type does not match schema type")
+          }
+        }
+      }
 
-      withSpecifiedTable(createWrongTable) { table =>
-        scanamo.exec(ScanamoTable[WrongEntry](table.name).putAll(
-          Set(
-            WrongEntry(id, wrong = 1, record = createRecord),
-            WrongEntry(id, wrong = 2, record = createRecord),
+      it("when the range key name is wrong") {
+        def createWrongTable(table: Table): Table =
+          createTableWithHashRangeKey(
+            table,
+            hashKeyName = "hashKey",
+            rangeKeyName = "wrong",
+            rangeKeyType = ScalarAttributeType.N
           )
-        ))
 
-        withMaxima(table) { maxima =>
-          val result = maxima.max(id)
+        case class WrongEntry(hashKey: IdentityKey, wrong: Int, record: Record)
 
-          val err = result.left.value
-          err shouldBe a[MaximaReadError]
-          err.e shouldBe a[Error]
-          err.e.getMessage should startWith("DynamoReadError: InvalidPropertiesError")
+        val id = createIdentityKey
+
+        withSpecifiedTable(createWrongTable) { table =>
+          scanamo.exec(ScanamoTable[WrongEntry](table.name).putAll(
+            Set(
+              WrongEntry(id, wrong = 1, record = createRecord),
+              WrongEntry(id, wrong = 2, record = createRecord),
+            )
+          ))
+
+          withMaxima(table) { maxima =>
+            val result = maxima.max(id)
+
+            val err = result.left.value
+            err shouldBe a[MaximaReadError]
+            err.e shouldBe a[Error]
+            err.e.getMessage should startWith("DynamoReadError: InvalidPropertiesError")
+          }
         }
       }
-    }
 
-    it("when the range key type is wrong") {
-      case class WrongEntry(hashKey: IdentityKey, rangeKey: String, record: Record)
+      it("when the range key type is wrong") {
+        case class WrongEntry(hashKey: IdentityKey, rangeKey: String, record: Record)
 
-      val id = createIdentityKey
+        val id = createIdentityKey
 
-      def createWrongTable(table: Table): Table =
-        createTableWithHashRangeKey(table, hashKeyName = "hashKey", rangeKeyName = "rangeKey", rangeKeyType = ScalarAttributeType.S)
+        def createWrongTable(table: Table): Table =
+          createTableWithHashRangeKey(table, hashKeyName = "hashKey", rangeKeyName = "rangeKey", rangeKeyType = ScalarAttributeType.S)
 
-      withSpecifiedTable(createWrongTable) { table =>
-        scanamo.exec(ScanamoTable[WrongEntry](table.name).putAll(
-          Set(
-            WrongEntry(id, rangeKey = randomAlphanumeric, record = createRecord),
-            WrongEntry(id, rangeKey = randomAlphanumeric, record = createRecord),
-          )
-        ))
+        withSpecifiedTable(createWrongTable) { table =>
+          scanamo.exec(ScanamoTable[WrongEntry](table.name).putAll(
+            Set(
+              WrongEntry(id, rangeKey = randomAlphanumeric, record = createRecord),
+              WrongEntry(id, rangeKey = randomAlphanumeric, record = createRecord),
+            )
+          ))
 
-        withMaxima(table) { maxima =>
-          val result = maxima.max(id)
+          withMaxima(table) { maxima =>
+            val result = maxima.max(id)
 
-          val err = result.left.value
-          err shouldBe a[MaximaReadError]
-          err.e shouldBe a[Error]
-          err.e.getMessage should include("DynamoReadError: InvalidPropertiesError")
+            val err = result.left.value
+            err shouldBe a[MaximaReadError]
+            err.e shouldBe a[Error]
+            err.e.getMessage should include("DynamoReadError: InvalidPropertiesError")
+          }
         }
       }
     }

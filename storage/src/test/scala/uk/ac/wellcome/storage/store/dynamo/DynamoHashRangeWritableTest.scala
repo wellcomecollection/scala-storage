@@ -1,7 +1,7 @@
 package uk.ac.wellcome.storage.store.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType
+import com.amazonaws.services.dynamodbv2.model.{AmazonDynamoDBException, ScalarAttributeType}
 import org.scalatest.OptionValues
 import org.scanamo.{DynamoFormat, Table => ScanamoTable}
 import org.scanamo.auto._
@@ -49,72 +49,100 @@ class DynamoHashRangeWritableTest
       rangeKeyType = ScalarAttributeType.N
     )
 
-  it("allows putting the same hash key at multiple versions") {
-    val hashKey = randomAlphanumeric
+  describe("DynamoHashRangeWritable") {
 
-    withLocalDynamoDbTable { table =>
-      val writable = createDynamoWritableWith(table, initialEntries = Set(
-        createEntry(hashKey, 2, createRecord)
-      ))
+    it("allows putting the same hash key at multiple versions") {
+      val hashKey = randomAlphanumeric
 
-      writable.put(id = Version(hashKey, 1))(createRecord) shouldBe a[Right[_, _]]
-      writable.put(id = Version(hashKey, 3))(createRecord) shouldBe a[Right[_, _]]
+      withLocalDynamoDbTable { table =>
+        val writable = createDynamoWritableWith(table, initialEntries = Set(
+          createEntry(hashKey, 2, createRecord)
+        ))
 
-      scanamo.exec(ScanamoTable[HashRangeEntry](table.name).scan()) should have size 3
-    }
-  }
+        writable.put(id = Version(hashKey, 1))(createRecord) shouldBe a[Right[_, _]]
+        writable.put(id = Version(hashKey, 3))(createRecord) shouldBe a[Right[_, _]]
 
-  describe("fails if the table definition is wrong") {
-    it("hash key name is wrong") {
-      assertErrorsOnBadKeyName(
-        table =>
-          createTableWithHashRangeKey(
-            table,
-            hashKeyName = "wrong",
-            hashKeyType = ScalarAttributeType.S,
-            rangeKeyName = "rangeKey",
-            rangeKeyType = ScalarAttributeType.N
-          )
-      )
+        scanamo.exec(ScanamoTable[HashRangeEntry](table.name).scan()) should have size 3
+      }
     }
 
-    it("hash key is the wrong type") {
-      assertErrorsOnBadKeyType(
-        table =>
-          createTableWithHashRangeKey(
-            table,
-            hashKeyName = "hashKey",
-            hashKeyType = ScalarAttributeType.N,
-            rangeKeyName = "rangeKey",
-            rangeKeyType = ScalarAttributeType.N
-          )
-      )
+    it("fails if the partition key is too long") {
+      // Maximum length of an partition key is 2048 bytes as of 25/06/2019
+      // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html#limits-partition-sort-keys
+
+      // There is also a sort key restriction of 1024 bytes
+      // though as we use Int as our sort key this will be
+      // impossible to reach as Int.MaxValue can be represented
+      // in < 32 bits!
+
+
+      val hashKey = randomStringOfByteLength(2049)()
+
+      val record = createRecord
+
+      withLocalDynamoDbTable { table =>
+        val writable = createDynamoWritableWith(table, initialEntries = Set.empty)
+        val result = writable.put(id = Version(hashKey, 1))(record)
+
+        val err = result.left.value
+
+        err.e shouldBe a[AmazonDynamoDBException]
+        err.e.getMessage should include("Hash primary key values must be under 2048 bytes")
+      }
     }
 
-    it("range key name is wrong") {
-      assertErrorsOnBadKeyName(
-        table =>
-          createTableWithHashRangeKey(
-            table,
-            hashKeyName = "hashKey",
-            hashKeyType = ScalarAttributeType.S,
-            rangeKeyName = "wrong",
-            rangeKeyType = ScalarAttributeType.N
-          )
-      )
-    }
+    describe("fails if the table definition is wrong") {
+      it("hash key name is wrong") {
+        assertErrorsOnBadKeyName(
+          table =>
+            createTableWithHashRangeKey(
+              table,
+              hashKeyName = "wrong",
+              hashKeyType = ScalarAttributeType.S,
+              rangeKeyName = "rangeKey",
+              rangeKeyType = ScalarAttributeType.N
+            )
+        )
+      }
 
-    it("range key is the wrong type") {
-      assertErrorsOnBadKeyType(
-        table =>
-          createTableWithHashRangeKey(
-            table,
-            hashKeyName = "hashKey",
-            hashKeyType = ScalarAttributeType.S,
-            rangeKeyName = "rangeKey",
-            rangeKeyType = ScalarAttributeType.S
-          )
-      )
+      it("hash key is the wrong type") {
+        assertErrorsOnBadKeyType(
+          table =>
+            createTableWithHashRangeKey(
+              table,
+              hashKeyName = "hashKey",
+              hashKeyType = ScalarAttributeType.N,
+              rangeKeyName = "rangeKey",
+              rangeKeyType = ScalarAttributeType.N
+            )
+        )
+      }
+
+      it("range key name is wrong") {
+        assertErrorsOnBadKeyName(
+          table =>
+            createTableWithHashRangeKey(
+              table,
+              hashKeyName = "hashKey",
+              hashKeyType = ScalarAttributeType.S,
+              rangeKeyName = "wrong",
+              rangeKeyType = ScalarAttributeType.N
+            )
+        )
+      }
+
+      it("range key is the wrong type") {
+        assertErrorsOnBadKeyType(
+          table =>
+            createTableWithHashRangeKey(
+              table,
+              hashKeyName = "hashKey",
+              hashKeyType = ScalarAttributeType.S,
+              rangeKeyName = "rangeKey",
+              rangeKeyType = ScalarAttributeType.S
+            )
+        )
+      }
     }
   }
 }

@@ -1,7 +1,7 @@
 package uk.ac.wellcome.storage.store.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.model.{ConditionalCheckFailedException, ScalarAttributeType}
+import com.amazonaws.services.dynamodbv2.model.{AmazonDynamoDBException, ConditionalCheckFailedException, ScalarAttributeType}
 import org.scalatest.OptionValues
 import org.scanamo.auto._
 import org.scanamo.syntax._
@@ -41,39 +41,60 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, Dyn
   override def createTable(table: Table): Table =
     createTableWithHashKey(table, keyName = "hashKey")
 
-  it("fails to overwrite a new version with an old version") {
-    val hashKey = randomAlphanumeric
-    val olderRecord = createRecord
-    val newerRecord = createRecord
+  describe("DynamoHashWritable") {
+    it("fails to overwrite a new version with an old version") {
+      val hashKey = randomAlphanumeric
+      val olderRecord = createRecord
+      val newerRecord = createRecord
 
-    withLocalDynamoDbTable { table =>
-      val writable = createDynamoWritableWith(table, initialEntries = Set(
-        createEntry(hashKey, 2, newerRecord)
-      ))
+      withLocalDynamoDbTable { table =>
+        val writable = createDynamoWritableWith(table, initialEntries = Set(
+          createEntry(hashKey, 2, newerRecord)
+        ))
 
-      val result = writable.put(id = Version(hashKey, 1))(olderRecord)
+        val result = writable.put(id = Version(hashKey, 1))(olderRecord)
 
-      val err = result.left.value
-      err.e shouldBe a[ConditionalCheckFailedException]
-      err.e.getMessage should startWith("The conditional request failed")
-    }
-  }
-
-  describe("fails if the table definition is wrong") {
-    it("hash key name is wrong") {
-      assertErrorsOnBadKeyName(
-        table => createTableWithHashKey(table, keyName = "wrong")
-      )
+        val err = result.left.value
+        err.e shouldBe a[ConditionalCheckFailedException]
+        err.e.getMessage should startWith("The conditional request failed")
+      }
     }
 
-    it("hash key is the wrong type") {
-      assertErrorsOnBadKeyType(
-        table => createTableWithHashKey(
-          table,
-          keyName = "hashKey",
-          keyType = ScalarAttributeType.N
+    it("fails if the partition key is too long") {
+      // Maximum length of an partition key is 2048 bytes as of 25/06/2019
+      // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html#limits-partition-sort-keys
+
+      val hashKey = randomStringOfByteLength(2049)()
+
+      val record = createRecord
+
+      withLocalDynamoDbTable { table =>
+        val writable = createDynamoWritableWith(table, initialEntries = Set.empty)
+        val result = writable.put(id = Version(hashKey, 1))(record)
+
+        val err = result.left.value
+
+        err.e shouldBe a[AmazonDynamoDBException]
+        err.e.getMessage should include("Hash primary key values must be under 2048 bytes")
+      }
+    }
+
+    describe("fails if the table definition is wrong") {
+      it("hash key name is wrong") {
+        assertErrorsOnBadKeyName(
+          table => createTableWithHashKey(table, keyName = "wrong")
         )
-      )
+      }
+
+      it("hash key is the wrong type") {
+        assertErrorsOnBadKeyType(
+          table => createTableWithHashKey(
+            table,
+            keyName = "hashKey",
+            keyType = ScalarAttributeType.N
+          )
+        )
+      }
     }
   }
 }

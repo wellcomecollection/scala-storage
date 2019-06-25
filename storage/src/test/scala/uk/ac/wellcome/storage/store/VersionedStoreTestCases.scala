@@ -17,7 +17,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
   def withFailingGetVersionedStore[R](initialEntries: Entries = Map.empty)(testWith: TestWith[VersionedStoreImpl, R]): R
   def withFailingPutVersionedStore[R](initialEntries: Entries = Map.empty)(testWith: TestWith[VersionedStoreImpl, R]): R
 
-  describe("VersionedStore") {
+  describe("it behaves as a VersionedStore") {
     describe("init") {
       it("stores a new record at the starting version") {
         withVersionedStore() { dao =>

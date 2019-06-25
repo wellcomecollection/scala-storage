@@ -67,11 +67,18 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
         Bucket(bucketName)
       },
       destroy = { bucket: Bucket =>
-        listKeysInBucket(bucket).foreach { key =>
-          safeCleanup(key) { s3Client.deleteObject(bucket.name, _) }
-        }
+        if (s3Client.doesBucketExistV2(bucket.name)) {
 
-        s3Client.deleteBucket(bucket.name)
+          listKeysInBucket(bucket).foreach { key =>
+            safeCleanup(key) {
+              s3Client.deleteObject(bucket.name, _)
+            }
+          }
+
+          s3Client.deleteBucket(bucket.name)
+        } else {
+          info(s"Trying to clean up ${bucket.name}, bucket does not exist.")
+        }
       }
     )
 

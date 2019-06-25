@@ -3,7 +3,8 @@ package uk.ac.wellcome.storage.store
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.generators.RandomThings
-import uk.ac.wellcome.storage.{DanglingHybridStorePointerError, DoesNotExistError, ReadError, WriteError}
+import uk.ac.wellcome.storage.streaming.{InputStreamWithLength, InputStreamWithLengthAndMetadata}
+import uk.ac.wellcome.storage._
 
 trait HybridStoreTestCases[IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
 TypedStoreImpl <: TypedStore[TypedStoreId, T],
@@ -16,18 +17,23 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
   type HybridStoreImpl = HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
 
   def withHybridStoreImpl[R](typedStore: TypedStoreImpl, indexedStore: IndexedStoreImpl)(testWith: TestWith[HybridStoreImpl, R])(implicit context: HybridStoreContext): R
+
   def withTypedStoreImpl[R](testWith: TestWith[TypedStoreImpl, R])(implicit context: HybridStoreContext): R
+
   def withIndexedStoreImpl[R](testWith: TestWith[IndexedStoreImpl, R])(implicit context: HybridStoreContext): R
 
   def createTypedStoreId(implicit namespace: Namespace): TypedStoreId
+
   def createIndexedStoreId(implicit namespace: Namespace): IndexedStoreId = createId
 
   def createMetadata: Metadata
 
   def withBrokenPutTypedStoreImpl[R](testWith: TestWith[TypedStoreImpl, R])(implicit context: HybridStoreContext): R
+
   def withBrokenGetTypedStoreImpl[R](testWith: TestWith[TypedStoreImpl, R])(implicit context: HybridStoreContext): R
 
   def withBrokenPutIndexedStoreImpl[R](testWith: TestWith[IndexedStoreImpl, R])(implicit context: HybridStoreContext): R
+
   def withBrokenGetIndexedStoreImpl[R](testWith: TestWith[IndexedStoreImpl, R])(implicit context: HybridStoreContext): R
 
   override def withStoreImpl[R](storeContext: HybridStoreContext, initialEntries: Map[IndexedStoreId, HybridStoreEntry[T, Metadata]])(testWith: TestWith[StoreImpl, R]): R = {
@@ -64,7 +70,7 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
                   val indexedResult = indexedStore.get(putValue.id)
                   val indexedValue = indexedResult.right.value
 
-                  val typedStoreId = indexedValue.identifiedT.typeStoreId
+                  val typedStoreId = indexedValue.identifiedT.typedStoreId
 
                   val typedResult = typedStore.get(typedStoreId)
                   val typedValue = typedResult.right.value
@@ -140,10 +146,9 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
                 val typedStoreId = createTypedStoreId
                 val metadata = createMetadata
 
-                // TODO: Change the second parameter to 'typedStoreId'
                 val hybridIndexedStoreEntry = HybridIndexedStoreEntry(
                   indexedStoreId = indexedStoreId,
-                  typeStoreId = typedStoreId,
+                  typedStoreId = typedStoreId,
                   metadata = metadata
                 )
 
@@ -170,7 +175,7 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
 
                 val hybridIndexedStoreEntry = HybridIndexedStoreEntry(
                   indexedStoreId = indexedStoreId,
-                  typeStoreId = typedStoreId,
+                  typedStoreId = typedStoreId,
                   metadata = metadata
                 )
 
@@ -202,24 +207,52 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
       }
 
       it("if the data in the typed store is the wrong format") {
-        true shouldBe false
+        withStoreContext { implicit context =>
+          withNamespace { implicit namespace =>
+            withTypedStoreImpl { typedStore =>
+              withIndexedStoreImpl { indexedStore =>
+                withHybridStoreImpl(typedStore, indexedStore) { hybridStoreImpl =>
+                  val id = createId
+
+                  hybridStoreImpl.put(id)(createT) shouldBe a[Right[_, _]]
+
+                  val typeStoreId = indexedStore.get(id).right.value
+                    .identifiedT.typedStoreId
+
+                  val byteLength = 256
+                  val inputStream = randomInputStream(byteLength)
+                  val inputStreamWithLength = new InputStreamWithLength(inputStream, byteLength)
+
+                  val inputStreamWithLengthAndMetadata =
+                    InputStreamWithLengthAndMetadata(inputStreamWithLength, Map.empty)
+
+                  typedStore.streamStore.put(typeStoreId)(inputStreamWithLengthAndMetadata) shouldBe a[Right[_,_]]
+
+                  val value = hybridStoreImpl.get(id).left.value
+
+                  value shouldBe a[JsonDecodingError]
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
 }
 
 trait HybridStoreWithOverwritesTestCases[
-  IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
-  TypedStoreImpl <: TypedStore[TypedStoreId, T],
-  IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]],
-  HybridStoreContext]
+IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
+TypedStoreImpl <: TypedStore[TypedStoreId, T],
+IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]],
+HybridStoreContext]
   extends HybridStoreTestCases[IndexedStoreId, TypedStoreId, T, Metadata, Namespace, TypedStoreImpl, IndexedStoreImpl, HybridStoreContext]
     with StoreWithOverwritesTestCases[IndexedStoreId, HybridStoreEntry[T, Metadata], Namespace, HybridStoreContext]
 
 trait HybridStoreWithoutOverwritesTestCases[
-  IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
-  TypedStoreImpl <: TypedStore[TypedStoreId, T],
-  IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]],
-  HybridStoreContext]
+IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
+TypedStoreImpl <: TypedStore[TypedStoreId, T],
+IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]],
+HybridStoreContext]
   extends HybridStoreTestCases[IndexedStoreId, TypedStoreId, T, Metadata, Namespace, TypedStoreImpl, IndexedStoreImpl, HybridStoreContext]
     with StoreWithoutOverwritesTestCases[IndexedStoreId, HybridStoreEntry[T, Metadata], Namespace, HybridStoreContext]
