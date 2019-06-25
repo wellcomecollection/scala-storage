@@ -200,6 +200,10 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
           }
         }
       }
+
+      it("if the data in the typed store is the wrong format") {
+        true shouldBe false
+      }
     }
   }
 }

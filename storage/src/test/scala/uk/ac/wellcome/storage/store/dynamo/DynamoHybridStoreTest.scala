@@ -98,6 +98,10 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
     it("if a DynamoDB index entry points to a non-existent S3 bucket") {
       true shouldBe false
     }
+
+    it("if the DynamoDB row is in the wrong format") {
+      true shouldBe false
+    }
   }
 }
 
