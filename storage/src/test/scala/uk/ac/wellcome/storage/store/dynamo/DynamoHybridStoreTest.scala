@@ -122,4 +122,26 @@ class DynamoHybridStoreTest extends HybridStoreTestCases[
 
   override def createId(implicit namespace: Unit): Version[String, Int] =
     Version(id = randomAlphanumeric, version = 1)
+
+  describe("it handles errors from AWS") {
+    it("if the prefix refers to a non-existent bucket") {
+      true shouldBe false
+    }
+
+    it("if the prefix creates an S3 key that's too long") {
+      true shouldBe false
+    }
+
+    it("if the underlying DynamoDB table doesn't exist") {
+      true shouldBe false
+    }
+
+    it("if a DynamoDB index entry points to a non-existent S3 key") {
+      true shouldBe false
+    }
+
+    it("if a DynamoDB index entry points to a non-existent S3 bucket") {
+      true shouldBe false
+    }
+  }
 }
