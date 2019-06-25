@@ -3,7 +3,7 @@ package uk.ac.wellcome.storage.store.memory
 import java.util.UUID
 
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.{Identified, StoreReadError, StoreWriteError, WriteError}
+import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGenerators}
 import uk.ac.wellcome.storage.store._
 
@@ -155,6 +155,15 @@ class MemoryHybridStoreTest
       new MemoryIndexedStoreImpl(initialEntries = Map.empty) {
         override def put(id: UUID)(t: HybridIndexedStoreEntry[UUID, String, Map[String, String]]): Either[WriteError, Identified[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]]] =
           Left(StoreWriteError(new Error("BOOM!")))
+      }
+    )
+  }
+
+  override def withBrokenGetIndexedStoreImpl[R](testWith: TestWith[MemoryIndexedStoreImpl, R])(implicit context: Context): R = {
+    testWith(
+      new MemoryIndexedStoreImpl(initialEntries = Map.empty) {
+        override def get(id: UUID): Either[ReadError, Identified[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]]] =
+          Left(StoreReadError(new Error("BOOM!")))
       }
     )
   }

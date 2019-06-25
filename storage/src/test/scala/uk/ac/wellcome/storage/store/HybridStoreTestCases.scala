@@ -4,7 +4,6 @@ import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.generators.RandomThings
 import uk.ac.wellcome.storage.{DanglingHybridStorePointerError, DoesNotExistError, ReadError, WriteError}
-//import uk.ac.wellcome.storage.{ReadError, WriteError}
 
 trait HybridStoreTestCases[IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
 TypedStoreImpl <: TypedStore[TypedStoreId, T],
@@ -29,6 +28,7 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
   def withBrokenGetTypedStoreImpl[R](testWith: TestWith[TypedStoreImpl, R])(implicit context: HybridStoreContext): R
 
   def withBrokenPutIndexedStoreImpl[R](testWith: TestWith[IndexedStoreImpl, R])(implicit context: HybridStoreContext): R
+  def withBrokenGetIndexedStoreImpl[R](testWith: TestWith[IndexedStoreImpl, R])(implicit context: HybridStoreContext): R
 
   override def withStoreImpl[R](storeContext: HybridStoreContext, initialEntries: Map[IndexedStoreId, HybridStoreEntry[T, Metadata]])(testWith: TestWith[StoreImpl, R]): R = {
     // TODO: The underlying withStoreImpl method should take implicit context
@@ -168,70 +168,20 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
           }
         }
       }
+
+      it("if the indexed store has a read error") {
+        withStoreContext { implicit context =>
+          withNamespace { implicit namespace =>
+            withTypedStoreImpl { typedStore =>
+              withBrokenGetIndexedStoreImpl { indexedStore =>
+                withHybridStoreImpl(typedStore, indexedStore) {
+                  _.get(createId).left.value shouldBe a[ReadError]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
-//
-//    describe("errors when getting the record") {
-//      it("fails if the indexed store refers to a missing typed store entry") {
-//        withStoreContext { case impls@(_, indexedStore) =>
-//          withNamespace { implicit namespace =>
-//
-//            val hybridStoreId, indexedStoreId = createIndexedStoreId
-//            val typedStoreId = createTypedStoreId
-//            val metadata = createMetadata
-//
-//            val hybridIndexedStoreEntry =
-//              HybridIndexedStoreEntry(indexedStoreId, typedStoreId, metadata)
-//
-//            indexedStore.put(indexedStoreId)(hybridIndexedStoreEntry) shouldBe a[Right[_, _]]
-//
-//            withStoreImpl(impls, Map.empty) {
-//              _.get(hybridStoreId).left.value shouldBe a[ReadError]
-//            }
-//          }
-//        }
-//      }
-//
-//      it("fails if the typed store has an error") {
-//        withStoreContext { case (_, indexedStore) =>
-//          withNamespace { implicit namespace =>
-//
-//            val hybridStoreId, indexedStoreId = createIndexedStoreId
-//            val typedStoreId = createTypedStoreId
-//            val metadata = createMetadata
-//
-//            val hybridIndexedStoreEntry =
-//              HybridIndexedStoreEntry(indexedStoreId, typedStoreId, metadata)
-//
-//            indexedStore.put(indexedStoreId)(hybridIndexedStoreEntry) shouldBe a[Right[_, _]]
-//
-//            val impls = (createBrokenGetTypedStore, indexedStore)
-//
-//            withStoreImpl(impls, Map.empty) {
-//              _.get(hybridStoreId).left.value shouldBe a[ReadError]
-//            }
-//          }
-//        }
-//      }
-//
-//      it("fails if the indexed store has an error") {
-//        withStoreContext { case (objectStore, _) =>
-//          withNamespace { implicit namespace =>
-//            val impls = (objectStore, createBrokenGetIndexedStore)
-//            withStoreImpl(impls, Map.empty) {
-//              _.get(createId).left.value shouldBe a[ReadError]
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
-//
-//  def createBrokenPutTypedStore: TypedStoreImpl
-//
-//  def createBrokenPutIndexedStore: IndexedStoreImpl
-//
-//  def createBrokenGetTypedStore: TypedStoreImpl
-//
-//  def createBrokenGetIndexedStore: IndexedStoreImpl
 }
