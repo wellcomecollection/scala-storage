@@ -2,8 +2,8 @@ package uk.ac.wellcome.storage.store
 
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.{DanglingHybridStorePointerError, DoesNotExistError, ReadError, WriteError}
 import uk.ac.wellcome.storage.generators.RandomThings
+import uk.ac.wellcome.storage.{DanglingHybridStorePointerError, DoesNotExistError, ReadError, WriteError}
 //import uk.ac.wellcome.storage.{ReadError, WriteError}
 
 trait HybridStoreTestCases[IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
@@ -118,7 +118,7 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
             withTypedStoreImpl { typedStore =>
               withIndexedStoreImpl { indexedStore =>
 
-                val hybridStoreId, indexedStoreId = createIndexedStoreId
+                val indexedStoreId = createIndexedStoreId
                 val typedStoreId = createTypedStoreId
                 val metadata = createMetadata
 
@@ -132,7 +132,7 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
                 indexedStore.put(indexedStoreId)(hybridIndexedStoreEntry) shouldBe a[Right[_, _]]
 
                 withHybridStoreImpl(typedStore, indexedStore) {
-                  _.get(hybridStoreId).left.value shouldBe a[DanglingHybridStorePointerError]
+                  _.get(indexedStoreId).left.value shouldBe a[DanglingHybridStorePointerError]
                 }
               }
             }
@@ -146,7 +146,7 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
             withBrokenGetTypedStoreImpl { typedStore =>
               withIndexedStoreImpl { indexedStore =>
 
-                val hybridStoreId, indexedStoreId = createIndexedStoreId
+                val indexedStoreId = createIndexedStoreId
                 val typedStoreId = createTypedStoreId
                 val metadata = createMetadata
 
@@ -158,8 +158,10 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
 
                 indexedStore.put(indexedStoreId)(hybridIndexedStoreEntry) shouldBe a[Right[_, _]]
 
-                withHybridStoreImpl(typedStore, indexedStore) {
-                  _.get(hybridStoreId).left.value shouldBe a[DanglingHybridStorePointerError]
+                withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
+                  val err = hybridStore.get(indexedStoreId).left.value
+                  err shouldBe a[ReadError]
+                  err.isInstanceOf[DoesNotExistError] shouldBe false
                 }
               }
             }
