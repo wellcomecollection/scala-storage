@@ -3,6 +3,7 @@ package uk.ac.wellcome.storage.store.memory
 import java.util.UUID
 
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.{Identified, StoreReadError, StoreWriteError, WriteError}
 import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGenerators}
 import uk.ac.wellcome.storage.store._
 
@@ -15,7 +16,10 @@ class MemoryHybridStoreTest
     with RecordGenerators
     with MemoryTypedStoreFixtures[String, Record] {
 
-  type Context = (MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])
+  type MemoryIndexedStoreImpl = MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]]
+  type MemoryTypedStoreImpl = MemoryTypedStore[String, Record]
+
+  type Context = (MemoryTypedStoreImpl, MemoryIndexedStoreImpl)
 
 //  type IndexedMemoryStore = MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Record]]
 //
@@ -85,21 +89,21 @@ class MemoryHybridStoreTest
 //  override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
 //  override def createId(implicit namespace: String): UUID = UUID.randomUUID()
   override def withHybridStoreImpl[R](
-    typedStore: MemoryTypedStore[String, Record],
-    indexedStore: MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])(
+    typedStore: MemoryTypedStoreImpl,
+    indexedStore: MemoryIndexedStoreImpl)(
     testWith: TestWith[HybridStoreImpl, R])(
     implicit context: Context): R =
     testWith(
       new MemoryHybridStore[UUID, Record, Map[String, String]]()(typedStore, indexedStore, codec)
     )
 
-  override def withTypedStoreImpl[R](testWith: TestWith[MemoryTypedStore[String, Record], R])(implicit context: (MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])): R = {
+  override def withTypedStoreImpl[R](testWith: TestWith[MemoryTypedStoreImpl, R])(implicit context: Context): R = {
     val (typedStore, _) = context
 
     testWith(typedStore)
   }
 
-  override def withIndexedStoreImpl[R](testWith: TestWith[MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]], R])(implicit context: (MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])): R = {
+  override def withIndexedStoreImpl[R](testWith: TestWith[MemoryIndexedStoreImpl, R])(implicit context: Context): R = {
     val (_, indexedStore) = context
 
     testWith(indexedStore)
@@ -109,11 +113,11 @@ class MemoryHybridStoreTest
 
   override def createMetadata: Map[String, String] = createValidMetadata
 
-  override def withStoreContext[R](testWith: TestWith[(MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]]), R]): R = {
+  override def withStoreContext[R](testWith: TestWith[Context, R]): R = {
     implicit val underlyingStreamStore: MemoryStreamStore[String] = MemoryStreamStore[String]()
 
     withMemoryTypedStoreImpl(initialEntries = Map.empty) { typedStore =>
-      val indexedStore = new MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]](initialEntries = Map.empty)
+      val indexedStore = new MemoryIndexedStoreImpl(initialEntries = Map.empty)
 
       testWith((typedStore, indexedStore))
     }
@@ -125,4 +129,33 @@ class MemoryHybridStoreTest
   override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
 
   override def createId(implicit namespace: String): UUID = UUID.randomUUID()
+
+  override def withBrokenPutTypedStoreImpl[R](testWith: TestWith[MemoryTypedStoreImpl, R])(implicit context: Context): R = {
+    implicit val underlyingStreamStore: MemoryStreamStore[String] = MemoryStreamStore[String]()
+
+    testWith(
+      new MemoryTypedStoreImpl(initialEntries = Map.empty) {
+        override def put(id: String)(entry: TypedStoreEntry[Record]): WriteEither = Left(StoreWriteError(new Error("BOOM!")))
+      }
+    )
+  }
+
+  override def withBrokenGetTypedStoreImpl[R](testWith: TestWith[MemoryTypedStoreImpl, R])(implicit context: Context): R = {
+    implicit val underlyingStreamStore: MemoryStreamStore[String] = MemoryStreamStore[String]()
+
+    testWith(
+      new MemoryTypedStoreImpl(initialEntries = Map.empty) {
+        override def get(id: String): ReadEither = Left(StoreReadError(new Error("BOOM!")))
+      }
+    )
+  }
+
+  override def withBrokenPutIndexedStoreImpl[R](testWith: TestWith[MemoryIndexedStoreImpl, R])(implicit context: Context): R = {
+    testWith(
+      new MemoryIndexedStoreImpl(initialEntries = Map.empty) {
+        override def put(id: UUID)(t: HybridIndexedStoreEntry[UUID, String, Map[String, String]]): Either[WriteError, Identified[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]]] =
+          Left(StoreWriteError(new Error("BOOM!")))
+      }
+    )
+  }
 }

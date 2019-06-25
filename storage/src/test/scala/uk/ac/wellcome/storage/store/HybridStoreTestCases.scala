@@ -2,6 +2,7 @@ package uk.ac.wellcome.storage.store
 
 import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
+import uk.ac.wellcome.storage.{DanglingHybridStorePointerError, DoesNotExistError, ReadError, WriteError}
 import uk.ac.wellcome.storage.generators.RandomThings
 //import uk.ac.wellcome.storage.{ReadError, WriteError}
 
@@ -24,6 +25,11 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
 
   def createMetadata: Metadata
 
+  def withBrokenPutTypedStoreImpl[R](testWith: TestWith[TypedStoreImpl, R])(implicit context: HybridStoreContext): R
+  def withBrokenGetTypedStoreImpl[R](testWith: TestWith[TypedStoreImpl, R])(implicit context: HybridStoreContext): R
+
+  def withBrokenPutIndexedStoreImpl[R](testWith: TestWith[IndexedStoreImpl, R])(implicit context: HybridStoreContext): R
+
   override def withStoreImpl[R](storeContext: HybridStoreContext, initialEntries: Map[IndexedStoreId, HybridStoreEntry[T, Metadata]])(testWith: TestWith[StoreImpl, R]): R = {
     // TODO: The underlying withStoreImpl method should take implicit context
     implicit val context: HybridStoreContext = storeContext
@@ -41,78 +47,127 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
     }
   }
 
-//  override def withStoreImpl[R](initialEntries: Map[IndexedStoreId, HybridStoreEntry[T, Metadata]])(testWith: TestWith[StoreImpl, R]): R =
-//    withStoreContext { implicit storeContext =>
-//      withHybridStoreImpl { hybridStore =>
-//        initialEntries.foreach {
-//          case (id, entry: HybridStoreEntry[T, Metadata]) => {
-//            hybridStore.put(id)(entry) shouldBe a[Right[_, _]]
-//          }
-//        }
-//
-//        testWith(hybridStore)
-//      }
-//    }
-//
-//  describe("HybridStore") {
-//    describe("storing a new record") {
-//      withStoreContext { case impls @ (typedStore, indexedStore, _) =>
-//        withStoreImpl(impls, Map.empty) { hybridStore =>
-//          withNamespace { implicit namespace =>
-//
-//            val id = createId
-//            val hybridStoreEntry = createT
-//
-//            val putResult = hybridStore.put(id)(hybridStoreEntry)
-//            val putValue = putResult.right.value
-//
-//            val indexedResult = indexedStore.get(putValue.id)
-//            val indexedValue = indexedResult.right.value
-//
-//            val typedStoreId = indexedValue.identifiedT.typeStoreId
-//
-//            val typedResult = typedStore.get(typedStoreId)
-//            val typedValue = typedResult.right.value
-//
-//            it("stores the object in the object store") {
-//              typedValue.identifiedT shouldBe TypedStoreEntry(hybridStoreEntry.t, Map.empty)
-//            }
-//
-//            it("stores the metadata in the indexed store") {
-//              indexedValue.id shouldBe id
-//              indexedValue.identifiedT.metadata shouldBe hybridStoreEntry.metadata
-//            }
-//          }
-//        }
-//      }
-//    }
-//
-//    describe("errors when storing the record") {
-//      it("fails if the object store has an error") {
-//        withStoreContext { case (_, indexedStore, _) =>
-//          withNamespace { implicit namespace =>
-//
-//            val impls = (createBrokenPutTypedStore, indexedStore)
-//
-//            withStoreImpl(impls, Map.empty) {
-//              _.put(createId)(createT).left.value shouldBe a[WriteError]
-//            }
-//          }
-//        }
-//      }
-//
-//      it("fails if the indexed store has an error") {
-//        withStoreContext { case (objectStore, _) =>
-//          withNamespace { implicit namespace =>
-//
-//            val impls = (objectStore, createBrokenPutIndexedStore)
-//            withStoreImpl(impls, Map.empty) {
-//              _.put(createId)(createT).left.value shouldBe a[WriteError]
-//            }
-//          }
-//        }
-//      }
-//    }
+  describe("it behaves as a HybridStore") {
+    describe("storing a new record") {
+      withStoreContext { implicit context =>
+        withNamespace { implicit namespace =>
+          withTypedStoreImpl { typedStore =>
+            withIndexedStoreImpl { indexedStore =>
+              withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
+                val id = createId
+                val hybridStoreEntry = createT
+
+                val putResult = hybridStore.put(id)(hybridStoreEntry)
+                val putValue = putResult.right.value
+
+                val indexedResult = indexedStore.get(putValue.id)
+                val indexedValue = indexedResult.right.value
+
+                val typedStoreId = indexedValue.identifiedT.typeStoreId
+
+                val typedResult = typedStore.get(typedStoreId)
+                val typedValue = typedResult.right.value
+
+                it("stores the object in the object store") {
+                  typedValue.identifiedT shouldBe TypedStoreEntry(hybridStoreEntry.t, Map.empty)
+                }
+
+                it("stores the metadata in the indexed store") {
+                  indexedValue.id shouldBe id
+                  indexedValue.identifiedT.metadata shouldBe hybridStoreEntry.metadata
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    describe("handles errors in the underlying stores") {
+      it("if the typed store has a write error") {
+        withStoreContext { implicit context =>
+          withNamespace { implicit namespace =>
+            withBrokenPutTypedStoreImpl { typedStore =>
+              withIndexedStoreImpl { indexedStore =>
+                withHybridStoreImpl(typedStore, indexedStore) {
+                  _.put(createId)(createT).left.value shouldBe a[WriteError]
+                }
+              }
+            }
+          }
+        }
+      }
+
+      it("if the indexed store has a write error") {
+        withStoreContext { implicit context =>
+          withNamespace { implicit namespace =>
+            withTypedStoreImpl { typedStore =>
+              withBrokenPutIndexedStoreImpl { indexedStore =>
+                withHybridStoreImpl(typedStore, indexedStore) {
+                  _.put(createId)(createT).left.value shouldBe a[WriteError]
+                }
+              }
+            }
+          }
+        }
+      }
+
+      it("if the indexed store refers to a missing typed store entry") {
+        withStoreContext { implicit context =>
+          withNamespace { implicit namespace =>
+            withTypedStoreImpl { typedStore =>
+              withIndexedStoreImpl { indexedStore =>
+
+                val hybridStoreId, indexedStoreId = createIndexedStoreId
+                val typedStoreId = createTypedStoreId
+                val metadata = createMetadata
+
+                // TODO: Change the second parameter to 'typedStoreId'
+                val hybridIndexedStoreEntry = HybridIndexedStoreEntry(
+                  indexedStoreId = indexedStoreId,
+                  typeStoreId = typedStoreId,
+                  metadata = metadata
+                )
+
+                indexedStore.put(indexedStoreId)(hybridIndexedStoreEntry) shouldBe a[Right[_, _]]
+
+                withHybridStoreImpl(typedStore, indexedStore) {
+                  _.get(hybridStoreId).left.value shouldBe a[DanglingHybridStorePointerError]
+                }
+              }
+            }
+          }
+        }
+      }
+
+      it("if the typed store has a read error") {
+        withStoreContext { implicit context =>
+          withNamespace { implicit namespace =>
+            withBrokenGetTypedStoreImpl { typedStore =>
+              withIndexedStoreImpl { indexedStore =>
+
+                val hybridStoreId, indexedStoreId = createIndexedStoreId
+                val typedStoreId = createTypedStoreId
+                val metadata = createMetadata
+
+                val hybridIndexedStoreEntry = HybridIndexedStoreEntry(
+                  indexedStoreId = indexedStoreId,
+                  typeStoreId = typedStoreId,
+                  metadata = metadata
+                )
+
+                indexedStore.put(indexedStoreId)(hybridIndexedStoreEntry) shouldBe a[Right[_, _]]
+
+                withHybridStoreImpl(typedStore, indexedStore) {
+                  _.get(hybridStoreId).left.value shouldBe a[DanglingHybridStorePointerError]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 //
 //    describe("errors when getting the record") {
 //      it("fails if the indexed store refers to a missing typed store entry") {

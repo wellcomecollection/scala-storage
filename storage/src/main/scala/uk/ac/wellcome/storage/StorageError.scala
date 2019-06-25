@@ -63,6 +63,8 @@ case class DoesNotExistError(e: Throwable = new Error())
 
 case class StoreReadError(e: Throwable) extends ReadError with BackendError
 
+case class DanglingHybridStorePointerError(e: Throwable) extends ReadError
+
 case class CannotCloseStreamError(e: Throwable) extends ReadError
 
 case class CharsetDecodingError(e: Throwable = new Error())
