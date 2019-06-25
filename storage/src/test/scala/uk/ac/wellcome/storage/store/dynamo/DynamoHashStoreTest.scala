@@ -11,7 +11,7 @@ import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 import uk.ac.wellcome.storage.store.StoreWithoutOverwritesTestCases
 
 class DynamoHashStoreTest extends StoreWithoutOverwritesTestCases[Version[String, Int], Record, String, Table] with RecordGenerators with DynamoFixtures {
-  override def withStoreImpl[R](table: Table, initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[StoreImpl, R]): R = {
+  override def withStoreImpl[R](initialEntries: Map[Version[String, Int], Record], table: Table)(testWith: TestWith[StoreImpl, R]): R = {
     val dynamoEntries = initialEntries.map { case (id, record) =>
       DynamoHashEntry(id.id, id.version, record)
     }.toSet

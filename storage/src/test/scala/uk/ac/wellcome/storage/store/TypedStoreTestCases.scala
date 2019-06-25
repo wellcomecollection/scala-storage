@@ -14,7 +14,7 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
   with TypedStoreFixtures[Ident, T, StreamStoreImpl, TypedStoreImpl, StreamStoreContext]
   with RandomThings {
 
-  override def withStoreImpl[R](storeContext: StreamStoreContext, initialEntries: Map[Ident, TypedStoreEntry[T]])(testWith: TestWith[StoreImpl, R]): R =
+  override def withStoreImpl[R](initialEntries: Map[Ident, TypedStoreEntry[T]], storeContext: StreamStoreContext)(testWith: TestWith[StoreImpl, R]): R =
     withTypedStoreImpl(storeContext, initialEntries) { typedStore =>
       testWith(typedStore)
     }

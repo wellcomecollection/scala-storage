@@ -6,13 +6,12 @@ import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.store.fixtures.VersionedStoreFixtures
 
-trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherValues with Logging with VersionedStoreFixtures[Id, T] {
-  def createIdent: Id
-  def createT: T
-
-  type Entries = Map[Version[Id, Int], T]
-
-  def withVersionedStore[R](initialEntries: Entries = Map.empty)(testWith: TestWith[VersionedStoreImpl, R]): R
+trait VersionedStoreTestCases[Id, T, VersionedStoreContext]
+  extends FunSpec
+    with Matchers
+    with EitherValues
+    with Logging
+    with VersionedStoreFixtures[Id, Int, T, VersionedStoreContext] {
 
   def withFailingGetVersionedStore[R](initialEntries: Entries = Map.empty)(testWith: TestWith[VersionedStoreImpl, R]): R
   def withFailingPutVersionedStore[R](initialEntries: Entries = Map.empty)(testWith: TestWith[VersionedStoreImpl, R]): R
@@ -20,11 +19,11 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
   describe("it behaves as a VersionedStore") {
     describe("init") {
       it("stores a new record at the starting version") {
-        withVersionedStore() { dao =>
+        withVersionedStoreImpl() { versionedStore =>
           val id = createIdent
           val t = createT
 
-          val result = dao.init(id)(t)
+          val result = versionedStore.init(id)(t)
           val value = result.right.value
 
           value.identifiedT shouldBe t
@@ -38,7 +37,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         val t1 = createT
         val t2 = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(Version(id, 0) -> t1)
         ) { store =>
           val result = store.init(id)(t2)
@@ -48,7 +47,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         }
       }
 
-      it("fails if the underlying dao fails to put") {
+      it("fails if the underlying store fails to put") {
         withFailingPutVersionedStore() { store =>
           val id = createIdent
           val t = createT
@@ -61,7 +60,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
 
     describe("put") {
       it("stores a new record") {
-        withVersionedStore() { store =>
+        withVersionedStoreImpl() { store =>
           val id = createIdent
 
           val t = createT
@@ -83,7 +82,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         val t1 = createT
         val t2 = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(Version(id, 0) -> t1)
         ) { store =>
           val result = store.putLatest(id)(t2)
@@ -100,7 +99,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         val t1 = createT
         val t2 = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(Version(id, 0) -> t1)
         ) { store =>
           val result = store.put(Version(id, 1))(t2)
@@ -118,7 +117,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
           val t0 = createT
           val t2 = createT
 
-          withVersionedStore(
+          withVersionedStoreImpl(
             initialEntries = Map(Version(id, 0) -> t0)
           ) { store =>
             val result = store.put(Version(id, 2))(t2)
@@ -135,7 +134,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
           val t2 = createT
           val t3 = createT
 
-          withVersionedStore(
+          withVersionedStoreImpl(
             initialEntries = Map(Version(id, 2) -> t2)
           ) { store =>
             val result = store.putLatest(id)(t3)
@@ -153,7 +152,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         val t2 = createT
         val t3 = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(Version(id, 3) -> t3)
         ) { store =>
           val result = store.put(Version(id, 1))(t2)
@@ -168,14 +167,14 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
 
         val t = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(Version(id, 0) -> t)
         ) { store =>
           store.put(Version(id, 0))(t).left.value shouldBe a[VersionAlreadyExistsError]
         }
       }
 
-      it("fails if the underlying dao fails to put") {
+      it("fails if the underlying store fails to put") {
         withFailingPutVersionedStore() { store =>
           val id = createIdent
           val t = createT
@@ -191,7 +190,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         val id = createIdent
         val t = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(Version(id, 0) -> t)
         ) { store =>
           val result = store.getLatest(id)
@@ -207,7 +206,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         val t1 = createT
         val t2 = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(Version(id, 1) -> t1, Version(id, 2) -> t2)
         ) { store =>
 
@@ -228,7 +227,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         val t4 = createT
         val t5 = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(
             Version(id, 1) -> t1,
             Version(id, 2) -> t2,
@@ -249,7 +248,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         val id = createIdent
         val t = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(Version(id, 0) -> t)
         ) { store =>
           store.get(Version(id, 0)).right.value shouldBe Identified(Version(id, 0), t)
@@ -258,7 +257,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
       }
 
       it("fails when getting a non-existent id and version pair") {
-        withVersionedStore() { store =>
+        withVersionedStoreImpl() { store =>
           val id = createIdent
 
           store.get(Version(id, 1)).left.value shouldBe a[NoVersionExistsError]
@@ -266,7 +265,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
       }
 
       it("fails when getting a non-existent id") {
-        withVersionedStore() { store =>
+        withVersionedStoreImpl() { store =>
           val id = createIdent
 
           store.getLatest(id).left.value shouldBe a[NoVersionExistsError]
@@ -289,7 +288,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         val t = createT
         val updatedT = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(Version(id, 0) -> t)
         ) { store =>
           val upsertResult = store
@@ -301,7 +300,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
       }
 
       it("writes when an id does not exist") {
-        withVersionedStore() { store =>
+        withVersionedStoreImpl() { store =>
           val id = createIdent
           val t = createT
           val otherT = createT
@@ -322,7 +321,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         val t = createT
         val updatedT = createT
 
-        withVersionedStore(
+        withVersionedStoreImpl(
           initialEntries = Map(Version(id, 0) -> t)
         ) { store =>
           val update = store
@@ -334,7 +333,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
       }
 
       it("refuses to write when an id does not exist") {
-        withVersionedStore() { store =>
+        withVersionedStoreImpl() { store =>
           val id = createIdent
           val t = createT
 
@@ -345,7 +344,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         }
       }
 
-      it("fails if the underlying dao fails to write") {
+      it("fails if the underlying store fails to write") {
         val id = createIdent
         val t = createT
 
@@ -359,7 +358,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
         }
       }
 
-      it("fails if the underlying dao fails to read") {
+      it("fails if the underlying store fails to read") {
         val id = createIdent
 
         val t = createT
@@ -383,7 +382,7 @@ trait VersionedStoreTestCases[Id, T] extends FunSpec with Matchers with EitherVa
       val t3 = createT
       val t4 = createT
 
-      withVersionedStore() { store =>
+      withVersionedStoreImpl() { store =>
         store.init(id)(t0) shouldBe a[Right[_, _]]
         store.getLatest(id).right.value shouldBe Identified(Version(id, 0), t0)
         store.get(Version(id, 0)).right.value shouldBe Identified(Version(id, 0), t0)

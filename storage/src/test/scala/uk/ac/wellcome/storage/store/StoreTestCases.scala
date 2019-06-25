@@ -56,11 +56,11 @@ trait StoreTestCases[Id, T, Namespace, StoreContext]
           val id = createId
           val t = createT
 
-          withStoreImpl(storeContext, initialEntries = Map.empty) { store1 =>
+          withStoreImpl(initialEntries = Map.empty, storeContext) { store1 =>
             store1.put(id)(t) shouldBe a[Right[_, _]]
           }
 
-          withStoreImpl(storeContext, initialEntries = Map.empty) { store2 =>
+          withStoreImpl(initialEntries = Map.empty, storeContext) { store2 =>
             val retrievedEntry: Identified[Id, T] = store2.get(id).right.value
             retrievedEntry.id shouldBe id
             assertEqualT(t, retrievedEntry.identifiedT)

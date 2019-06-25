@@ -5,7 +5,7 @@ import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.maxima.Maxima
 
 class VersionedStore[Id, V, T](
-  store: Store[Version[Id, V], T] with Maxima[Id, V]
+  val store: Store[Version[Id, V], T] with Maxima[Id, V]
 )(implicit N: Numeric[V], O: Ordering[V])
     extends Store[Version[Id, V], T]
     with Logging {

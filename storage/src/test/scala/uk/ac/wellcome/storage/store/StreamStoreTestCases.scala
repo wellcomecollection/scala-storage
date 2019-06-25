@@ -23,7 +23,7 @@ trait StreamStoreTestCases[Ident, Namespace, StreamStoreImpl <: StreamStore[Iden
     with StreamStoreFixtures[Ident, StreamStoreImpl, StreamStoreContext]
     with StoreWithOverwritesTestCases[Ident, InputStreamWithLengthAndMetadata, Namespace, StreamStoreContext] {
 
-  override def withStoreImpl[R](storeContext: StreamStoreContext, initialEntries: Map[Ident, InputStreamWithLengthAndMetadata])(testWith: TestWith[StoreImpl, R]): R =
+  override def withStoreImpl[R](initialEntries: Map[Ident, InputStreamWithLengthAndMetadata], storeContext: StreamStoreContext)(testWith: TestWith[StoreImpl, R]): R =
     withStreamStoreImpl(storeContext, initialEntries) { streamStore =>
       testWith(streamStore)
     }
