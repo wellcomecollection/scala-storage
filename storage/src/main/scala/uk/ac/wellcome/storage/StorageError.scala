@@ -58,7 +58,7 @@ case class MetadataCoercionFailure(
 ) extends WriteError
 
 case class InvalidIdentifierFailure(e: Throwable = new Error())
-  extends WriteError
+    extends WriteError
 
 case class DoesNotExistError(e: Throwable = new Error())
     extends ReadError

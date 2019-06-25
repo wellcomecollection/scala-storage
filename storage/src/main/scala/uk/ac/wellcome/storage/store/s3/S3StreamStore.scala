@@ -144,7 +144,8 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
       keyByteLength <= MAX_KEY_BYTE_LENGTH,
       request,
       InvalidIdentifierFailure(
-        new Error(s"S3 object key byte length is too big: $keyByteLength > $MAX_KEY_BYTE_LENGTH")
+        new Error(
+          s"S3 object key byte length is too big: $keyByteLength > $MAX_KEY_BYTE_LENGTH")
       )
     )
   }

@@ -29,7 +29,8 @@ class MemoryStreamStore[Ident](
     entry: InputStreamWithLengthAndMetadata): WriteEither =
     bytesCodec.fromStream(entry) match {
       case Right(bytes) =>
-        val internalEntry = MemoryStreamStoreEntry(bytes, metadata = entry.metadata)
+        val internalEntry =
+          MemoryStreamStoreEntry(bytes, metadata = entry.metadata)
         memoryStore.put(id)(internalEntry).map { _ =>
           Identified(id, entry)
         }
@@ -42,7 +43,8 @@ class MemoryStreamStore[Ident](
 
 object MemoryStreamStore {
   def apply[Ident](): MemoryStreamStore[Ident] = {
-    val memoryStore = new MemoryStore[Ident, MemoryStreamStoreEntry](initialEntries = Map.empty)
+    val memoryStore =
+      new MemoryStore[Ident, MemoryStreamStoreEntry](initialEntries = Map.empty)
 
     new MemoryStreamStore[Ident](memoryStore)
   }
