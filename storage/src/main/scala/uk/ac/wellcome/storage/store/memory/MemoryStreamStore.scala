@@ -7,7 +7,7 @@ import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 
 class MemoryStreamStore[Ident](
-  val memoryStore: MemoryStore[Ident, MemoryStoreEntry])
+  val memoryStore: MemoryStore[Ident, MemoryStreamStoreEntry])
     extends StreamStore[Ident, InputStreamWithLengthAndMetadata]
     with Logging {
   override def get(id: Ident): ReadEither =
@@ -29,7 +29,8 @@ class MemoryStreamStore[Ident](
     entry: InputStreamWithLengthAndMetadata): WriteEither =
     bytesCodec.fromStream(entry) match {
       case Right(bytes) =>
-        val internalEntry = MemoryStoreEntry(bytes, metadata = entry.metadata)
+        val internalEntry =
+          MemoryStreamStoreEntry(bytes, metadata = entry.metadata)
         memoryStore.put(id)(internalEntry).map { _ =>
           Identified(id, entry)
         }
@@ -40,7 +41,16 @@ class MemoryStreamStore[Ident](
     }
 }
 
-case class MemoryStoreEntry(
+object MemoryStreamStore {
+  def apply[Ident](): MemoryStreamStore[Ident] = {
+    val memoryStore =
+      new MemoryStore[Ident, MemoryStreamStoreEntry](initialEntries = Map.empty)
+
+    new MemoryStreamStore[Ident](memoryStore)
+  }
+}
+
+case class MemoryStreamStoreEntry(
   bytes: Array[Byte],
   metadata: Map[String, String]
 )

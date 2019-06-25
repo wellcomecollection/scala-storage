@@ -5,7 +5,7 @@ import com.amazonaws.services.s3.model.AmazonS3Exception
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.store.StreamStoreTestCases
 import uk.ac.wellcome.storage.store.fixtures.BucketNamespaceFixtures
-import uk.ac.wellcome.storage.{DoesNotExistError, ObjectLocation, StoreReadError, StoreWriteError}
+import uk.ac.wellcome.storage._
 
 class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3StreamStore, Unit] with S3StreamStoreFixtures with BucketNamespaceFixtures {
   describe("handles errors from S3") {
@@ -58,6 +58,26 @@ class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3S
           val err = result.e
           err shouldBe a[AmazonS3Exception]
           err.getMessage should startWith("The specified bucket is not valid")
+        }
+      }
+
+      it("errors if the object key is too long") {
+        withNamespace { implicit namespace =>
+
+          // Maximum length of an s3 key is 1024 bytes as of 25/06/2019
+          // https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html
+
+          val tooLongPath = randomStringOfByteLength(1025)()
+          val id = createId.copy(path = tooLongPath)
+
+          val entry = ReplayableStream(randomBytes(), metadata = Map.empty)
+
+          withStoreImpl(initialEntries = Map.empty) { store =>
+            val value = store.put(id)(entry).left.value
+
+            value shouldBe a[InvalidIdentifierFailure]
+            value.e.getMessage should startWith("S3 object key byte length is too big")
+          }
         }
       }
     }

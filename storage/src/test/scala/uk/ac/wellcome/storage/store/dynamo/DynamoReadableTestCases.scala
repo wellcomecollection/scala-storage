@@ -28,71 +28,73 @@ trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Reco
 
   def createEntry(hashKey: String, v: Int, record: Record): EntryType
 
-  it("reads a row from the table") {
-    val id = randomAlphanumeric
-    val record = createRecord
+  describe("DynamoReadable") {
+    it("reads a row from the table") {
+      val id = randomAlphanumeric
+      val record = createRecord
 
-    val initialEntries = Set(
-      createEntry(id, v = 1, record),
-    )
+      val initialEntries = Set(
+        createEntry(id, v = 1, record),
+      )
 
-    withLocalDynamoDbTable { table =>
-      val readable = createDynamoReadableWith(table, initialEntries)
+      withLocalDynamoDbTable { table =>
+        val readable = createDynamoReadableWith(table, initialEntries)
 
-      readable.get(Version(id, 1)).right.value shouldBe Identified(Version(id, 1), record)
+        readable.get(Version(id, 1)).right.value shouldBe Identified(Version(id, 1), record)
+      }
     }
-  }
 
-  it("finds nothing if the table is empty") {
-    withLocalDynamoDbTable { table =>
-      val readable = createDynamoReadableWith(table)
+    it("finds nothing if the table is empty") {
+      withLocalDynamoDbTable { table =>
+        val readable = createDynamoReadableWith(table)
 
-      readable.get(Version(randomAlphanumeric, 1)).left.value shouldBe a[DoesNotExistError]
+        readable.get(Version(randomAlphanumeric, 1)).left.value shouldBe a[DoesNotExistError]
+      }
     }
-  }
 
-  it("finds nothing if there's no row with that hash key") {
-    val id = randomAlphanumeric
+    it("finds nothing if there's no row with that hash key") {
+      val id = randomAlphanumeric
 
-    val initialEntries = Set(
-      createEntry(id, v = 1, createRecord),
-    )
+      val initialEntries = Set(
+        createEntry(id, v = 1, createRecord),
+      )
 
-    withLocalDynamoDbTable { table =>
-      val readable = createDynamoReadableWith(table, initialEntries)
+      withLocalDynamoDbTable { table =>
+        val readable = createDynamoReadableWith(table, initialEntries)
 
-      readable.get(Version(randomAlphanumeric, 1)).left.value shouldBe a[DoesNotExistError]
+        readable.get(Version(randomAlphanumeric, 1)).left.value shouldBe a[DoesNotExistError]
+      }
     }
-  }
 
-  it("fails if DynamoDB has an error") {
-    val readable = createDynamoReadableWith(nonExistentTable)
+    it("fails if DynamoDB has an error") {
+      val readable = createDynamoReadableWith(nonExistentTable)
 
-    val result = readable.get(Version(randomAlphanumeric, 1))
-    val err = result.left.value.e
-
-    err shouldBe a[ResourceNotFoundException]
-    err.getMessage should startWith("Cannot do operations on a non-existent table")
-  }
-
-  it("fails if the row doesn't match the model") {
-    // This doesn't have the payload field that our DynamoEntry model requires
-    case class BadModel(hashKey: String, rangeKey: Int, version: Int)
-
-    val id = randomAlphanumeric
-
-    withLocalDynamoDbTable { table =>
-      scanamo.exec(ScanamoTable[BadModel](table.name).putAll(
-        Set(BadModel(id, rangeKey = 1, version = 1))
-      ))
-
-      val readable = createDynamoReadableWith(table)
-
-      val result = readable.get(Version(id, 1))
+      val result = readable.get(Version(randomAlphanumeric, 1))
       val err = result.left.value.e
 
-      err shouldBe a[Error]
-      err.getMessage should startWith("DynamoReadError: InvalidPropertiesError")
+      err shouldBe a[ResourceNotFoundException]
+      err.getMessage should startWith("Cannot do operations on a non-existent table")
+    }
+
+    it("fails if the row doesn't match the model") {
+      // This doesn't have the payload field that our DynamoEntry model requires
+      case class BadModel(hashKey: String, rangeKey: Int, version: Int)
+
+      val id = randomAlphanumeric
+
+      withLocalDynamoDbTable { table =>
+        scanamo.exec(ScanamoTable[BadModel](table.name).putAll(
+          Set(BadModel(id, rangeKey = 1, version = 1))
+        ))
+
+        val readable = createDynamoReadableWith(table)
+
+        val result = readable.get(Version(id, 1))
+        val err = result.left.value.e
+
+        err shouldBe a[Error]
+        err.getMessage should startWith("DynamoReadError: InvalidPropertiesError")
+      }
     }
   }
 

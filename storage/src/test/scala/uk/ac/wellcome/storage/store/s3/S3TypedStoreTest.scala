@@ -42,16 +42,17 @@ class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucke
 
   override def createT: TypedStoreEntry[Record] = TypedStoreEntry(createRecord, metadata = createValidMetadata)
 
-  it("errors when given metadata that cannot be stored in S3") {
-    withLocalS3Bucket { bucket =>
-      withStoreImpl(initialEntries = Map.empty) { store: StoreImpl =>
-        val location = createId(bucket)
-        val entry = createT
+  describe("S3TypedStore") {
+    it("errors when given metadata that cannot be stored in S3") {
+      withLocalS3Bucket { bucket =>
+        withStoreImpl(initialEntries = Map.empty) { store: StoreImpl =>
+          val location = createId(bucket)
+          val entry = createT
 
-        // The S3 API will only accept metadata strings
-        // that can be represented in US-ASCII
-        // See: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html#UserMetadata
-        val invalidMetadata =
+          // The S3 API will only accept metadata strings
+          // that can be represented in US-ASCII
+          // See: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html#UserMetadata
+          val invalidMetadata =
           (1 to 10)
             .map { _ =>
               (
@@ -61,10 +62,31 @@ class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucke
             }
             .toMap
 
-        val invalidEntry = entry.copy(metadata = invalidMetadata)
-        val result = store.put(location)(invalidEntry)
+          val invalidEntry = entry.copy(metadata = invalidMetadata)
+          val result = store.put(location)(invalidEntry)
 
-        result.left.value shouldBe a[MetadataCoercionFailure]
+          result.left.value shouldBe a[MetadataCoercionFailure]
+        }
+      }
+    }
+
+    it("errors if the object key is too long") {
+      withNamespace { implicit namespace =>
+
+        // Maximum length of an s3 key is 1024 bytes as of 25/06/2019
+        // https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html
+
+        val tooLongPath = randomStringOfByteLength(1025)()
+        val id = createId.copy(path = tooLongPath)
+
+        val entry = createT
+
+        withStoreImpl(initialEntries = Map.empty) { store =>
+          val value = store.put(id)(entry).left.value
+
+          value shouldBe a[InvalidIdentifierFailure]
+          value.e.getMessage should startWith("S3 object key byte length is too big")
+        }
       }
     }
   }

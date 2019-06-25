@@ -37,7 +37,7 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
 
   def withSingleValueStreamStore[R](rawStream: InputStream)(testWith: TestWith[StreamStoreImpl, R]): R
 
-  describe("behaves as a TypedStore") {
+  describe("it behaves as a TypedStore") {
     describe("get") {
       it("errors if the streaming store has an error") {
         withNamespace { implicit namespace =>
@@ -86,53 +86,54 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
         }
       }
     }
-  }
 
-  describe("put") {
-    it("errors if the stream store has an error") {
-      withNamespace { implicit namespace =>
-        withBrokenStreamStore { implicit brokenStreamStore =>
-          withTypedStore(brokenStreamStore, initialEntries = Map.empty) { typedStore =>
-            val result = typedStore.put(createId)(createT).left.value
 
-            result shouldBe a[StoreWriteError]
-          }
-        }
-      }
-    }
-
-    it("errors if the data in the stream store is the wrong format") {
-      withNamespace { implicit namespace =>
-        val stream = stringCodec.toStream("Not a JSON string").right.value
-
-        withSingleValueStreamStore(stream) { streamStore =>
-          withTypedStore(streamStore, initialEntries = Map.empty) { typedStore =>
-            val result = typedStore.get(createId).left.value
-
-            result shouldBe a[DecoderError]
-          }
-        }
-      }
-    }
-
-    it("errors if the codec can't create a stream") {
-      withStoreContext { storeContext =>
+    describe("put") {
+      it("errors if the stream store has an error") {
         withNamespace { implicit namespace =>
-          val exception = new Throwable("BOOM!")
+          withBrokenStreamStore { implicit brokenStreamStore =>
+            withTypedStore(brokenStreamStore, initialEntries = Map.empty) { typedStore =>
+              val result = typedStore.put(createId)(createT).left.value
 
-          implicit val brokenCodec: Codec[T] = new Codec[T] {
-            override def toStream(t: T): Either[EncoderError, InputStreamWithLength] =
-              Left(JsonEncodingError(exception))
-
-            override def fromStream(inputStream: InputStream): Either[DecoderError, T] =
-              Left(JsonDecodingError(exception))
+              result shouldBe a[StoreWriteError]
+            }
           }
+        }
+      }
 
-          withTypedStoreImpl(storeContext, initialEntries = Map.empty) { typedStore =>
-            val result = typedStore.put(createId)(createT).left.value
+      it("errors if the data in the stream store is the wrong format") {
+        withNamespace { implicit namespace =>
+          val stream = stringCodec.toStream("Not a JSON string").right.value
 
-            result shouldBe a[JsonEncodingError]
-          } (brokenCodec)
+          withSingleValueStreamStore(stream) { streamStore =>
+            withTypedStore(streamStore, initialEntries = Map.empty) { typedStore =>
+              val result = typedStore.get(createId).left.value
+
+              result shouldBe a[DecoderError]
+            }
+          }
+        }
+      }
+
+      it("errors if the codec can't create a stream") {
+        withStoreContext { storeContext =>
+          withNamespace { implicit namespace =>
+            val exception = new Throwable("BOOM!")
+
+            implicit val brokenCodec: Codec[T] = new Codec[T] {
+              override def toStream(t: T): Either[EncoderError, InputStreamWithLength] =
+                Left(JsonEncodingError(exception))
+
+              override def fromStream(inputStream: InputStream): Either[DecoderError, T] =
+                Left(JsonDecodingError(exception))
+            }
+
+            withTypedStoreImpl(storeContext, initialEntries = Map.empty) { typedStore =>
+              val result = typedStore.put(createId)(createT).left.value
+
+              result shouldBe a[JsonEncodingError]
+            }(brokenCodec)
+          }
         }
       }
     }

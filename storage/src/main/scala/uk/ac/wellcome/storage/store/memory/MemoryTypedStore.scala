@@ -14,7 +14,7 @@ class MemoryTypedStore[Ident, T](
 
   val initial = initialEntries.map {
     case (location, entry) =>
-      location -> MemoryStoreEntry(
+      location -> MemoryStreamStoreEntry(
         IOUtils.toByteArray(
           codec.toStream(entry.t).right.get
         ),

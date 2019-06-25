@@ -89,7 +89,11 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
   // also given x10 concurrent streams = 10x100MB = 1GB memory overhead which we are comfortable with.
   // This change was tested to reproduce the error with a proxy that dropped traffic to simulate S3 network failure.
   private val MB: Int = 1024 * 1024
-  private val bufferReadLimit: Int = 100 * MB
+  private val BUFFER_READ_LIMIT: Int = 100 * MB
+
+  // Maximum length of an s3 key is 1024 bytes as of 25/06/2019
+  // https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html
+  private val MAX_KEY_BYTE_LENGTH = 1024
 
   private def coerceMetadata(
     metadata: Metadata): Either[MetadataCoercionFailure, Metadata] = {
@@ -119,7 +123,9 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
     location: ObjectLocation,
     stream: InputStreamWithLengthAndMetadata,
     metadataMap: Map[String, String]
-  ): PutObjectRequest = {
+  ): Either[WriteError, PutObjectRequest] = {
+    val keyByteLength = location.path.getBytes.length
+
     val metadata = new ObjectMetadata()
 
     metadata.setContentLength(stream.length)
@@ -132,9 +138,16 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
       metadata
     )
 
-    request.getRequestClientOptions.setReadLimit(bufferReadLimit)
+    request.getRequestClientOptions.setReadLimit(BUFFER_READ_LIMIT)
 
-    request
+    Either.cond(
+      keyByteLength <= MAX_KEY_BYTE_LENGTH,
+      request,
+      InvalidIdentifierFailure(
+        new Error(
+          s"S3 object key byte length is too big: $keyByteLength > $MAX_KEY_BYTE_LENGTH")
+      )
+    )
   }
 
   private def uploadWithTransferManager(
@@ -157,7 +170,7 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
     inputStream: InputStreamWithLengthAndMetadata): WriteEither =
     for {
       metadataMap <- coerceMetadata(inputStream.metadata)
-      putObjectRequest = createPutObjectRequest(
+      putObjectRequest <- createPutObjectRequest(
         location,
         inputStream,
         metadataMap)

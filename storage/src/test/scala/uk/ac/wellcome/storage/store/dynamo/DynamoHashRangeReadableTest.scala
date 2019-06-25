@@ -40,99 +40,101 @@ class DynamoHashRangeReadableTest extends DynamoReadableTestCases[Version[String
   override def createEntry(hashKey: String, v: Int, record: Record): HashRangeEntry =
     DynamoHashRangeEntry(hashKey, v, record)
 
-  describe("it fails if the table has the wrong structure") {
-    it("hash key name is wrong") {
-      assertErrorsOnBadKeyName(
-        table =>
-          createTableWithHashRangeKey(
-            table,
-            hashKeyName = "wrong",
-            hashKeyType = ScalarAttributeType.S,
-            rangeKeyName = "rangeKey",
-            rangeKeyType = ScalarAttributeType.N
-          )
+  describe("DynamoHashRangeReadable") {
+    describe("it fails if the table has the wrong structure") {
+      it("hash key name is wrong") {
+        assertErrorsOnBadKeyName(
+          table =>
+            createTableWithHashRangeKey(
+              table,
+              hashKeyName = "wrong",
+              hashKeyType = ScalarAttributeType.S,
+              rangeKeyName = "rangeKey",
+              rangeKeyType = ScalarAttributeType.N
+            )
+        )
+      }
+
+      it("hash key is the wrong type") {
+        assertErrorsOnBadKeyType(
+          table =>
+            createTableWithHashRangeKey(
+              table,
+              hashKeyName = "hashKey",
+              hashKeyType = ScalarAttributeType.N,
+              rangeKeyName = "rangeKey",
+              rangeKeyType = ScalarAttributeType.N
+            )
+        )
+      }
+
+      it("range key name is wrong") {
+        assertErrorsOnBadKeyName(
+          table =>
+            createTableWithHashRangeKey(
+              table,
+              hashKeyName = "hashKey",
+              hashKeyType = ScalarAttributeType.S,
+              rangeKeyName = "wrong",
+              rangeKeyType = ScalarAttributeType.N
+            )
+        )
+      }
+
+      it("range key is the wrong type") {
+        assertErrorsOnBadKeyType(
+          table =>
+            createTableWithHashRangeKey(
+              table,
+              hashKeyName = "hashKey",
+              hashKeyType = ScalarAttributeType.S,
+              rangeKeyName = "rangeKey",
+              rangeKeyType = ScalarAttributeType.S
+            )
+        )
+      }
+
+      it("range key is missing") {
+        assertErrorsOnWrongTableDefinition(
+          table =>
+            createTableWithHashKey(
+              table,
+              keyName = "hashKey",
+              keyType = ScalarAttributeType.S
+            ),
+          message = "Query key condition not supported"
+        )
+      }
+    }
+
+    it("finds a row with matching hashKey and rangeKey") {
+      val id = randomAlphanumeric
+      val record = createRecord
+
+      val initialEntries = Set(
+        createEntry(id, v = 1, record),
       )
+
+      withLocalDynamoDbTable { table =>
+        val readable = createDynamoReadableWith(table, initialEntries)
+
+        readable.get(Version(id, 1)).right.value shouldBe Identified(Version(id, 1), record)
+      }
     }
 
-    it("hash key is the wrong type") {
-      assertErrorsOnBadKeyType(
-        table =>
-          createTableWithHashRangeKey(
-            table,
-            hashKeyName = "hashKey",
-            hashKeyType = ScalarAttributeType.N,
-            rangeKeyName = "rangeKey",
-            rangeKeyType = ScalarAttributeType.N
-          )
+    it("fails if there's a row with matching hash but not range key") {
+      val id = randomAlphanumeric
+      val record = createRecord
+
+      val initialEntries = Set(
+        createEntry(id, v = 2, record),
       )
-    }
 
-    it("range key name is wrong") {
-      assertErrorsOnBadKeyName(
-        table =>
-          createTableWithHashRangeKey(
-            table,
-            hashKeyName = "hashKey",
-            hashKeyType = ScalarAttributeType.S,
-            rangeKeyName = "wrong",
-            rangeKeyType = ScalarAttributeType.N
-          )
-      )
-    }
+      withLocalDynamoDbTable { table =>
+        val readable = createDynamoReadableWith(table, initialEntries)
 
-    it("range key is the wrong type") {
-      assertErrorsOnBadKeyType(
-        table =>
-          createTableWithHashRangeKey(
-            table,
-            hashKeyName = "hashKey",
-            hashKeyType = ScalarAttributeType.S,
-            rangeKeyName = "rangeKey",
-            rangeKeyType = ScalarAttributeType.S
-          )
-      )
-    }
-
-    it("range key is missing") {
-      assertErrorsOnWrongTableDefinition(
-        table =>
-          createTableWithHashKey(
-            table,
-            keyName = "hashKey",
-            keyType = ScalarAttributeType.S
-          ),
-        message = "Query key condition not supported"
-      )
-    }
-  }
-
-  it("finds a row with matching hashKey and rangeKey") {
-    val id = randomAlphanumeric
-    val record = createRecord
-
-    val initialEntries = Set(
-      createEntry(id, v = 1, record),
-    )
-
-    withLocalDynamoDbTable { table =>
-      val readable = createDynamoReadableWith(table, initialEntries)
-
-      readable.get(Version(id, 1)).right.value shouldBe Identified(Version(id, 1), record)
-    }
-  }
-
-  it("fails if there's a row with matching hash but not range key") {
-    val id = randomAlphanumeric
-    val record = createRecord
-
-    val initialEntries = Set(
-      createEntry(id, v = 2, record),
-    )
-
-    withLocalDynamoDbTable { table =>
-      val readable = createDynamoReadableWith(table, initialEntries)
-
-      readable.get(Version(id, 1)).left.value shouldBe a[DoesNotExistError]
+        readable.get(Version(id, 1)).left.value shouldBe a[DoesNotExistError]
+      }
     }
   }
 }

@@ -57,11 +57,16 @@ case class MetadataCoercionFailure(
   e: Throwable = new Error()
 ) extends WriteError
 
+case class InvalidIdentifierFailure(e: Throwable = new Error())
+    extends WriteError
+
 case class DoesNotExistError(e: Throwable = new Error())
     extends ReadError
     with BackendError
 
 case class StoreReadError(e: Throwable) extends ReadError with BackendError
+
+case class DanglingHybridStorePointerError(e: Throwable) extends ReadError
 
 case class CannotCloseStreamError(e: Throwable) extends ReadError
 

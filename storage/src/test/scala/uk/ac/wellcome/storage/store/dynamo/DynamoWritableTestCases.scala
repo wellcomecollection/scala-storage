@@ -28,59 +28,61 @@ trait DynamoWritableTestCases[Ident, T, EntryType <: DynamoEntry[Ident, T]]
 
   def getT(table: Table)(hashKey: Ident, v: Int): T
 
-  it("puts an entry in an empty table") {
-    withLocalDynamoDbTable { table =>
-      val writable = createDynamoWritableWith(table)
+  describe("DynamoWritable") {
+    it("puts an entry in an empty table") {
+      withLocalDynamoDbTable { table =>
+        val writable = createDynamoWritableWith(table)
 
+        val hashKey = createId
+        val t = createT
+
+        writable.put(id = Version(hashKey, 1))(t) shouldBe a[Right[_, _]]
+
+        getT(table)(hashKey, 1) shouldBe t
+      }
+    }
+
+    describe("conditional puts") {
       val hashKey = createId
-      val t = createT
+      val olderT = createT
+      val newerT = createT
 
-      writable.put(id = Version(hashKey, 1))(t) shouldBe a[Right[_, _]]
+      it("overwrites an old version with a new version") {
+        withLocalDynamoDbTable { table =>
+          val writable = createDynamoWritableWith(table, initialEntries = Set(
+            createEntry(hashKey, 1, olderT)
+          ))
 
-      getT(table)(hashKey, 1) shouldBe t
-    }
-  }
+          writable.put(id = Version(hashKey, 2))(newerT) shouldBe a[Right[_, _]]
 
-  describe("conditional puts") {
-    val hashKey = createId
-    val olderT = createT
-    val newerT = createT
+          getT(table)(hashKey, 2) shouldBe newerT
+        }
+      }
 
-    it("overwrites an old version with a new version") {
-      withLocalDynamoDbTable { table =>
-        val writable = createDynamoWritableWith(table, initialEntries = Set(
-          createEntry(hashKey, 1, olderT)
-        ))
+      it("fails to overwrite the same version if it is already stored") {
+        withLocalDynamoDbTable { table =>
+          val writable = createDynamoWritableWith(table, initialEntries = Set(
+            createEntry(hashKey, 2, newerT)
+          ))
 
-        writable.put(id = Version(hashKey, 2))(newerT) shouldBe a[Right[_, _]]
+          val result = writable.put(id = Version(hashKey, 2))(newerT)
 
-        getT(table)(hashKey, 2) shouldBe newerT
+          val err = result.left.value
+          err.e shouldBe a[ConditionalCheckFailedException]
+          err.e.getMessage should startWith("The conditional request failed")
+        }
       }
     }
 
-    it("fails to overwrite the same version if it is already stored") {
-      withLocalDynamoDbTable { table =>
-        val writable = createDynamoWritableWith(table, initialEntries = Set(
-          createEntry(hashKey, 2, newerT)
-        ))
+    it("fails if DynamoDB fails") {
+      val writable = createDynamoWritableWith(nonExistentTable)
 
-        val result = writable.put(id = Version(hashKey, 2))(newerT)
+      val result = writable.put(id = Version(createId, 1))(createT)
 
-        val err = result.left.value
-        err.e shouldBe a[ConditionalCheckFailedException]
-        err.e.getMessage should startWith("The conditional request failed")
-      }
+      val err = result.left.value
+      err.e shouldBe a[ResourceNotFoundException]
+      err.e.getMessage should startWith("Cannot do operations on a non-existent table")
     }
-  }
-
-  it("fails if DynamoDB fails") {
-    val writable = createDynamoWritableWith(nonExistentTable)
-
-    val result = writable.put(id = Version(createId, 1))(createT)
-
-    val err = result.left.value
-    err.e shouldBe a[ResourceNotFoundException]
-    err.e.getMessage should startWith("Cannot do operations on a non-existent table")
   }
 
   def assertErrorsOnWrongTableDefinition(createWrongTable: Table => Table, message: String): Assertion =

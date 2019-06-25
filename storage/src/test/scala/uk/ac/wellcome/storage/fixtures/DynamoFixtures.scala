@@ -6,6 +6,7 @@ import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
 import org.scalatest.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import org.scanamo.error.DynamoReadError
+import org.scanamo.query.UniqueKey
 import org.scanamo.syntax._
 import org.scanamo.{DynamoFormat, Scanamo, Table => ScanamoTable}
 import uk.ac.wellcome.fixtures._
@@ -27,14 +28,14 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
   private val accessKey = "access"
   private val secretKey = "secret"
 
-  val dynamoClient: AmazonDynamoDB = DynamoClientFactory.create(
+  implicit val dynamoClient: AmazonDynamoDB = DynamoClientFactory.create(
     region = regionName,
     endpoint = dynamoDBEndPoint,
     accessKey = accessKey,
     secretKey = secretKey
   )
 
-  val scanamo = Scanamo(dynamoClient)
+  implicit val scanamo = Scanamo(dynamoClient)
 
   def nonExistentTable: Table =
     Table(
@@ -83,6 +84,11 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
   def getTableItem[T: DynamoFormat](id: String, table: Table): Option[Either[DynamoReadError, T]] =
     scanamo.exec(
       ScanamoTable[T](table.name).get('id -> id)
+    )
+
+  def deleteTableItem(key: UniqueKey[_], table: Table): DeleteItemResult =
+    scanamo.exec(
+      ScanamoTable(table.name).delete(key)
     )
 
   def getExistingTableItem[T: DynamoFormat](id: String, table: Table): T = {

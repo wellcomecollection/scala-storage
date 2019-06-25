@@ -20,8 +20,7 @@ class DynamoHashRangeStoreTest extends StoreWithoutOverwritesTestCases[Version[S
     scanamo.exec(ScanamoTable[DynamoHashRangeEntry[String, Int, Record]](table.name).putAll(dynamoEntries))
 
     val store = new DynamoHashRangeStore[String, Int, Record](
-      client = dynamoClient,
-      dynamoConfig = createDynamoConfigWith(table)
+      config = createDynamoConfigWith(table)
     )
 
     testWith(store)
