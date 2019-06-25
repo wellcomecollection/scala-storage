@@ -8,6 +8,8 @@ trait MemoryStoreFixtures[Ident, T, Namespace]
   extends StoreFixtures[Ident, T, Namespace, MemoryStore[Ident, T]]
   with RandomThings {
 
+
+
   override def withStoreImpl[R](storeContext: MemoryStore[Ident, T], initialEntries: Map[Ident, T])(testWith: TestWith[StoreImpl, R]): R = {
     storeContext.entries = storeContext.entries ++ initialEntries
 

@@ -9,8 +9,13 @@ trait MemoryTypedStoreFixtures[Ident, T] extends MemoryStreamStoreFixtures[Ident
   def withTypedStore[R](streamStore: MemoryStreamStore[Ident], initialEntries: Map[Ident, TypedStoreEntry[T]])(testWith: TestWith[MemoryTypedStore[Ident, T], R])(implicit codec: Codec[T]): R = {
     implicit val memoryStreamStore: MemoryStreamStore[Ident] = streamStore
 
+    withMemoryTypedStoreImpl(initialEntries) { typedStore =>
+      testWith(typedStore)
+    }
+  }
+
+  def withMemoryTypedStoreImpl[R](initialEntries: Map[Ident, TypedStoreEntry[T]])(testWith: TestWith[MemoryTypedStore[Ident, T], R])(implicit streamStore: MemoryStreamStore[Ident], codec: Codec[T]): R =
     testWith(
       new MemoryTypedStore[Ident, T](initialEntries)
     )
-  }
 }

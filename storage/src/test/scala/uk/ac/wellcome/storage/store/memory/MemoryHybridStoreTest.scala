@@ -3,81 +3,126 @@ package uk.ac.wellcome.storage.store.memory
 import java.util.UUID
 
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage._
-import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
+import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGenerators}
 import uk.ac.wellcome.storage.store._
 
 class MemoryHybridStoreTest
-  extends HybridStoreTestCases[UUID, String, Record, Record, String,
+  extends HybridStoreTestCases[UUID, String, Record, Map[String, String], String,
     MemoryTypedStore[String, Record],
-    MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Record]], MemoryHybridStore[UUID, Record, Record]]
-    with RecordGenerators {
+    MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]],
+    (MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])]
+    with MetadataGenerators
+    with RecordGenerators
+    with MemoryTypedStoreFixtures[String, Record] {
 
-  type IndexedMemoryStore = MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Record]]
+  type Context = (MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])
 
-  override def createHybridStoreWith(context: (MemoryTypedStore[String, Record], IndexedMemoryStore)): MemoryHybridStore[UUID, Record, Record] = {
-    val (typedStore, indexedStore) = context
+//  type IndexedMemoryStore = MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Record]]
+//
+//  override def createHybridStoreWith(context: (MemoryTypedStore[String, Record], IndexedMemoryStore)): MemoryHybridStore[UUID, Record, Record] = {
+//    val (typedStore, indexedStore) = context
+//
+//    new MemoryHybridStore[UUID, Record, Record]()(typedStore, indexedStore, codec)
+//  }
+//
+//  override def withStoreContext[R](testWith: TestWith[(MemoryTypedStore[String, Record], IndexedMemoryStore), R]): R = {
+//    val streamStore = MemoryStreamStore[String]()
+//
+//    val typedStore =
+//      new MemoryTypedStore[String, Record]()(streamStore, codec)
+//
+//    val indexedStore =
+//      new MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Record]](Map.empty)
+//
+//    val context = (typedStore, indexedStore)
+//
+//    testWith(context)
+//  }
+//
+//
+//  override def createBrokenGetTypedStore: MemoryTypedStore[String, Record] = {
+//    val streamStore = MemoryStreamStore[String]()
+//
+//    new MemoryTypedStore[String, Record]()(streamStore, codec) {
+//      override def get(id: String): ReadEither = {
+//        Left(StoreReadError(new Error("BOOM!")))
+//      }
+//    }
+//  }
+//
+//  override def createBrokenPutTypedStore: MemoryTypedStore[String, Record] = {
+//    val streamStore = MemoryStreamStore[String]()
+//
+//    new MemoryTypedStore[String, Record]()(streamStore, codec) {
+//      override def put(id: String)(entry: TypedStoreEntry[Record]): WriteEither = {
+//        Left(StoreWriteError(new Error("BOOM!")))
+//      }
+//    }
+//  }
+//
+//  override def createBrokenGetIndexedStore: IndexedMemoryStore = {
+//    new MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Record]](Map.empty) {
+//      override def get(id: UUID): ReadEither = {
+//        Left(StoreReadError(new Error("BOOM!")))
+//      }
+//    }
+//  }
+//
+//  override def createBrokenPutIndexedStore: IndexedMemoryStore = {
+//    new MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Record]](Map.empty) {
+//      override def put(id: UUID)(t: HybridIndexedStoreEntry[UUID, String, Record]): Either[WriteError, Identified[UUID, HybridIndexedStoreEntry[UUID, String, Record]]] = {
+//        Left(StoreWriteError(new Error("BOOM!")))
+//      }
+//    }
+//  }
+//
+//  override def createTypedStoreId: String = randomAlphanumeric
+//  override def createMetadata: Record = createRecord
+//  override def createT: HybridStoreEntry[Record, Record] = {
+//    HybridStoreEntry(createRecord, createMetadata)
+//  }
+//
+//  override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
+//  override def createId(implicit namespace: String): UUID = UUID.randomUUID()
+  override def withHybridStoreImpl[R](
+    typedStore: MemoryTypedStore[String, Record],
+    indexedStore: MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])(
+    testWith: TestWith[HybridStoreImpl, R])(
+    implicit context: Context): R =
+    testWith(
+      new MemoryHybridStore[UUID, Record, Map[String, String]]()(typedStore, indexedStore, codec)
+    )
 
-    new MemoryHybridStore[UUID, Record, Record]()(typedStore, indexedStore, codec)
+  override def withTypedStoreImpl[R](testWith: TestWith[MemoryTypedStore[String, Record], R])(implicit context: (MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])): R = {
+    val (typedStore, _) = context
+
+    testWith(typedStore)
   }
 
-  override def withStoreContext[R](testWith: TestWith[(MemoryTypedStore[String, Record], IndexedMemoryStore), R]): R = {
-    val streamStore = MemoryStreamStore[String]()
+  override def withIndexedStoreImpl[R](testWith: TestWith[MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]], R])(implicit context: (MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])): R = {
+    val (_, indexedStore) = context
 
-    val typedStore =
-      new MemoryTypedStore[String, Record]()(streamStore, codec)
-
-    val indexedStore =
-      new MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Record]](Map.empty)
-
-    val context = (typedStore, indexedStore)
-
-    testWith(context)
+    testWith(indexedStore)
   }
 
+  override def createTypedStoreId(implicit namespace: String): String = s"$namespace/$randomAlphanumeric"
 
-  override def createBrokenGetTypedStore: MemoryTypedStore[String, Record] = {
-    val streamStore = MemoryStreamStore[String]()
+  override def createMetadata: Map[String, String] = createValidMetadata
 
-    new MemoryTypedStore[String, Record]()(streamStore, codec) {
-      override def get(id: String): ReadEither = {
-        Left(StoreReadError(new Error("BOOM!")))
-      }
+  override def withStoreContext[R](testWith: TestWith[(MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]]), R]): R = {
+    implicit val underlyingStreamStore: MemoryStreamStore[String] = MemoryStreamStore[String]()
+
+    withMemoryTypedStoreImpl(initialEntries = Map.empty) { typedStore =>
+      val indexedStore = new MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]](initialEntries = Map.empty)
+
+      testWith((typedStore, indexedStore))
     }
   }
 
-  override def createBrokenPutTypedStore: MemoryTypedStore[String, Record] = {
-    val streamStore = MemoryStreamStore[String]()
-
-    new MemoryTypedStore[String, Record]()(streamStore, codec) {
-      override def put(id: String)(entry: TypedStoreEntry[Record]): WriteEither = {
-        Left(StoreWriteError(new Error("BOOM!")))
-      }
-    }
-  }
-
-  override def createBrokenGetIndexedStore: IndexedMemoryStore = {
-    new MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Record]](Map.empty) {
-      override def get(id: UUID): ReadEither = {
-        Left(StoreReadError(new Error("BOOM!")))
-      }
-    }
-  }
-
-  override def createBrokenPutIndexedStore: IndexedMemoryStore = {
-    new MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Record]](Map.empty) {
-      override def put(id: UUID)(t: HybridIndexedStoreEntry[UUID, String, Record]): Either[WriteError, Identified[UUID, HybridIndexedStoreEntry[UUID, String, Record]]] = {
-        Left(StoreWriteError(new Error("BOOM!")))
-      }
-    }
-  }
-
-  override def createTypedStoreId: String = randomAlphanumeric
-  override def createMetadata: Record = createRecord
-  override def createT: HybridStoreEntry[Record, Record] = {
-    HybridStoreEntry(createRecord, createMetadata)
-  }
+  override def createT: HybridStoreEntry[Record, Map[String, String]] =
+    HybridStoreEntry(createRecord, createValidMetadata)
 
   override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
+
   override def createId(implicit namespace: String): UUID = UUID.randomUUID()
 }
