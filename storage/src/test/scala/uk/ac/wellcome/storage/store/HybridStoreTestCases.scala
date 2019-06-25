@@ -49,30 +49,48 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
 
   describe("it behaves as a HybridStore") {
     describe("storing a new record") {
-      withStoreContext { implicit context =>
-        withNamespace { implicit namespace =>
-          withTypedStoreImpl { typedStore =>
-            withIndexedStoreImpl { indexedStore =>
-              withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
-                val id = createId
-                val hybridStoreEntry = createT
+      it("stores the object in the object store") {
+        withStoreContext { implicit context =>
+          withNamespace { implicit namespace =>
+            withTypedStoreImpl { typedStore =>
+              withIndexedStoreImpl { indexedStore =>
+                withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
+                  val id = createId
+                  val hybridStoreEntry = createT
 
-                val putResult = hybridStore.put(id)(hybridStoreEntry)
-                val putValue = putResult.right.value
+                  val putResult = hybridStore.put(id)(hybridStoreEntry)
+                  val putValue = putResult.right.value
 
-                val indexedResult = indexedStore.get(putValue.id)
-                val indexedValue = indexedResult.right.value
+                  val indexedResult = indexedStore.get(putValue.id)
+                  val indexedValue = indexedResult.right.value
 
-                val typedStoreId = indexedValue.identifiedT.typeStoreId
+                  val typedStoreId = indexedValue.identifiedT.typeStoreId
 
-                val typedResult = typedStore.get(typedStoreId)
-                val typedValue = typedResult.right.value
-
-                it("stores the object in the object store") {
+                  val typedResult = typedStore.get(typedStoreId)
+                  val typedValue = typedResult.right.value
                   typedValue.identifiedT shouldBe TypedStoreEntry(hybridStoreEntry.t, Map.empty)
                 }
+              }
+            }
+          }
+        }
+      }
 
-                it("stores the metadata in the indexed store") {
+      it("stores the metadata in the indexed store") {
+        withStoreContext { implicit context =>
+          withNamespace { implicit namespace =>
+            withTypedStoreImpl { typedStore =>
+              withIndexedStoreImpl { indexedStore =>
+                withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
+                  val id = createId
+                  val hybridStoreEntry = createT
+
+                  val putResult = hybridStore.put(id)(hybridStoreEntry)
+                  val putValue = putResult.right.value
+
+                  val indexedResult = indexedStore.get(putValue.id)
+                  val indexedValue = indexedResult.right.value
+
                   indexedValue.id shouldBe id
                   indexedValue.identifiedT.metadata shouldBe hybridStoreEntry.metadata
                 }
