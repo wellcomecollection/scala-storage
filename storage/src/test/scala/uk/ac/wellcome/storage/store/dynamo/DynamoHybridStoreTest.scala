@@ -15,7 +15,7 @@ class DynamoHybridStoreTest extends HybridStoreTestCases[
   ObjectLocation,
   Record,
   Map[String, String],
-  Bucket,
+  Unit,
   S3TypedStore[Record],
   DynamoHashStore[String, Int, HybridIndexedStoreEntry[Version[String, Int], ObjectLocation, Map[String, String]]],
   (Bucket, Table)
@@ -58,8 +58,8 @@ class DynamoHybridStoreTest extends HybridStoreTestCases[
     )
   }
 
-  override def createTypedStoreId(implicit bucket: Bucket): ObjectLocation =
-    createObjectLocationWith(bucket)
+  override def createTypedStoreId(implicit bucket: Unit): ObjectLocation =
+    createObjectLocation
 
   override def createMetadata: Map[String, String] = createValidMetadata
 
@@ -117,12 +117,10 @@ class DynamoHybridStoreTest extends HybridStoreTestCases[
   override def createT: HybridStoreEntry[Record, Map[String, String]] =
     HybridStoreEntry(createRecord, createValidMetadata)
 
-  override def withNamespace[R](testWith: TestWith[Bucket, R]): R =
-    withLocalS3Bucket { bucket =>
-      testWith(bucket)
-    }
+  override def withNamespace[R](testWith: TestWith[Unit, R]): R =
+    testWith(())
 
-  override def createId(implicit namespace: Bucket): Version[String, Int] =
+  override def createId(implicit namespace: Unit): Version[String, Int] =
     Version(id = randomAlphanumeric, version = 1)
 }
 
