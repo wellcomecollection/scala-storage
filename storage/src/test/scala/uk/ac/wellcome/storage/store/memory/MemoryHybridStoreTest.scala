@@ -8,7 +8,7 @@ import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGene
 import uk.ac.wellcome.storage.store._
 
 class MemoryHybridStoreTest
-  extends HybridStoreTestCases[UUID, String, Record, Map[String, String], String,
+  extends HybridStoreWithOverwritesTestCases[UUID, String, Record, Map[String, String], String,
     MemoryTypedStore[String, Record],
     MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]],
     (MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])]

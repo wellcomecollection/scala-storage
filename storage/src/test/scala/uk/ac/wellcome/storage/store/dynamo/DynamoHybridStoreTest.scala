@@ -7,10 +7,10 @@ import uk.ac.wellcome.storage.fixtures.{DynamoFixtures, S3Fixtures}
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGenerators}
 import uk.ac.wellcome.storage._
-import uk.ac.wellcome.storage.store.{HybridIndexedStoreEntry, HybridStoreEntry, HybridStoreTestCases, TypedStoreEntry}
+import uk.ac.wellcome.storage.store.{HybridIndexedStoreEntry, HybridStoreEntry, HybridStoreWithoutOverwritesTestCases, TypedStoreEntry}
 import uk.ac.wellcome.storage.store.s3.{S3StreamStore, S3TypedStore}
 
-class DynamoHybridStoreTest extends HybridStoreTestCases[
+class DynamoHybridStoreTest extends HybridStoreWithoutOverwritesTestCases[
   Version[String, Int],
   ObjectLocation,
   Record,

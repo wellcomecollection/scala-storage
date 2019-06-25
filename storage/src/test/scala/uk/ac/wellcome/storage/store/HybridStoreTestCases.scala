@@ -203,3 +203,19 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
     }
   }
 }
+
+trait HybridStoreWithOverwritesTestCases[
+  IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
+  TypedStoreImpl <: TypedStore[TypedStoreId, T],
+  IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]],
+  HybridStoreContext]
+  extends HybridStoreTestCases[IndexedStoreId, TypedStoreId, T, Metadata, Namespace, TypedStoreImpl, IndexedStoreImpl, HybridStoreContext]
+    with StoreWithOverwritesTestCases[IndexedStoreId, HybridStoreEntry[T, Metadata], Namespace, HybridStoreContext]
+
+trait HybridStoreWithoutOverwritesTestCases[
+  IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
+  TypedStoreImpl <: TypedStore[TypedStoreId, T],
+  IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]],
+  HybridStoreContext]
+  extends HybridStoreTestCases[IndexedStoreId, TypedStoreId, T, Metadata, Namespace, TypedStoreImpl, IndexedStoreImpl, HybridStoreContext]
+    with StoreWithoutOverwritesTestCases[IndexedStoreId, HybridStoreEntry[T, Metadata], Namespace, HybridStoreContext]

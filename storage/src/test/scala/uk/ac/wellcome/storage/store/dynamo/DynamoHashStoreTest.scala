@@ -19,8 +19,7 @@ class DynamoHashStoreTest extends StoreWithoutOverwritesTestCases[Version[String
     scanamo.exec(ScanamoTable[DynamoHashEntry[String, Int, Record]](table.name).putAll(dynamoEntries))
 
     val store = new DynamoHashStore[String, Int, Record](
-      client = dynamoClient,
-      dynamoConfig = createDynamoConfigWith(table)
+      config = createDynamoConfigWith(table)
     )
 
     testWith(store)
