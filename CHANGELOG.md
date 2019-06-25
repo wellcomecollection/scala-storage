@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.14.0 - 2019-06-25
+
+Adds a DynamoHybridStore
+
 ## v7.13.1 - 2019-06-24
 
 Improve the tests for DynamoStore.
