@@ -16,8 +16,8 @@ class DynamoVersionedStoreTest
     with RecordGenerators
     with DynamoFixtures {
 
-  override def createIdent = randomAlphanumeric
-  override def createT = createRecord
+  override def createIdent: String = randomAlphanumeric
+  override def createT: Record = createRecord
 
   type DynamoStoreStub = DynamoHashRangeStore[String, Int, Record]
 
@@ -45,7 +45,6 @@ class DynamoVersionedStoreTest
   override def withVersionedStore[R](initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[VersionedStoreImpl, R]): R =
     withLocalDynamoDbTable { table =>
       val store = new DynamoStoreStub(
-        client = dynamoClient,
         config = createDynamoConfigWith(table)
       )
 
@@ -57,7 +56,6 @@ class DynamoVersionedStoreTest
   override def withFailingGetVersionedStore[R](initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[VersionedStoreImpl, R]): R =
     withLocalDynamoDbTable { table =>
       val store = new DynamoStoreStub(
-        client = dynamoClient,
         config = createDynamoConfigWith(table)
       ) {
         override def get(id: Version[String, Int]): ReadEither = {
@@ -73,7 +71,6 @@ class DynamoVersionedStoreTest
   override def withFailingPutVersionedStore[R](initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[VersionedStoreImpl, R]): R =
     withLocalDynamoDbTable { table =>
       val store = new DynamoStoreStub(
-        client = dynamoClient,
         config = createDynamoConfigWith(table)
       ) {
         override def put(id: Version[String, Int])(t: Record): WriteEither = {
