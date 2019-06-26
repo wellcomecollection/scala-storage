@@ -12,7 +12,7 @@ class DynamoHybridStoreTest extends DynamoHybridStoreTestCases[
   DynamoHashStore[String, Int, HybridIndexedStoreEntry[Version[String, Int], ObjectLocation, Map[String, String]]]
   ] {
   override def createTable(table: Table): Table =
-    createTableWithHashKey(table, keyName = "hashKey")
+    createTableWithHashKey(table)
 
   override def withHybridStoreImpl[R](
                                        typedStore: S3TypedStoreImpl,

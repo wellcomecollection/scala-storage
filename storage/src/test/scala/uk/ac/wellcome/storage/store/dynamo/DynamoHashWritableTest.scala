@@ -39,7 +39,7 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, Dyn
     DynamoHashEntry(hashKey, v, record)
 
   override def createTable(table: Table): Table =
-    createTableWithHashKey(table, keyName = "hashKey")
+    createTableWithHashKey(table)
 
   describe("DynamoHashWritable") {
     it("fails to overwrite a new version with an old version") {
@@ -88,11 +88,7 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, Dyn
 
       it("hash key is the wrong type") {
         assertErrorsOnBadKeyType(
-          table => createTableWithHashKey(
-            table,
-            keyName = "hashKey",
-            keyType = ScalarAttributeType.N
-          )
+          table => createTableWithHashKey(table, keyType = ScalarAttributeType.N)
         )
       }
     }

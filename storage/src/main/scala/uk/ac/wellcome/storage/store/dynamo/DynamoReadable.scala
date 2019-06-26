@@ -1,12 +1,10 @@
 package uk.ac.wellcome.storage.store.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import grizzled.slf4j.Logging
 import org.scanamo.query.Query
 import org.scanamo.syntax._
 import org.scanamo.{DynamoFormat, Scanamo, Table}
 import uk.ac.wellcome.storage.dynamo.{
-  DynamoEntry,
   DynamoHashEntry,
   DynamoHashRangeEntry
 }
@@ -15,9 +13,7 @@ import uk.ac.wellcome.storage._
 
 import scala.util.{Failure, Success, Try}
 
-sealed trait DynamoReadable[
-  Ident, DynamoIdent, EntryType <: DynamoEntry[_, T], T]
-    extends Readable[Ident, T] {
+sealed trait DynamoReadable[Ident, DynamoIdent, EntryType, T] extends Readable[Ident, T] {
 
   implicit protected val format: DynamoFormat[EntryType]
 
@@ -46,16 +42,14 @@ trait DynamoHashReadable[HashKey, V, T]
       Version[HashKey, V],
       HashKey,
       DynamoHashEntry[HashKey, V, T],
-      T]
-    with Logging {
+      T] {
   implicit protected val formatHashKey: DynamoFormat[HashKey]
 
   protected def createKeyExpression(id: HashKey): Query[_] =
-    'hashKey -> id
+    'id -> id
 
   override def get(id: Version[HashKey, V]): ReadEither = {
     val storedEntry = getEntry(id.id)
-    debug(s"READ: Got Dynamo entry $storedEntry")
 
     storedEntry.flatMap { entry =>
       if (entry.version == id.version) {
@@ -79,7 +73,7 @@ trait DynamoHashRangeReadable[HashKey, RangeKey, T]
   implicit val formatRangeKey: DynamoFormat[RangeKey]
 
   protected def createKeyExpression(id: Version[HashKey, RangeKey]): Query[_] =
-    'hashKey -> id.id and 'rangeKey -> id.version
+    'id -> id.id and 'version -> id.version
 
   override def get(id: Version[HashKey, RangeKey]): ReadEither =
     getEntry(id).map { entry =>

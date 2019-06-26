@@ -46,12 +46,7 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
     }
 
   def createTable(table: Table): Table =
-    createTableWithHashRangeKey(
-      table,
-      hashKeyName = "hashKey",
-      rangeKeyName = "rangeKey",
-      rangeKeyType = ScalarAttributeType.N
-    )
+    createTableWithHashRangeKey(table)
 
   describe("DynamoHashRangeMaxima") {
     it("fails if DynamoDB has an error") {
@@ -83,7 +78,7 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
 
       it("when the hash key type is wrong") {
         def createWrongTable(table: Table): Table =
-          createTableWithHashKey(table, keyName = "hashKey", keyType = ScalarAttributeType.N)
+          createTableWithHashKey(table, keyType = ScalarAttributeType.N)
 
         withSpecifiedTable(createWrongTable) { table =>
           withMaxima(table) { maxima =>
@@ -99,12 +94,7 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
 
       it("when the range key name is wrong") {
         def createWrongTable(table: Table): Table =
-          createTableWithHashRangeKey(
-            table,
-            hashKeyName = "hashKey",
-            rangeKeyName = "wrong",
-            rangeKeyType = ScalarAttributeType.N
-          )
+          createTableWithHashRangeKey(table, rangeKeyName = "wrong")
 
         case class WrongEntry(hashKey: IdentityKey, wrong: Int, record: Record)
 
@@ -135,7 +125,7 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
         val id = createIdentityKey
 
         def createWrongTable(table: Table): Table =
-          createTableWithHashRangeKey(table, hashKeyName = "hashKey", rangeKeyName = "rangeKey", rangeKeyType = ScalarAttributeType.S)
+          createTableWithHashRangeKey(table, rangeKeyType = ScalarAttributeType.S)
 
         withSpecifiedTable(createWrongTable) { table =>
           scanamo.exec(ScanamoTable[WrongEntry](table.name).putAll(

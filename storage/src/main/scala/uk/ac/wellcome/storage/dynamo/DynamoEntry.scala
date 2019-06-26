@@ -11,14 +11,19 @@ trait DynamoHashRangeKeyPair[HashKey, RangeKey] {
 }
 
 case class DynamoHashRangeEntry[HashKey, RangeKey, T](
-  hashKey: HashKey,
-  rangeKey: RangeKey,
+  id: HashKey,
+  version: RangeKey,
   payload: T
 ) extends DynamoEntry[HashKey, T]
-    with DynamoHashRangeKeyPair[HashKey, RangeKey]
+    with DynamoHashRangeKeyPair[HashKey, RangeKey] {
+  val hashKey: HashKey = id
+  val rangeKey: RangeKey = version
+}
 
 case class DynamoHashEntry[HashKey, V, T](
-  hashKey: HashKey,
+  id: HashKey,
   version: V,
   payload: T
-) extends DynamoEntry[HashKey, T]
+) extends DynamoEntry[HashKey, T] {
+  val hashKey: HashKey = id
+}

@@ -120,7 +120,7 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
 
   def createTableWithHashKey(
     table: Table,
-    keyName: String,
+    keyName: String = "id",
     keyType: ScalarAttributeType = ScalarAttributeType.S
   ): Table =
     createTableFromRequest(
@@ -142,10 +142,10 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
 
   def createTableWithHashRangeKey(
     table: Table,
-    hashKeyName: String,
+    hashKeyName: String = "id",
     hashKeyType: ScalarAttributeType = ScalarAttributeType.S,
-    rangeKeyName: String,
-    rangeKeyType: ScalarAttributeType): Table =
+    rangeKeyName: String = "version",
+    rangeKeyType: ScalarAttributeType = ScalarAttributeType.N): Table =
     createTableFromRequest(
       table = table,
       new CreateTableRequest()

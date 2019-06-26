@@ -1,9 +1,8 @@
 package uk.ac.wellcome.storage.store.dynamo
 
-import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType
-import uk.ac.wellcome.fixtures.TestWith
 import org.scanamo.auto._
 import org.scanamo.{Table => ScanamoTable}
+import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.Version
 import uk.ac.wellcome.storage.dynamo.DynamoHashRangeEntry
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures
@@ -35,13 +34,8 @@ class DynamoHashRangeStoreTest extends StoreWithoutOverwritesTestCases[Version[S
 
   override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
 
-  override def createTable(table: Table): Table = createTableWithHashRangeKey(
-    table,
-    hashKeyName = "hashKey",
-    hashKeyType = ScalarAttributeType.S,
-    rangeKeyName = "rangeKey",
-    rangeKeyType = ScalarAttributeType.N
-  )
+  override def createTable(table: Table): Table =
+    createTableWithHashRangeKey(table)
 
   override def createId(implicit namespace: String): Version[String, Int] =
     Version(id = randomAlphanumeric, version = 1)
