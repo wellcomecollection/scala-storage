@@ -90,9 +90,9 @@ We prefer this approach to mocking as we feel it is simpler and the composable t
 
 At the heart of our `Store` implementations is the `StreamStore` which enforces working with an InputStream when sending or receiving bytes from a storage provider. It doesn't care where the `InputStream` comes from: in-memory, a file on disk, a cloud provider, or something else. This makes it easier to test and more flexible.
 
-Most of our services run in AWS Fargate on container hosts with limited disk space. Working with an `InputStream` without downloading the entire file means the disk space is not a problem.
+Most of our services run on container hosts with limited disk space. Working with an `InputStream` without downloading the entire file means the disk space is not a problem.
 
-## Foo
+## Where we use it
 
 These libraries are used as part of the [Wellcome Digital Platform][platform].
 
