@@ -12,7 +12,7 @@ import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 import uk.ac.wellcome.storage.store._
 
 class DynamoVersionedStoreTest
-  extends VersionedStoreTestCases[String, Record]
+  extends VersionedStoreTestCases[String, Record, Table]
     with RecordGenerators
     with DynamoFixtures {
 
@@ -42,16 +42,18 @@ class DynamoVersionedStoreTest
     scanamo.exec(scanamoTable.putAll(rows.toSet))
   }
 
-  override def withVersionedStore[R](initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[VersionedStoreImpl, R]): R =
-    withLocalDynamoDbTable { table =>
-      val store = new DynamoStoreStub(
-        config = createDynamoConfigWith(table)
-      )
+  override def withVersionedStoreImpl[R](initialEntries: Entries, table: Table)(testWith: TestWith[VersionedStoreImpl, R]): R = {
+    val store = new DynamoStoreStub(
+      config = createDynamoConfigWith(table)
+    )
 
-      insertEntries(table)(initialEntries)
+    insertEntries(table)(initialEntries)
 
-      testWith(new VersionedStore(store))
-    }
+    testWith(new VersionedStore(store))
+  }
+
+  override def withVersionedStoreContext[R](testWith: TestWith[Table, R]): R =
+    withLocalDynamoDbTable { table => testWith(table) }
 
   override def withFailingGetVersionedStore[R](initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[VersionedStoreImpl, R]): R =
     withLocalDynamoDbTable { table =>

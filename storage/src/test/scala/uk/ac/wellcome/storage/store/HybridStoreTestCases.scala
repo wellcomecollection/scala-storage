@@ -36,8 +36,7 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
 
   def withBrokenGetIndexedStoreImpl[R](testWith: TestWith[IndexedStoreImpl, R])(implicit context: HybridStoreContext): R
 
-  override def withStoreImpl[R](storeContext: HybridStoreContext, initialEntries: Map[IndexedStoreId, HybridStoreEntry[T, Metadata]])(testWith: TestWith[StoreImpl, R]): R = {
-    // TODO: The underlying withStoreImpl method should take implicit context
+  override def withStoreImpl[R](initialEntries: Map[IndexedStoreId, HybridStoreEntry[T, Metadata]], storeContext: HybridStoreContext)(testWith: TestWith[StoreImpl, R]): R = {
     implicit val context: HybridStoreContext = storeContext
 
     withTypedStoreImpl { typedStore =>
