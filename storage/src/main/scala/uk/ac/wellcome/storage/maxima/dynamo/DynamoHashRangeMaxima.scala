@@ -23,7 +23,7 @@ trait DynamoHashRangeMaxima[
   override def max(hashKey: HashKey): Either[MaximaError, RangeKey] = {
     val ops = table.descending
       .limit(1)
-      .query('hashKey -> hashKey)
+      .query('id -> hashKey)
 
     Try(Scanamo(client).exec(ops)) match {
       case Success(List(Right(entry))) => Right(entry.rangeKey)

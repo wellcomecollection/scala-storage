@@ -34,9 +34,9 @@ class DynamoHashRangeWritableTest
   }
 
   override def getT(table: Table)(hashKey: String, v: Int): Record =
-  scanamo.exec(
-    ScanamoTable[HashRangeEntry](table.name).get('hashKey -> hashKey and 'rangeKey -> v)
-  ).value.right.value.payload
+    scanamo.exec(
+      ScanamoTable[HashRangeEntry](table.name).get('id -> hashKey and 'version -> v)
+    ).value.right.value.payload
 
   override def createEntry(hashKey: String, v: Int, record: Record): HashRangeEntry =
     DynamoHashRangeEntry(hashKey, v, record)
