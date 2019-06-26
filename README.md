@@ -2,11 +2,28 @@
 
 [![Build Status](https://travis-ci.org/wellcometrust/scala-storage.svg?branch=master)](https://travis-ci.org/wellcometrust/scala-storage)
 
-Storage libraries in use at Wellcome comprising:
+Provides type classes allowing interaction with storage service providers.
 
-- `VersionedDao`: A DynamoDB wrapper allowing strongly typed _and_ strongly consistent updates.
-- `ObjectStore`: A storage agnostic strongly typed large object store library (an `S3StorageBackend` is provided).
-- `VersionedHybridStore`: A strongly typed _and_ strongly consistent large object store with indexes provided by DynamoDB.
+Storage providers currently supported:
+
+- AWS DynamoDB
+- AWS S3
+- In memory
+
+The library provides functionality for:
+
+- Codec: provides generic encode/decode functionality for a type, using Json by default
+- Listing: listing things from a provider
+- Locking: safe distributed process locking around one or grouped identifiers
+- Transfer: transferring things within a storage provider, including transfer by prefix
+- Maxima: find the maximum valued thing where a numeric representation of that thing is provided
+- Streaming: stream bytes to and from a storage provider
+- Store: get and put to/from a storage provider
+  - StreamStore: get and put to/from a storage provider that has a Streaming interface
+  - TypedStore: get and put to/from a storage provider using concrete types where a Codec can be provided
+  - HybridStore: combines two stores, one providing an index, the other typed storage
+  - VersionedStore: get, put, update, upsert with a storage provider using concrete types using versions
+  - VersionedHybridStore: Combining the index/object storage capability of the hybrid store with a VersionedStore
 
 These libraries are used as part of the [Wellcome Digital Platform][platform].
 
