@@ -60,17 +60,39 @@ The library includes classes for:
 
     - `VersionedHybridStore`: A combination of the `HybridStore` and the `VersionedStore`, which allows us to store multiple versions of a large document with atomic updates.
 
-- [`streaming`](https://github.com/wellcometrust/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/streaming): convert Java/Scala classes to and from an `InputStream`.
+- [`streaming`](https://github.com/wellcometrust/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/streaming): Convert Java/Scala classes to and from an `InputStream`.
 
 - [`transfer`](https://github.com/wellcometrust/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/transfer): Transferring things within a storage provider, including transfer by prefix
 
     For example, this allows us to copy a folder in S3 to another location.
 
-Storage providers currently supported:
+## How it is written
 
-- AWS DynamoDB
-- AWS S3
-- In memory
+### Traits AKA Type classes
+
+Each trait contains its own logic, but implementations do not need to reproduce that logic. For example the `LockingService` contains logic to ensure that locks are always released even when errors occur.
+
+An implementation of the `LockingService` need only define `lock()` and `unlock()` operations, the rest is provided by the trait.
+
+### Composable test cases
+
+Every trait comes with a set of generic test cases that an implementation must fulfill. A contract, if you like.
+
+When we create a new implementation we can re-use those test cases. This means that we can be confident that implementations are interchangeable.
+
+### In-memory implementations for testing
+
+If we are testing code that calls a storage class, but we are not testing the storage class directly, we can use a simpler in-memory implementation. This is faster and simpler, and the composable test cases assure us that it has the same behaviour as an implementation we might use in production.
+
+We prefer this approach to mocking as we feel it is simpler and the composable test cases provide a guarantee of correctness. We know that the behaviour of the test implementations always matches the "real" implementations.
+
+### Using InputStream with storage providers
+
+At the heart of our `Store` implementations is the `StreamStore` which enforces working with an InputStream when sending or receiving bytes from a storage provider. It doesn't care where the `InputStream` comes from: in-memory, a file on disk, a cloud provider, or something else. This makes it easier to test and more flexible.
+
+Most of our services run in AWS Fargate on container hosts with limited disk space. Working with an `InputStream` without downloading the entire file means the disk space is not a problem.
+
+## Foo
 
 These libraries are used as part of the [Wellcome Digital Platform][platform].
 
