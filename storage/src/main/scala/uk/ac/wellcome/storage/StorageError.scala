@@ -36,12 +36,12 @@ case class LossyEncodingDetected(
     with WriteError
 
 sealed trait ReadError extends StorageError
-
+sealed trait NotFoundError extends ReadError
 sealed trait VersionError extends StorageError
 
 case class NoVersionExistsError(e: Throwable = new Error())
     extends VersionError
-    with ReadError
+    with NotFoundError
 case class HigherVersionExistsError(e: Throwable = new Error())
     extends VersionError
     with WriteError
@@ -61,7 +61,7 @@ case class InvalidIdentifierFailure(e: Throwable = new Error())
     extends WriteError
 
 case class DoesNotExistError(e: Throwable = new Error())
-    extends ReadError
+    extends NotFoundError
     with BackendError
 
 case class StoreReadError(e: Throwable) extends ReadError with BackendError

@@ -90,4 +90,14 @@ class DynamoVersionedHybridStoreTest extends VersionedStoreTestCases[String, Hyb
       }
     }
   }
+
+  override def withStoreImpl[R](initialEntries: Map[Version[String, Int], HybridStoreEntry[Record, Record]], storeContext: DynamoHybridStoreWithMaxima[Record, Record])(testWith: TestWith[StoreImpl, R]): R =
+    withVersionedStoreImpl(initialEntries, storeContext)(testWith)
+
+  override def withStoreContext[R](testWith: TestWith[DynamoHybridStoreWithMaxima[Record, Record], R]): R =
+    withVersionedStoreContext(testWith)
+
+  override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
+
+  override def createId(implicit namespace: String): Version[String, Int] = Version(randomAlphanumeric, 0)
 }

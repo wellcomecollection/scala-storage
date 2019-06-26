@@ -72,4 +72,14 @@ class MemoryVersionedHybridStoreTest
   }
 
   override def createT: HybridStoreEntry[Record, Record] = HybridStoreEntry(createRecord, createRecord)
+
+  override def withStoreImpl[R](initialEntries: Map[Version[String, Int], HybridStoreEntry[Record, Record]], storeContext: MemoryHybridStoreWithMaxima[String, Record, Record])(testWith: TestWith[StoreImpl, R]): R =
+    withVersionedStoreImpl(initialEntries, storeContext)(testWith)
+
+  override def withStoreContext[R](testWith: TestWith[MemoryHybridStoreWithMaxima[String, Record, Record], R]): R =
+    withVersionedStoreContext(testWith)
+
+  override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
+
+  override def createId(implicit namespace: String): Version[String, Int] = Version(randomAlphanumeric, 0)
 }

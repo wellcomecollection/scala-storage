@@ -2,7 +2,7 @@ package uk.ac.wellcome.storage.store
 
 import org.scalatest.{EitherValues, FunSpec}
 import uk.ac.wellcome.storage.store.fixtures.StoreFixtures
-import uk.ac.wellcome.storage.{DoesNotExistError, Identified, StoreWriteError}
+import uk.ac.wellcome.storage.{Identified, NotFoundError, WriteError}
 
 trait StoreTestCases[Id, T, Namespace, StoreContext]
   extends FunSpec
@@ -15,7 +15,7 @@ trait StoreTestCases[Id, T, Namespace, StoreContext]
       it("fails to get a non-existent location") {
         withNamespace { implicit namespace =>
           withEmptyStoreImpl { store =>
-            store.get(createId).left.value shouldBe a[DoesNotExistError]
+            store.get(createId).left.value shouldBe a[NotFoundError]
           }
         }
       }
@@ -131,7 +131,7 @@ trait StoreWithoutOverwritesTestCases[Id, T, Namespace, StoreContext]
           store.put(id)(t1) shouldBe a[Right[_, _]]
 
           val overwriteResult = store.put(id)(t2)
-          overwriteResult.left.value shouldBe a[StoreWriteError]
+          overwriteResult.left.value shouldBe a[WriteError]
         }
       }
     }
