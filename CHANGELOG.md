@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.16.0 - 2019-06-26
+
+Adds VersionedHybridStore type class and memory implementation.
+
 ## v7.14.0 - 2019-06-25
 
 Adds a DynamoHybridStore
