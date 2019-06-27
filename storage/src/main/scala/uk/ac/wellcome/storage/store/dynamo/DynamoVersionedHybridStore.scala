@@ -1,7 +1,8 @@
 package uk.ac.wellcome.storage.store.dynamo
 
-import uk.ac.wellcome.storage.store.{HybridStoreEntry, VersionedStore}
+import uk.ac.wellcome.storage.ObjectLocation
+import uk.ac.wellcome.storage.store.VersionedHybridStore
 
-class DynamoVersionedHybridStore[T, Metadata](
-  store: DynamoHybridStoreWithMaxima[T, Metadata])
-    extends VersionedStore[String, Int, HybridStoreEntry[T, Metadata]](store)
+class DynamoVersionedHybridStore[Id, V, T, Metadata](
+  store: DynamoHybridStoreWithMaxima[Id, V, T, Metadata])(implicit N: Numeric[V])
+    extends VersionedHybridStore[Id, V, ObjectLocation, T, Metadata](store)
