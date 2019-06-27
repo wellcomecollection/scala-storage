@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.17.0 - 2019-06-27
+
+Use better default names for DynamoDB table entries.
+
 ## v7.16.1 - 2019-06-27
 
 Adds store tests to versionedstore tests.
