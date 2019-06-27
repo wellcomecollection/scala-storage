@@ -87,10 +87,13 @@ class DynamoVersionedHybridStoreTest extends VersionedStoreTestCases[String, Hyb
     }
   }
 
-  override def withStoreImpl[R](initialEntries: Map[Version[String, Int], HybridStoreEntry[Record, Record]], storeContext: DynamoHybridStoreWithMaxima[Record, Record])(testWith: TestWith[StoreImpl, R]): R =
+  override def withStoreImpl[R](
+    initialEntries: Map[Version[String, Int], HybridStoreEntry[Record, Map[String, String]]],
+    storeContext: DynamoHybridStoreWithMaxima[Record, Map[String, String]])(
+      testWith: TestWith[StoreImpl, R]): R =
     withVersionedStoreImpl(initialEntries, storeContext)(testWith)
 
-  override def withStoreContext[R](testWith: TestWith[DynamoHybridStoreWithMaxima[Record, Record], R]): R =
+  override def withStoreContext[R](testWith: TestWith[DynamoHybridStoreWithMaxima[Record, Map[String, String]], R]): R =
     withVersionedStoreContext(testWith)
 
   override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
