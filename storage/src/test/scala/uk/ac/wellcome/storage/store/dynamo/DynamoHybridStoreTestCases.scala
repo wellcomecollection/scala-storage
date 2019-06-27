@@ -1,7 +1,6 @@
 package uk.ac.wellcome.storage.store.dynamo
 
 import org.scanamo.auto._
-import org.scanamo.syntax._
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
@@ -242,15 +241,9 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
             withTypedStoreImpl { typedStore =>
               withIndexedStoreImpl { indexedStore =>
                 withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
-
                   val id = createId
-                  val hybridStoreEntry = createT
 
-                  hybridStore.put(id)(hybridStoreEntry) shouldBe a[Right[_,_]]
-
-                  deleteTableItem('hashKey -> id.id, table)
-
-                  case class BadRow(hashKey: String, version: Int, contents: String)
+                  case class BadRow(id: String, version: Int, contents: String)
 
                   putTableItem(BadRow(id.id, id.version, randomAlphanumeric), table)
 

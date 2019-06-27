@@ -34,20 +34,15 @@ class DynamoHashRangeWritableTest
   }
 
   override def getT(table: Table)(hashKey: String, v: Int): Record =
-  scanamo.exec(
-    ScanamoTable[HashRangeEntry](table.name).get('hashKey -> hashKey and 'rangeKey -> v)
-  ).value.right.value.payload
+    scanamo.exec(
+      ScanamoTable[HashRangeEntry](table.name).get('id -> hashKey and 'version -> v)
+    ).value.right.value.payload
 
   override def createEntry(hashKey: String, v: Int, record: Record): HashRangeEntry =
     DynamoHashRangeEntry(hashKey, v, record)
 
   override def createTable(table: Table): Table =
-    createTableWithHashRangeKey(
-      table = table,
-      hashKeyName = "hashKey",
-      rangeKeyName = "rangeKey",
-      rangeKeyType = ScalarAttributeType.N
-    )
+    createTableWithHashRangeKey(table)
 
   describe("DynamoHashRangeWritable") {
 
@@ -95,52 +90,28 @@ class DynamoHashRangeWritableTest
       it("hash key name is wrong") {
         assertErrorsOnBadKeyName(
           table =>
-            createTableWithHashRangeKey(
-              table,
-              hashKeyName = "wrong",
-              hashKeyType = ScalarAttributeType.S,
-              rangeKeyName = "rangeKey",
-              rangeKeyType = ScalarAttributeType.N
-            )
+            createTableWithHashRangeKey(table, hashKeyName = "wrong")
         )
       }
 
       it("hash key is the wrong type") {
         assertErrorsOnBadKeyType(
           table =>
-            createTableWithHashRangeKey(
-              table,
-              hashKeyName = "hashKey",
-              hashKeyType = ScalarAttributeType.N,
-              rangeKeyName = "rangeKey",
-              rangeKeyType = ScalarAttributeType.N
-            )
+            createTableWithHashRangeKey(table, hashKeyType = ScalarAttributeType.N)
         )
       }
 
       it("range key name is wrong") {
         assertErrorsOnBadKeyName(
           table =>
-            createTableWithHashRangeKey(
-              table,
-              hashKeyName = "hashKey",
-              hashKeyType = ScalarAttributeType.S,
-              rangeKeyName = "wrong",
-              rangeKeyType = ScalarAttributeType.N
-            )
+            createTableWithHashRangeKey(table, rangeKeyName = "wrong")
         )
       }
 
       it("range key is the wrong type") {
         assertErrorsOnBadKeyType(
           table =>
-            createTableWithHashRangeKey(
-              table,
-              hashKeyName = "hashKey",
-              hashKeyType = ScalarAttributeType.S,
-              rangeKeyName = "rangeKey",
-              rangeKeyType = ScalarAttributeType.S
-            )
+            createTableWithHashRangeKey(table, rangeKeyType = ScalarAttributeType.S)
         )
       }
     }

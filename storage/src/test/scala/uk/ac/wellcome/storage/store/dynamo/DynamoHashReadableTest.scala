@@ -26,7 +26,7 @@ class DynamoHashReadableTest extends DynamoReadableTestCases[String, DynamoHashE
     new DynamoHashReadableImpl(dynamoClient, ScanamoTable[HashEntry](table.name))
   }
 
-  override def createTable(table: Table): Table = createTableWithHashKey(table, keyName = "hashKey")
+  override def createTable(table: Table): Table = createTableWithHashKey(table)
 
   override def createEntry(hashKey: String, v: Int, record: Record): HashEntry =
     DynamoHashEntry(hashKey, v, record)
@@ -35,13 +35,13 @@ class DynamoHashReadableTest extends DynamoReadableTestCases[String, DynamoHashE
     describe("fails if the table definition is wrong") {
       it("hash key name is wrong") {
         assertErrorsOnBadKeyName(table =>
-          createTableWithHashKey(table, keyName = "wrong", keyType = ScalarAttributeType.S)
+          createTableWithHashKey(table, keyName = "wrong")
         )
       }
 
       it("hash key is the wrong type") {
         assertErrorsOnBadKeyType(table =>
-          createTableWithHashKey(table, keyName = "hashKey", keyType = ScalarAttributeType.N)
+          createTableWithHashKey(table, keyType = ScalarAttributeType.N)
         )
       }
     }

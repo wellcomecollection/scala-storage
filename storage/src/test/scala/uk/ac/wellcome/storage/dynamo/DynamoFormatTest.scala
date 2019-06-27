@@ -16,7 +16,7 @@ import org.scanamo.time.JavaTimeFormats._
 
 trait DynamoFormatTestCases[T] extends FunSpec with Matchers with DynamoFixtures with EitherValues {
   def createTable(table: Table): Table =
-    createTableWithHashKey(table, keyName = "id")
+    createTableWithHashKey(table)
 
   def createT: T
   def createBadT: String

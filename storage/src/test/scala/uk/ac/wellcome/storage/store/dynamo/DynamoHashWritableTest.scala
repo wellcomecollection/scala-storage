@@ -32,14 +32,14 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, Dyn
 
   override def getT(table: Table)(hashKey: String, v: Int): Record =
     scanamo.exec(
-      ScanamoTable[HashEntry](table.name).get('hashKey -> hashKey)
+      ScanamoTable[HashEntry](table.name).get('id -> hashKey)
     ).value.right.value.payload
 
   override def createEntry(hashKey: String, v: Int, record: Record): HashEntry =
     DynamoHashEntry(hashKey, v, record)
 
   override def createTable(table: Table): Table =
-    createTableWithHashKey(table, keyName = "hashKey")
+    createTableWithHashKey(table)
 
   describe("DynamoHashWritable") {
     it("fails to overwrite a new version with an old version") {
@@ -88,11 +88,7 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, Dyn
 
       it("hash key is the wrong type") {
         assertErrorsOnBadKeyType(
-          table => createTableWithHashKey(
-            table,
-            keyName = "hashKey",
-            keyType = ScalarAttributeType.N
-          )
+          table => createTableWithHashKey(table, keyType = ScalarAttributeType.N)
         )
       }
     }

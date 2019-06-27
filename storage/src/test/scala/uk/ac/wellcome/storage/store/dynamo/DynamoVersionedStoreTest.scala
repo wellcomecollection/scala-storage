@@ -1,6 +1,6 @@
 package uk.ac.wellcome.storage.store.dynamo
 
-import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType
+import com.amazonaws.services.dynamodbv2.model.BatchWriteItemResult
 import org.scanamo.auto._
 import org.scanamo.{Table => ScanamoTable}
 import uk.ac.wellcome.fixtures.TestWith
@@ -22,14 +22,9 @@ class DynamoVersionedStoreTest
   type DynamoStoreStub = DynamoHashRangeStore[String, Int, Record]
 
   override def createTable(table: Table): Table =
-    createTableWithHashRangeKey(
-      table = table,
-      hashKeyName = "hashKey",
-      rangeKeyName = "rangeKey",
-      rangeKeyType = ScalarAttributeType.N
-    )
+    createTableWithHashRangeKey(table)
 
-  private def insertEntries(table: Table)(entries: Map[Version[String, Int], Record]) = {
+  private def insertEntries(table: Table)(entries: Map[Version[String, Int], Record]): Seq[BatchWriteItemResult] = {
     val scanamoTable = new ScanamoTable[DynamoHashRangeEntry[String, Int, Record]](table.name)
 
     val rows = entries.map {

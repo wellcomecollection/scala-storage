@@ -78,13 +78,13 @@ trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Reco
 
     it("fails if the row doesn't match the model") {
       // This doesn't have the payload field that our DynamoEntry model requires
-      case class BadModel(hashKey: String, rangeKey: Int, version: Int)
+      case class BadModel(id: String, version: Int, t: String)
 
       val id = randomAlphanumeric
 
       withLocalDynamoDbTable { table =>
         scanamo.exec(ScanamoTable[BadModel](table.name).putAll(
-          Set(BadModel(id, rangeKey = 1, version = 1))
+          Set(BadModel(id, version = 1, t = randomAlphanumeric))
         ))
 
         val readable = createDynamoReadableWith(table)

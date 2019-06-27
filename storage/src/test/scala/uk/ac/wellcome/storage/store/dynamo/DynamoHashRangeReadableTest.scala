@@ -30,12 +30,7 @@ class DynamoHashRangeReadableTest extends DynamoReadableTestCases[Version[String
   }
 
   override def createTable(table: Table): Table =
-    createTableWithHashRangeKey(
-      table = table,
-      hashKeyName = "hashKey",
-      rangeKeyName = "rangeKey",
-      rangeKeyType = ScalarAttributeType.N
-    )
+    createTableWithHashRangeKey(table)
 
   override def createEntry(hashKey: String, v: Int, record: Record): HashRangeEntry =
     DynamoHashRangeEntry(hashKey, v, record)
@@ -45,63 +40,34 @@ class DynamoHashRangeReadableTest extends DynamoReadableTestCases[Version[String
       it("hash key name is wrong") {
         assertErrorsOnBadKeyName(
           table =>
-            createTableWithHashRangeKey(
-              table,
-              hashKeyName = "wrong",
-              hashKeyType = ScalarAttributeType.S,
-              rangeKeyName = "rangeKey",
-              rangeKeyType = ScalarAttributeType.N
-            )
+            createTableWithHashRangeKey(table, hashKeyName = "wrong")
         )
       }
 
       it("hash key is the wrong type") {
         assertErrorsOnBadKeyType(
           table =>
-            createTableWithHashRangeKey(
-              table,
-              hashKeyName = "hashKey",
-              hashKeyType = ScalarAttributeType.N,
-              rangeKeyName = "rangeKey",
-              rangeKeyType = ScalarAttributeType.N
-            )
+            createTableWithHashRangeKey(table, hashKeyType = ScalarAttributeType.N)
         )
       }
 
       it("range key name is wrong") {
         assertErrorsOnBadKeyName(
           table =>
-            createTableWithHashRangeKey(
-              table,
-              hashKeyName = "hashKey",
-              hashKeyType = ScalarAttributeType.S,
-              rangeKeyName = "wrong",
-              rangeKeyType = ScalarAttributeType.N
-            )
+            createTableWithHashRangeKey(table, rangeKeyName = "wrong")
         )
       }
 
       it("range key is the wrong type") {
         assertErrorsOnBadKeyType(
           table =>
-            createTableWithHashRangeKey(
-              table,
-              hashKeyName = "hashKey",
-              hashKeyType = ScalarAttributeType.S,
-              rangeKeyName = "rangeKey",
-              rangeKeyType = ScalarAttributeType.S
-            )
+            createTableWithHashRangeKey(table, rangeKeyType = ScalarAttributeType.S)
         )
       }
 
       it("range key is missing") {
         assertErrorsOnWrongTableDefinition(
-          table =>
-            createTableWithHashKey(
-              table,
-              keyName = "hashKey",
-              keyType = ScalarAttributeType.S
-            ),
+          table => createTableWithHashKey(table),
           message = "Query key condition not supported"
         )
       }

@@ -34,7 +34,7 @@ class DynamoHashStoreTest extends StoreWithoutOverwritesTestCases[Version[String
 
   override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
 
-  override def createTable(table: Table): Table = createTableWithHashKey(table, keyName = "hashKey")
+  override def createTable(table: Table): Table = createTableWithHashKey(table)
 
   override def createId(implicit namespace: String): Version[String, Int] =
     Version(id = randomAlphanumeric, version = 1)
