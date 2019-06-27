@@ -5,16 +5,12 @@ import org.scanamo.query._
 import org.scanamo.syntax._
 import org.scanamo.{DynamoFormat, Scanamo, Table}
 import uk.ac.wellcome.storage.{Identified, StoreWriteError, Version}
-import uk.ac.wellcome.storage.dynamo.{
-  DynamoHashEntry,
-  DynamoHashRangeEntry
-}
+import uk.ac.wellcome.storage.dynamo.{DynamoHashEntry, DynamoHashRangeEntry}
 import uk.ac.wellcome.storage.store.Writable
 
 import scala.util.{Failure, Success, Try}
 
-sealed trait DynamoWritable[Ident, EntryType, T]
-    extends Writable[Ident, T] {
+sealed trait DynamoWritable[Ident, EntryType, T] extends Writable[Ident, T] {
 
   protected val client: AmazonDynamoDB
   protected val table: Table[EntryType]
@@ -68,7 +64,8 @@ trait DynamoHashRangeWritable[HashKey, RangeKey, T]
   implicit protected val formatRangeKey: DynamoFormat[RangeKey]
   assert(formatRangeKey != null)
 
-  override protected def parseEntry(entry: DynamoHashRangeEntry[HashKey, RangeKey, T]): T =
+  override protected def parseEntry(
+    entry: DynamoHashRangeEntry[HashKey, RangeKey, T]): T =
     entry.payload
 
   override protected def createEntry(

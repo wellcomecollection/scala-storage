@@ -4,16 +4,14 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import org.scanamo.query.Query
 import org.scanamo.syntax._
 import org.scanamo.{DynamoFormat, Scanamo, Table}
-import uk.ac.wellcome.storage.dynamo.{
-  DynamoHashEntry,
-  DynamoHashRangeEntry
-}
+import uk.ac.wellcome.storage.dynamo.{DynamoHashEntry, DynamoHashRangeEntry}
 import uk.ac.wellcome.storage.store.Readable
 import uk.ac.wellcome.storage._
 
 import scala.util.{Failure, Success, Try}
 
-sealed trait DynamoReadable[Ident, DynamoIdent, EntryType, T] extends Readable[Ident, T] {
+sealed trait DynamoReadable[Ident, DynamoIdent, EntryType, T]
+    extends Readable[Ident, T] {
 
   implicit protected val format: DynamoFormat[EntryType]
 
