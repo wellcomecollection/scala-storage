@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.16.1 - 2019-06-27
+
+Adds store tests to versionedstore tests.
+
 ## v7.16.0 - 2019-06-26
 
 Adds VersionedHybridStore type class and memory implementation.
