@@ -11,7 +11,13 @@ trait VersionedStoreTestCases[Id, T, VersionedStoreContext]
     with Matchers
     with EitherValues
     with Logging
-    with VersionedStoreFixtures[Id, Int, T, VersionedStoreContext] {
+    with VersionedStoreFixtures[Id, Int, T, VersionedStoreContext]
+    with StoreWithoutOverwritesTestCases[Version[Id, Int], T, String, VersionedStoreContext]{
+
+  def createIdent: Id
+  def createT: T
+
+  def withVersionedStoreImpl[R](initialEntries: Entries = Map.empty)(testWith: TestWith[VersionedStoreImpl, R]): R
 
   def withFailingGetVersionedStore[R](initialEntries: Entries = Map.empty)(testWith: TestWith[VersionedStoreImpl, R]): R
   def withFailingPutVersionedStore[R](initialEntries: Entries = Map.empty)(testWith: TestWith[VersionedStoreImpl, R]): R
@@ -20,6 +26,7 @@ trait VersionedStoreTestCases[Id, T, VersionedStoreContext]
     describe("init") {
       it("stores a new record at the starting version") {
         withVersionedStoreImpl() { versionedStore =>
+
           val id = createIdent
           val t = createT
 

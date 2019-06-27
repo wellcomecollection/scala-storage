@@ -15,7 +15,12 @@ class MemoryVersionedStoreTest
   override def createIdent: String = randomAlphanumeric
   override def createT: Record = createRecord
 
-  override def withVersionedStoreImpl[R](initialEntries: Entries, storeContext: UnderlyingMemoryStore)(testWith: TestWith[VersionedStoreImpl, R]): R = {
+  override def withVersionedStoreImpl[R](initialEntries: Entries)(testWith: TestWith[VersionedStoreImpl, R]): R = {
+    val store = new MemoryStore[Version[String, Int], Record](initialEntries) with MemoryMaxima[String, Record]
+    testWith(new MemoryVersionedStore(store))
+  }
+
+  override def withVersionedStoreImpl[R](initialEntries: Entries, storeContext: MemoryStore[Version[String, Int], Record] with MemoryMaxima[String, Record])(testWith: TestWith[VersionedStoreImpl, R]): R = {
     initialEntries.map {
       case (k,v) => storeContext.put(k)(v)
     }
@@ -43,4 +48,13 @@ class MemoryVersionedStoreTest
     }
     testWith(new MemoryVersionedStore(store))
   }
+
+  override def withStoreContext[R](testWith: TestWith[MemoryStore[Version[String, Int], Record] with MemoryMaxima[String, Record], R]): R =
+    withVersionedStoreContext(testWith)
+
+  override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
+
+  override def createId(implicit namespace: String): Version[String, Int] = Version(randomAlphanumeric, 0)
+
+  override def withStoreImpl[R](initialEntries: Map[Version[String, Int], Record], storeContext: MemoryStore[Version[String, Int], Record] with MemoryMaxima[String, Record])(testWith: TestWith[StoreImpl, R]): R = withVersionedStoreImpl(initialEntries, storeContext)(testWith)
 }

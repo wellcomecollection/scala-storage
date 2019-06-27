@@ -42,15 +42,27 @@ class DynamoVersionedStoreTest
     scanamo.exec(scanamoTable.putAll(rows.toSet))
   }
 
-  override def withVersionedStoreImpl[R](initialEntries: Entries, table: Table)(testWith: TestWith[VersionedStoreImpl, R]): R = {
-    val store = new DynamoStoreStub(
-      config = createDynamoConfigWith(table)
-    )
+  override def withVersionedStoreImpl[R](initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[VersionedStoreImpl, R]): R =
+    withLocalDynamoDbTable { table =>
+      val store = new DynamoStoreStub(
+        config = createDynamoConfigWith(table)
+      )
 
     insertEntries(table)(initialEntries)
 
     testWith(new VersionedStore(store))
   }
+
+  override def withVersionedStoreImpl[R](initialEntries: Entries, storeContext: Table)(testWith: TestWith[VersionedStoreImpl, R]): R = {
+    val store = new DynamoStoreStub(
+      config = createDynamoConfigWith(storeContext)
+    )
+
+    insertEntries(storeContext)(initialEntries)
+
+    testWith(new VersionedStore(store))
+  }
+
 
   override def withVersionedStoreContext[R](testWith: TestWith[Table, R]): R =
     withLocalDynamoDbTable { table => testWith(table) }
@@ -84,4 +96,14 @@ class DynamoVersionedStoreTest
 
       testWith(new VersionedStore(store))
     }
+
+  override def withStoreContext[R](testWith: TestWith[Table, R]): R =
+    withVersionedStoreContext(testWith)
+
+  override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
+
+  override def createId(implicit namespace: String): Version[String, Int] = Version(randomAlphanumeric, 0)
+
+  override def withStoreImpl[R](initialEntries: Map[Version[String, Int], Record], storeContext: Table)(testWith: TestWith[StoreImpl, R]): R = withVersionedStoreImpl(initialEntries, storeContext)(testWith)
+
 }
