@@ -11,14 +11,14 @@ import uk.ac.wellcome.storage.store.{HybridIndexedStoreEntry, HybridStoreEntry, 
 import uk.ac.wellcome.storage.{ObjectLocation, StoreReadError, StoreWriteError, Version}
 
 class DynamoVersionedHybridStoreTest extends VersionedStoreTestCases[String, HybridStoreEntry[Record, Map[String, String]],
-  DynamoHybridStoreWithMaxima[Record, Map[String, String]]]
+  DynamoHybridStoreWithMaxima[String, Int, Record, Map[String, String]]]
   with RecordGenerators
   with ObjectLocationGenerators
   with S3Fixtures
   with MetadataGenerators
   with DynamoFixtures {
 
-  type DynamoVersionedStoreImpl = DynamoVersionedHybridStore[Record, Map[String, String]]
+  type DynamoVersionedStoreImpl = DynamoVersionedHybridStore[String, Int, Record, Map[String, String]]
   type IndexedStoreEntry = HybridIndexedStoreEntry[Version[String, Int], ObjectLocation, Map[String, String]]
 
   override def createTable(table: Table): Table =
@@ -60,15 +60,15 @@ class DynamoVersionedHybridStoreTest extends VersionedStoreTestCases[String, Hyb
 
   override def createT: HybridStoreEntry[Record, Map[String, String]] = HybridStoreEntry(createRecord, createValidMetadata)
 
-  override def withVersionedStoreImpl[R](initialEntries: Entries, storeContext: DynamoHybridStoreWithMaxima[Record, Map[String, String]])(testWith: TestWith[VersionedStoreImpl, R]): R = {
+  override def withVersionedStoreImpl[R](initialEntries: Entries, storeContext: DynamoHybridStoreWithMaxima[String, Int, Record, Map[String, String]])(testWith: TestWith[VersionedStoreImpl, R]): R = {
     initialEntries.map {
       case (k,v) => storeContext.put(k)(v).right.value
     }
 
-    testWith(new DynamoVersionedHybridStore[Record, Map[String, String]](storeContext))
+    testWith(new DynamoVersionedHybridStore[String, Int, Record, Map[String, String]](storeContext))
   }
 
-  override def withVersionedStoreContext[R](testWith: TestWith[DynamoHybridStoreWithMaxima[Record, Map[String, String]], R]): R = {
+  override def withVersionedStoreContext[R](testWith: TestWith[DynamoHybridStoreWithMaxima[String, Int, Record, Map[String, String]], R]): R = {
     withLocalS3Bucket { bucket =>
       withLocalDynamoDbTable { table =>
 
@@ -82,18 +82,18 @@ class DynamoVersionedHybridStoreTest extends VersionedStoreTestCases[String, Hyb
 
         val prefix = createObjectLocationPrefixWith(bucket.name)
 
-        testWith(new DynamoHybridStoreWithMaxima[Record, Map[String, String]](prefix)(indexedStore, typedStore))
+        testWith(new DynamoHybridStoreWithMaxima[String, Int, Record, Map[String, String]](prefix)(indexedStore, typedStore))
       }
     }
   }
 
   override def withStoreImpl[R](
     initialEntries: Map[Version[String, Int], HybridStoreEntry[Record, Map[String, String]]],
-    storeContext: DynamoHybridStoreWithMaxima[Record, Map[String, String]])(
+    storeContext: DynamoHybridStoreWithMaxima[String, Int, Record, Map[String, String]])(
       testWith: TestWith[StoreImpl, R]): R =
     withVersionedStoreImpl(initialEntries, storeContext)(testWith)
 
-  override def withStoreContext[R](testWith: TestWith[DynamoHybridStoreWithMaxima[Record, Map[String, String]], R]): R =
+  override def withStoreContext[R](testWith: TestWith[DynamoHybridStoreWithMaxima[String, Int, Record, Map[String, String]], R]): R =
     withVersionedStoreContext(testWith)
 
   override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
