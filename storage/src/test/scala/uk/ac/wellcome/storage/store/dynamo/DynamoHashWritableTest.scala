@@ -32,7 +32,7 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, Dyn
 
   override def getT(table: Table)(hashKey: String, v: Int): Record =
     scanamo.exec(
-      ScanamoTable[HashEntry](table.name).get('hashKey -> hashKey)
+      ScanamoTable[HashEntry](table.name).get('id -> hashKey)
     ).value.right.value.payload
 
   override def createEntry(hashKey: String, v: Int, record: Record): HashEntry =

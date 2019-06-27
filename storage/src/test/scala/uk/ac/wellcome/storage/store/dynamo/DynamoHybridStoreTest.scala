@@ -15,8 +15,8 @@ class DynamoHybridStoreTest extends DynamoHybridStoreTestCases[
     createTableWithHashKey(table)
 
   override def withHybridStoreImpl[R](
-                                       typedStore: S3TypedStoreImpl,
-                                       indexedStore: DynamoIndexedStoreImpl)(testWith: TestWith[HybridStoreImpl, R])(implicit context: (Bucket, Table)): R = {
+    typedStore: S3TypedStoreImpl,
+    indexedStore: DynamoIndexedStoreImpl)(testWith: TestWith[HybridStoreImpl, R])(implicit context: (Bucket, Table)): R = {
     implicit val underlyingTypedStore: S3TypedStoreImpl = typedStore
     implicit val underlyingIndexedStore: DynamoIndexedStoreImpl = indexedStore
 
