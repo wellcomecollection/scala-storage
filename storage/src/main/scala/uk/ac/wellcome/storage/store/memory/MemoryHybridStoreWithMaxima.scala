@@ -14,7 +14,7 @@ class MemoryHybridStoreWithMaxima[Id, T, Metadata](
   val typedStore: MemoryTypedStore[String, T],
   val indexedStore: Store[
     Version[Id, Int],
-    HybridIndexedStoreEntry[Version[Id, Int], String, Metadata]] with Maxima[
+    HybridIndexedStoreEntry[String, Metadata]] with Maxima[
     Id,
     Int],
   val codec: Codec[T]

@@ -10,7 +10,7 @@ import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGene
 import uk.ac.wellcome.storage.store._
 import uk.ac.wellcome.storage.store.s3.{S3StreamStore, S3TypedStore}
 
-trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], HybridIndexedStoreEntry[Version[String, Int], ObjectLocation, Map[String, String]]]]
+trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]]]
   extends HybridStoreWithoutOverwritesTestCases[
     Version[String, Int],
     ObjectLocation,
@@ -23,7 +23,7 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
     ] with RecordGenerators with S3Fixtures with DynamoFixtures with MetadataGenerators {
   type S3TypedStoreImpl = S3TypedStore[Record]
   type DynamoIndexedStoreImpl = DynamoStoreImpl
-  type IndexedStoreEntry = HybridIndexedStoreEntry[Version[String, Int], ObjectLocation, Map[String, String]]
+  type IndexedStoreEntry = HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]
 
   def createPrefix(implicit context: (Bucket, Table)): ObjectLocationPrefix = {
     val (bucket, _) = context

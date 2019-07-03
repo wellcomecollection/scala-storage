@@ -11,7 +11,7 @@ class DynamoHybridStore[T, Metadata](prefix: ObjectLocationPrefix)(
   val indexedStore: DynamoHashStore[
     String,
     Int,
-    HybridIndexedStoreEntry[Version[String, Int], ObjectLocation, Metadata]],
+    HybridIndexedStoreEntry[ObjectLocation, Metadata]],
   val typedStore: S3TypedStore[T]
 ) extends HybridStore[Version[String, Int], ObjectLocation, T, Metadata] {
 

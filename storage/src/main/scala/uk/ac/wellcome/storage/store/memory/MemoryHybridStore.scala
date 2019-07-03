@@ -8,7 +8,7 @@ class MemoryHybridStore[Ident, T, Metadata](
   val typedStore: MemoryTypedStore[String, T],
   val indexedStore: MemoryStore[
     Ident,
-    HybridIndexedStoreEntry[Ident, String, Metadata]],
+    HybridIndexedStoreEntry[String, Metadata]],
   val codec: Codec[T]
 ) extends HybridStore[Ident, String, T, Metadata] {
 
