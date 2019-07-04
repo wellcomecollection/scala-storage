@@ -13,6 +13,6 @@ object MemoryVersionedStore {
   def apply[Id, T](initialEntries: Map[Version[Id, Int], T]): MemoryVersionedStore[Id, T] =
     new MemoryVersionedStore[Id, T](
       store = new MemoryStore[Version[Id, Int], T](initialEntries)
-      with MemoryMaxima[Id, Int]
+      with MemoryMaxima[Id, T]
     )
 }
