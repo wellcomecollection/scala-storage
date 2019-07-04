@@ -15,7 +15,7 @@ class DynamoHybridStoreWithMaxima[Id, V, T, Metadata](
   val indexedStore: DynamoHashRangeStore[
     Id,
     V,
-    HybridIndexedStoreEntry[Version[Id, V], ObjectLocation, Metadata]],
+    HybridIndexedStoreEntry[ObjectLocation, Metadata]],
   val typedStore: S3TypedStore[T]
 ) extends HybridStoreWithMaxima[Id, V, ObjectLocation, T, Metadata] {
 

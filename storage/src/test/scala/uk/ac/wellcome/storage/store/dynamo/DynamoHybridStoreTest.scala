@@ -9,7 +9,7 @@ import uk.ac.wellcome.storage.store.HybridIndexedStoreEntry
 import org.scanamo.auto._
 
 class DynamoHybridStoreTest extends DynamoHybridStoreTestCases[
-  DynamoHashStore[String, Int, HybridIndexedStoreEntry[Version[String, Int], ObjectLocation, Map[String, String]]]
+  DynamoHashStore[String, Int, HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]]
   ] {
   override def createTable(table: Table): Table =
     createTableWithHashKey(table)
@@ -40,7 +40,7 @@ class DynamoHybridStoreTest extends DynamoHybridStoreTestCases[
 
     testWith(
       new DynamoIndexedStoreImpl(config = createDynamoConfigWith(table)) {
-        override def put(id: Version[String, Int])(t: HybridIndexedStoreEntry[Version[String, Int], ObjectLocation, Map[String, String]]): WriteEither =
+        override def put(id: Version[String, Int])(t: HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]): WriteEither =
           Left(StoreWriteError(new Error("BOOM!")))
       }
     )

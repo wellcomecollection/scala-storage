@@ -10,13 +10,13 @@ import uk.ac.wellcome.storage.store._
 class MemoryHybridStoreTest
   extends HybridStoreWithOverwritesTestCases[UUID, String, Record, Map[String, String], String,
     MemoryTypedStore[String, Record],
-    MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]],
-    (MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]])]
+    MemoryStore[UUID, HybridIndexedStoreEntry[String, Map[String, String]]],
+    (MemoryTypedStore[String, Record], MemoryStore[UUID, HybridIndexedStoreEntry[String, Map[String, String]]])]
     with MetadataGenerators
     with RecordGenerators
     with MemoryTypedStoreFixtures[String, Record] {
 
-  type MemoryIndexedStoreImpl = MemoryStore[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]]
+  type MemoryIndexedStoreImpl = MemoryStore[UUID, HybridIndexedStoreEntry[String, Map[String, String]]]
   type MemoryTypedStoreImpl = MemoryTypedStore[String, Record]
 
   type Context = (MemoryTypedStoreImpl, MemoryIndexedStoreImpl)
@@ -86,7 +86,7 @@ class MemoryHybridStoreTest
   override def withBrokenPutIndexedStoreImpl[R](testWith: TestWith[MemoryIndexedStoreImpl, R])(implicit context: Context): R = {
     testWith(
       new MemoryIndexedStoreImpl(initialEntries = Map.empty) {
-        override def put(id: UUID)(t: HybridIndexedStoreEntry[UUID, String, Map[String, String]]): Either[WriteError, Identified[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]]] =
+        override def put(id: UUID)(t: HybridIndexedStoreEntry[String, Map[String, String]]): Either[WriteError, Identified[UUID, HybridIndexedStoreEntry[String, Map[String, String]]]] =
           Left(StoreWriteError(new Error("BOOM!")))
       }
     )
@@ -95,7 +95,7 @@ class MemoryHybridStoreTest
   override def withBrokenGetIndexedStoreImpl[R](testWith: TestWith[MemoryIndexedStoreImpl, R])(implicit context: Context): R = {
     testWith(
       new MemoryIndexedStoreImpl(initialEntries = Map.empty) {
-        override def get(id: UUID): Either[ReadError, Identified[UUID, HybridIndexedStoreEntry[UUID, String, Map[String, String]]]] =
+        override def get(id: UUID): Either[ReadError, Identified[UUID, HybridIndexedStoreEntry[String, Map[String, String]]]] =
           Left(StoreReadError(new Error("BOOM!")))
       }
     )

@@ -6,9 +6,8 @@ import uk.ac.wellcome.storage.streaming.Codec
 class MemoryHybridStore[Ident, T, Metadata](
   implicit
   val typedStore: MemoryTypedStore[String, T],
-  val indexedStore: MemoryStore[
-    Ident,
-    HybridIndexedStoreEntry[Ident, String, Metadata]],
+  val indexedStore: MemoryStore[Ident,
+                                HybridIndexedStoreEntry[String, Metadata]],
   val codec: Codec[T]
 ) extends HybridStore[Ident, String, T, Metadata] {
 

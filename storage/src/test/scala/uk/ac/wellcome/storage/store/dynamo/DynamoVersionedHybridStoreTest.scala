@@ -19,7 +19,7 @@ class DynamoVersionedHybridStoreTest extends VersionedStoreTestCases[String, Hyb
   with DynamoFixtures {
 
   type DynamoVersionedStoreImpl = DynamoVersionedHybridStore[String, Int, Record, Map[String, String]]
-  type IndexedStoreEntry = HybridIndexedStoreEntry[Version[String, Int], ObjectLocation, Map[String, String]]
+  type IndexedStoreEntry = HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]
 
   override def createTable(table: Table): Table =
     createTableWithHashRangeKey(table)
