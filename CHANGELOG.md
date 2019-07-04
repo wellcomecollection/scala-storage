@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.18.1 - 2019-07-04
+
+Update the README!
+
 ## v7.18.0 - 2019-06-27
 
 Updates the VHS interface to allow type paramterised Id and Version.
