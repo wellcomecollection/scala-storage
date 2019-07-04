@@ -1,3 +1,3 @@
-RELEASE_TYPE: minor
+RELEASE_TYPE: patch
 
-Don't double-store the indexed store ID in the HybridStore.
+Update the README!
