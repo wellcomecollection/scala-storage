@@ -8,7 +8,7 @@ import uk.ac.wellcome.storage._
 
 trait HybridStoreTestCases[IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
 TypedStoreImpl <: TypedStore[TypedStoreId, T],
-IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]],
+IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[TypedStoreId, Metadata]],
 HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridStoreEntry[T, Metadata], Namespace, HybridStoreContext]
   with Matchers
   with RandomThings
@@ -146,7 +146,6 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
                 val metadata = createMetadata
 
                 val hybridIndexedStoreEntry = HybridIndexedStoreEntry(
-                  indexedStoreId = indexedStoreId,
                   typedStoreId = typedStoreId,
                   metadata = metadata
                 )
@@ -173,7 +172,6 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
                 val metadata = createMetadata
 
                 val hybridIndexedStoreEntry = HybridIndexedStoreEntry(
-                  indexedStoreId = indexedStoreId,
                   typedStoreId = typedStoreId,
                   metadata = metadata
                 )
@@ -243,7 +241,7 @@ HybridStoreContext] extends FunSpec with StoreTestCases[IndexedStoreId, HybridSt
 trait HybridStoreWithOverwritesTestCases[
 IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
 TypedStoreImpl <: TypedStore[TypedStoreId, T],
-IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]],
+IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[TypedStoreId, Metadata]],
 HybridStoreContext]
   extends HybridStoreTestCases[IndexedStoreId, TypedStoreId, T, Metadata, Namespace, TypedStoreImpl, IndexedStoreImpl, HybridStoreContext]
     with StoreWithOverwritesTestCases[IndexedStoreId, HybridStoreEntry[T, Metadata], Namespace, HybridStoreContext]
@@ -251,7 +249,7 @@ HybridStoreContext]
 trait HybridStoreWithoutOverwritesTestCases[
 IndexedStoreId, TypedStoreId, T, Metadata, Namespace,
 TypedStoreImpl <: TypedStore[TypedStoreId, T],
-IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]],
+IndexedStoreImpl <: Store[IndexedStoreId, HybridIndexedStoreEntry[TypedStoreId, Metadata]],
 HybridStoreContext]
   extends HybridStoreTestCases[IndexedStoreId, TypedStoreId, T, Metadata, Namespace, TypedStoreImpl, IndexedStoreImpl, HybridStoreContext]
     with StoreWithoutOverwritesTestCases[IndexedStoreId, HybridStoreEntry[T, Metadata], Namespace, HybridStoreContext]

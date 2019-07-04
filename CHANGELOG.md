@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.18.0 - 2019-06-27
+
+Updates the VHS interface to allow type paramterised Id and Version.
+
 ## v7.17.0 - 2019-06-27
 
 Use better default names for DynamoDB table entries.

@@ -11,7 +11,7 @@ class MemoryVersionedHybridStoreTest
     MemoryHybridStoreWithMaxima[String, Record, Record]]
     with RecordGenerators {
 
-  type IndexedStoreEntry = HybridIndexedStoreEntry[Version[String,Int], String, Record]
+  type IndexedStoreEntry = HybridIndexedStoreEntry[String, Record]
 
   override def withFailingGetVersionedStore[R](initialEntries: Entries)(testWith: TestWith[VersionedStoreImpl, R]): R = {
     withVersionedStoreContext { storeContext =>
@@ -61,8 +61,8 @@ class MemoryVersionedHybridStoreTest
   }
 
   override def withVersionedStoreContext[R](testWith: TestWith[MemoryHybridStoreWithMaxima[String, Record, Record], R]): R = {
-    val indexedStore = new MemoryStore[Version[String, Int], HybridIndexedStoreEntry[Version[String, Int], String, Record]](Map.empty)
-      with MemoryMaxima[String, HybridIndexedStoreEntry[Version[String, Int], String, Record]]
+    val indexedStore = new MemoryStore[Version[String, Int], HybridIndexedStoreEntry[String, Record]](Map.empty)
+      with MemoryMaxima[String, HybridIndexedStoreEntry[String, Record]]
 
     val memoryStoreForStreamStore = new MemoryStore[String, MemoryStreamStoreEntry](Map.empty)
     val streamStore = new MemoryStreamStore[String](memoryStoreForStreamStore)

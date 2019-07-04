@@ -4,8 +4,7 @@ import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage._
 
 case class HybridStoreEntry[T, Metadata](t: T, metadata: Metadata)
-case class HybridIndexedStoreEntry[IndexedStoreId, TypeStoreId, Metadata](
-  indexedStoreId: IndexedStoreId,
+case class HybridIndexedStoreEntry[TypeStoreId, Metadata](
   typedStoreId: TypeStoreId,
   metadata: Metadata
 )
@@ -15,7 +14,7 @@ trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
     with Logging {
 
   type IndexEntry =
-    HybridIndexedStoreEntry[IndexedStoreId, TypedStoreId, Metadata]
+    HybridIndexedStoreEntry[TypedStoreId, Metadata]
 
   implicit protected val indexedStore: Store[IndexedStoreId, IndexEntry]
   implicit protected val typedStore: TypedStore[TypedStoreId, T]
@@ -59,7 +58,6 @@ trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
         TypedStoreEntry(t.t, Map.empty))
 
       locationEntry = HybridIndexedStoreEntry(
-        indexedStoreId = id,
         typedStoreId = putTypeResult.id,
         metadata = t.metadata
       )
