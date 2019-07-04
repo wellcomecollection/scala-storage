@@ -4,7 +4,7 @@ import java.io.InputStream
 
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.iterable.S3Objects
-import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest, PutObjectResult, S3ObjectSummary}
+import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest, S3ObjectSummary}
 import grizzled.slf4j.Logging
 import io.circe.parser.parse
 import io.circe.{Decoder, Json}
@@ -126,7 +126,7 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
       path = key
     )
 
-  def putStream(location: ObjectLocation, inputStream: InputStream with HasLength with HasMetadata): PutObjectResult = {
+  def putStream(location: ObjectLocation, inputStream: InputStream with HasLength with HasMetadata): Unit = {
     val metadata = new ObjectMetadata()
 
     metadata.setContentLength(inputStream.length)
@@ -140,6 +140,8 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
     )
 
     s3Client.putObject(putObjectRequest)
+
+    inputStream.close()
   }
 
   def assertEqualObjects(x: ObjectLocation, y: ObjectLocation): Assertion =

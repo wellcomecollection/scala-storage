@@ -10,7 +10,7 @@ trait S3TypedStoreFixtures[T] extends TypedStoreFixtures[ObjectLocation, T, S3St
   override def withTypedStore[R](streamStore: S3StreamStore, initialEntries: Map[ObjectLocation, TypedStoreEntry[T]])(testWith: TestWith[S3TypedStore[T], R])(implicit codec: Codec[T]): R = {
     implicit val s3StreamStore: S3StreamStore = streamStore
 
-    initialEntries.map { case (location, entry) =>
+    initialEntries.foreach { case (location, entry) =>
       val stream = codec.toStream(entry.t).right.value
 
       val uploadStream = new InputStreamWithLengthAndMetadata(stream, stream.length, entry.metadata)
