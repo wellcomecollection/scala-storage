@@ -5,9 +5,11 @@ import com.amazonaws.services.s3.model.AmazonS3Exception
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.listing.ListingTestCases
-import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
+import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix, S3ObjectLocation, S3ObjectLocationPrefix}
 
-trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation, ObjectLocationPrefix, ListingResult, S3Listing[ListingResult], Bucket] with S3ListingFixtures[ListingResult] {
+trait S3ListingTestCases[ListingResult]
+  extends ListingTestCases[S3ObjectLocation, S3ObjectLocationPrefix, ListingResult, S3Listing[ListingResult], Bucket]
+    with S3ListingFixtures[ListingResult] {
   def withListing[R](bucket: Bucket, initialEntries: Seq[ObjectLocation])(testWith: TestWith[S3Listing[ListingResult], R]): R = {
     createInitialEntries(bucket, initialEntries)
 

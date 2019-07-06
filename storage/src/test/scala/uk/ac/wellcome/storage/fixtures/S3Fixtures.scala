@@ -12,8 +12,7 @@ import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import org.scalatest.{Assertion, EitherValues, Matchers}
 import uk.ac.wellcome.fixtures._
 import uk.ac.wellcome.json.JsonUtil._
-import uk.ac.wellcome.storage.ObjectLocation
-import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
+import uk.ac.wellcome.storage.S3ObjectLocation
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config}
 import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming.{HasLength, HasMetadata, InputStreamWithLength}
@@ -30,7 +29,12 @@ object S3Fixtures {
   }
 }
 
-trait S3Fixtures extends Logging with Eventually with IntegrationPatience with Matchers with EitherValues with ObjectLocationGenerators {
+trait S3Fixtures
+  extends Logging
+    with Eventually
+    with IntegrationPatience
+    with Matchers
+    with EitherValues {
 
   import S3Fixtures._
 
@@ -82,8 +86,8 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
       }
     )
 
-  def getContentFromS3(location: ObjectLocation): String = {
-    val s3Object = s3Client.getObject(location.namespace, location.path)
+  def getContentFromS3(location: S3ObjectLocation): String = {
+    val s3Object = s3Client.getObject(location.bucket, location.key)
 
     val inputStream = new InputStreamWithLength(
       s3Object.getObjectContent,
@@ -92,10 +96,10 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
     stringCodec.fromStream(inputStream).right.value
   }
 
-  def getJsonFromS3(location: ObjectLocation): Json =
+  def getJsonFromS3(location: S3ObjectLocation): Json =
     parse(getContentFromS3(location)).right.get
 
-  def getObjectFromS3[T](location: ObjectLocation)(implicit decoder: Decoder[T]): T =
+  def getObjectFromS3[T](location: S3ObjectLocation)(implicit decoder: Decoder[T]): T =
     fromJson[T](getContentFromS3(location)).get
 
   def createBucketName: String =
@@ -109,24 +113,17 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
   def createBucket: Bucket =
     Bucket(createBucketName)
 
-  def createObjectLocationWith(
-    bucket: Bucket
-  ): ObjectLocation =
-    ObjectLocation(
-      namespace = bucket.name,
-      path = randomAlphanumeric
+  def createS3ObjectLocationWith(
+    bucket: Bucket = createBucket,
+    key: String = randomAlphanumeric
+  ): S3ObjectLocation =
+    S3ObjectLocation(
+      bucket = bucket.name,
+      key = key
     )
 
-  def createObjectLocationWith(
-    bucket: Bucket,
-    key: String
-  ): ObjectLocation =
-    ObjectLocation(
-      namespace = bucket.name,
-      path = key
-    )
-
-  def putStream(location: ObjectLocation, inputStream: InputStream with HasLength with HasMetadata): Unit = {
+  def putStream(location: S3ObjectLocation,
+                inputStream: InputStream with HasLength with HasMetadata): Unit = {
     val metadata = new ObjectMetadata()
 
     metadata.setContentLength(inputStream.length)
@@ -144,7 +141,7 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
     inputStream.close()
   }
 
-  def assertEqualObjects(x: ObjectLocation, y: ObjectLocation): Assertion =
+  def assertEqualObjects(x: S3ObjectLocation, y: S3ObjectLocation): Assertion =
     getContentFromS3(x) shouldBe getContentFromS3(y)
 
   /** Returns a list of keys in an S3 bucket.
@@ -172,7 +169,7 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
     */
   def getAllObjectContents(bucket: Bucket): Map[String, String] =
     listKeysInBucket(bucket).map { key =>
-      key -> getContentFromS3(createObjectLocationWith(bucket, key))
+      key -> getContentFromS3(createS3ObjectLocationWith(bucket, key))
     }.toMap
 
   def createS3ConfigWith(bucket: Bucket): S3Config =
