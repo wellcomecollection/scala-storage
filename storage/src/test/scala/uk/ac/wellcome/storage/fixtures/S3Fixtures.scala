@@ -12,7 +12,8 @@ import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import org.scalatest.{Assertion, EitherValues, Matchers}
 import uk.ac.wellcome.fixtures._
 import uk.ac.wellcome.json.JsonUtil._
-import uk.ac.wellcome.storage.S3ObjectLocation
+import uk.ac.wellcome.storage.generators.RandomThings
+import uk.ac.wellcome.storage.{S3ObjectLocation, S3ObjectLocationPrefix}
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config}
 import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming.{HasLength, HasMetadata, InputStreamWithLength}
@@ -34,7 +35,8 @@ trait S3Fixtures
     with Eventually
     with IntegrationPatience
     with Matchers
-    with EitherValues {
+    with EitherValues
+    with RandomThings {
 
   import S3Fixtures._
 
@@ -120,6 +122,18 @@ trait S3Fixtures
     S3ObjectLocation(
       bucket = bucket.name,
       key = key
+    )
+
+  def createS3ObjectLocation: S3ObjectLocation =
+    createS3ObjectLocationWith()
+
+  def createS3ObjectLocationPrefixWith(
+    bucket: Bucket = createBucket,
+    keyPrefix: String = randomAlphanumeric
+  ): S3ObjectLocationPrefix =
+    S3ObjectLocationPrefix(
+      bucket = bucket,
+      keyPrefix = keyPrefix
     )
 
   def putStream(location: S3ObjectLocation,

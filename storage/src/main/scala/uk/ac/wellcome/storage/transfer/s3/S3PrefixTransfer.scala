@@ -3,19 +3,19 @@ package uk.ac.wellcome.storage.transfer.s3
 import com.amazonaws.services.s3.AmazonS3
 import uk.ac.wellcome.storage.listing.s3.S3ObjectLocationListing
 import uk.ac.wellcome.storage.transfer.PrefixTransfer
-import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
+import uk.ac.wellcome.storage.{S3ObjectLocation, S3ObjectLocationPrefix}
 
 class S3PrefixTransfer()(
   implicit
   val transfer: S3Transfer,
   val listing: S3ObjectLocationListing
-) extends PrefixTransfer[ObjectLocationPrefix, ObjectLocation] {
+) extends PrefixTransfer[S3ObjectLocationPrefix, S3ObjectLocation] {
   override protected def buildDstLocation(
-    srcPrefix: ObjectLocationPrefix,
-    dstPrefix: ObjectLocationPrefix,
-    srcLocation: ObjectLocation): ObjectLocation =
+    srcPrefix: S3ObjectLocationPrefix,
+    dstPrefix: S3ObjectLocationPrefix,
+    srcLocation: S3ObjectLocation): S3ObjectLocation =
     dstPrefix.asLocation(
-      srcLocation.path.stripPrefix(srcPrefix.path)
+      srcLocation.key.stripPrefix(srcPrefix.keyPrefix)
     )
 }
 
