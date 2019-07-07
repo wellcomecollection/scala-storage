@@ -63,8 +63,6 @@ case class ObjectLocation(namespace: String, path: String) {
     )
 }
 
-
-
 case class ObjectLocationPrefix(namespace: String, path: String) {
   def asLocation(parts: String*): ObjectLocation =
     ObjectLocation(
