@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.18.3 - 2019-07-07
+
+This replaces the generic `ObjectLocation` case class with a `NamespacedPath` trait and two concrete implementations: `S3ObjectLocation` and `S3ObjectLocationPrefix`.
+
 ## v7.18.2 - 2019-07-04
 
 *   Close the input stream when calling `putStream()` in S3Fixtures.
