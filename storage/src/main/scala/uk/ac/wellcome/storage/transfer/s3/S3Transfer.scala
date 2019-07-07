@@ -11,7 +11,8 @@ import uk.ac.wellcome.storage.transfer._
 
 import scala.util.{Failure, Success, Try}
 
-class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[S3ObjectLocation] {
+class S3Transfer(implicit s3Client: AmazonS3)
+    extends Transfer[S3ObjectLocation] {
   private val transferManager = TransferManagerBuilder.standard
     .withS3Client(s3Client)
     .build
@@ -21,10 +22,9 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[S3ObjectLocation]
   override def transfer(
     src: S3ObjectLocation,
     dst: S3ObjectLocation): Either[TransferFailure, TransferSuccess] = {
-    def compare(
-      srcStream: InputStream,
-      dstStream: InputStream): Either[TransferOverwriteFailure[S3ObjectLocation],
-                                      TransferNoOp[S3ObjectLocation]] = {
+    def compare(srcStream: InputStream, dstStream: InputStream)
+      : Either[TransferOverwriteFailure[S3ObjectLocation],
+               TransferNoOp[S3ObjectLocation]] = {
       if (IOUtils.contentEquals(srcStream, dstStream)) {
         Right(TransferNoOp(src, dst))
       } else {

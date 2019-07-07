@@ -4,7 +4,12 @@ import java.nio.charset.StandardCharsets
 
 import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.{AmazonS3Exception, ObjectMetadata, PutObjectRequest, S3Object}
+import com.amazonaws.services.s3.model.{
+  AmazonS3Exception,
+  ObjectMetadata,
+  PutObjectRequest,
+  S3Object
+}
 import com.amazonaws.services.s3.transfer.{TransferManagerBuilder, Upload}
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.s3.S3ObjectLocation

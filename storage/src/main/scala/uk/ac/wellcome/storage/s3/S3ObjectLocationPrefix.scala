@@ -2,7 +2,8 @@ package uk.ac.wellcome.storage.s3
 
 import uk.ac.wellcome.storage.NamespacedPath
 
-case class S3ObjectLocationPrefix(bucket: String, keyPrefix: String) extends NamespacedPath {
+case class S3ObjectLocationPrefix(bucket: String, keyPrefix: String)
+    extends NamespacedPath {
   override val namespace: String = bucket
   override val path: String = keyPrefix
 
