@@ -7,13 +7,14 @@ import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.fixtures.{DynamoFixtures, S3Fixtures}
 import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGenerators}
+import uk.ac.wellcome.storage.s3.{S3ObjectLocation, S3ObjectLocationPrefix}
 import uk.ac.wellcome.storage.store._
 import uk.ac.wellcome.storage.store.s3.{S3StreamStore, S3TypedStore}
 
-trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]]]
+trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], HybridIndexedStoreEntry[S3ObjectLocation, Map[String, String]]]]
   extends HybridStoreWithoutOverwritesTestCases[
     Version[String, Int],
-    ObjectLocation,
+    S3ObjectLocation,
     Record,
     Map[String, String],
     Unit,
@@ -23,21 +24,18 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
     ] with RecordGenerators with S3Fixtures with DynamoFixtures with MetadataGenerators {
   type S3TypedStoreImpl = S3TypedStore[Record]
   type DynamoIndexedStoreImpl = DynamoStoreImpl
-  type IndexedStoreEntry = HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]
+  type IndexedStoreEntry = HybridIndexedStoreEntry[S3ObjectLocation, Map[String, String]]
 
-  def createPrefix(implicit context: (Bucket, Table)): ObjectLocationPrefix = {
+  def createPrefix(implicit context: (Bucket, Table)): S3ObjectLocationPrefix = {
     val (bucket, _) = context
-    ObjectLocationPrefix(
-      namespace = bucket.name,
-      path = randomAlphanumeric
-    )
+    createS3ObjectLocationPrefixWith(bucket)
   }
 
   override def withTypedStoreImpl[R](testWith: TestWith[S3TypedStoreImpl, R])(implicit context: (Bucket, Table)): R =
     testWith(S3TypedStore[Record])
 
-  override def createTypedStoreId(implicit bucket: Unit): ObjectLocation =
-    createObjectLocation
+  override def createTypedStoreId(implicit bucket: Unit): S3ObjectLocation =
+    createS3ObjectLocation
 
   override def createMetadata: Map[String, String] = createValidMetadata
 
@@ -46,7 +44,7 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
 
     testWith(
       new S3TypedStore[Record]()(codec, s3StreamStore) {
-        override def put(id: ObjectLocation)(entry: TypedStoreEntry[Record]): WriteEither =
+        override def put(id: S3ObjectLocation)(entry: TypedStoreEntry[Record]): WriteEither =
           Left(StoreWriteError(new Error("BOOM!")))
       }
     )
@@ -57,7 +55,7 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
 
     testWith(
       new S3TypedStore[Record]()(codec, s3StreamStore) {
-        override def get(id: ObjectLocation): ReadEither =
+        override def get(id: S3ObjectLocation): ReadEither =
           Left(StoreReadError(new Error("BOOM!")))
       }
     )
@@ -223,8 +221,7 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
 
                   val value = hybridStore.get(id).left.value
 
-                  value shouldBe a[StoreReadError]
-                  value.e.getMessage should startWith("The specified bucket does not exist")
+                  value shouldBe a[DanglingHybridStorePointerError]
                 }
               }
             }

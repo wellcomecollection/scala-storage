@@ -12,6 +12,7 @@ import com.amazonaws.services.s3.model.{
 }
 import com.amazonaws.services.s3.transfer.{TransferManagerBuilder, Upload}
 import uk.ac.wellcome.storage._
+import uk.ac.wellcome.storage.s3.S3ObjectLocation
 import uk.ac.wellcome.storage.store.StreamStore
 import uk.ac.wellcome.storage.streaming._
 
@@ -19,11 +20,11 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 class S3StreamStore()(implicit s3Client: AmazonS3)
-    extends StreamStore[ObjectLocation, InputStreamWithLengthAndMetadata] {
+    extends StreamStore[S3ObjectLocation, InputStreamWithLengthAndMetadata] {
   type Metadata = Map[String, String]
 
-  override def get(location: ObjectLocation): ReadEither = {
-    Try(s3Client.getObject(location.namespace, location.path)) match {
+  override def get(location: S3ObjectLocation): ReadEither = {
+    Try(s3Client.getObject(location.bucket, location.key)) match {
       case Success(retrievedObject: S3Object) =>
         Right(
           Identified(location, buildStoreEntry(retrievedObject))
@@ -38,8 +39,11 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
           if exc.getMessage.startsWith("The specified key does not exist") =>
         DoesNotExistError()
       case exc: AmazonS3Exception
-          if exc.getMessage.startsWith("The specified bucket is not valid") =>
+          if exc.getMessage.startsWith("The specified bucket does not exist") =>
         DoesNotExistError()
+      case exc: AmazonS3Exception
+          if exc.getMessage.startsWith("The specified bucket is not valid") =>
+        StoreReadError(exc)
       case _ => StoreReadError(throwable)
     }
 
@@ -120,11 +124,11 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
   }
 
   private def createPutObjectRequest(
-    location: ObjectLocation,
+    location: S3ObjectLocation,
     stream: InputStreamWithLengthAndMetadata,
     metadataMap: Map[String, String]
   ): Either[WriteError, PutObjectRequest] = {
-    val keyByteLength = location.path.getBytes.length
+    val keyByteLength = location.key.getBytes.length
 
     val metadata = new ObjectMetadata()
 
@@ -132,8 +136,8 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
     metadata.setUserMetadata(metadataMap.asJava)
 
     val request = new PutObjectRequest(
-      location.namespace,
-      location.path,
+      location.bucket,
+      location.key,
       stream,
       metadata
     )
@@ -152,10 +156,10 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
 
   private def uploadWithTransferManager(
     putObjectRequest: PutObjectRequest,
-    location: ObjectLocation,
+    location: S3ObjectLocation,
     inputStream: InputStreamWithLengthAndMetadata
   ): Either[WriteError,
-            Identified[ObjectLocation, InputStreamWithLengthAndMetadata]] =
+            Identified[S3ObjectLocation, InputStreamWithLengthAndMetadata]] =
     Try {
       val upload: Upload = transferManager
         .upload(putObjectRequest)
@@ -166,7 +170,7 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
       case Failure(err) => Left(buildPutError(err))
     }
 
-  override def put(location: ObjectLocation)(
+  override def put(location: S3ObjectLocation)(
     inputStream: InputStreamWithLengthAndMetadata): WriteEither =
     for {
       metadataMap <- coerceMetadata(inputStream.metadata)
