@@ -8,6 +8,7 @@ import uk.ac.wellcome.storage.store.TypedStoreEntry
 import uk.ac.wellcome.storage.store.fixtures.BucketNamespaceFixtures
 import uk.ac.wellcome.storage.store.s3.{S3StreamStore, S3TypedStore, S3TypedStoreFixtures}
 import uk.ac.wellcome.storage._
+import uk.ac.wellcome.storage.s3.{S3ObjectLocation, S3ObjectLocationPrefix}
 import uk.ac.wellcome.storage.transfer._
 
 class S3PrefixTransferTest

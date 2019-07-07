@@ -1,10 +1,10 @@
 package uk.ac.wellcome.storage.store.fixtures
 
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.S3ObjectLocation
 import uk.ac.wellcome.storage.fixtures.S3Fixtures
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.generators.RandomThings
+import uk.ac.wellcome.storage.s3.S3ObjectLocation
 
 trait NamespaceFixtures[Ident, Namespace] {
   def withNamespace[R](testWith: TestWith[Namespace, R]): R

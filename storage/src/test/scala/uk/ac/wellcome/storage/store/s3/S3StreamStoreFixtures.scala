@@ -1,8 +1,8 @@
 package uk.ac.wellcome.storage.store.s3
 
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.S3ObjectLocation
 import uk.ac.wellcome.storage.fixtures.S3Fixtures
+import uk.ac.wellcome.storage.s3.S3ObjectLocation
 import uk.ac.wellcome.storage.store.fixtures.StreamStoreFixtures
 import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 

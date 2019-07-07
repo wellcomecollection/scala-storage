@@ -1,7 +1,7 @@
 package uk.ac.wellcome.storage.listing.s3
 
 import com.amazonaws.services.s3.AmazonS3
-import uk.ac.wellcome.storage.{S3ObjectLocation, S3ObjectLocationPrefix}
+import uk.ac.wellcome.storage.s3.{S3ObjectLocation, S3ObjectLocationPrefix}
 
 class S3ObjectLocationListing(implicit summaryListing: S3ObjectSummaryListing)
     extends S3Listing[S3ObjectLocation] {

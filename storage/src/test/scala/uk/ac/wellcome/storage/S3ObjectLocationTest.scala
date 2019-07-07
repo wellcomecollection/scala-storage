@@ -2,6 +2,7 @@ package uk.ac.wellcome.storage
 
 import org.scalatest.{FunSpec, Matchers}
 import uk.ac.wellcome.storage.fixtures.S3Fixtures
+import uk.ac.wellcome.storage.s3.S3ObjectLocation
 
 class S3ObjectLocationTest extends FunSpec with Matchers with S3Fixtures {
   val bucket: String = createBucketName

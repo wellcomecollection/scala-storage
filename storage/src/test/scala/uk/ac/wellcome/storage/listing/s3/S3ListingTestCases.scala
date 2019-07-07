@@ -5,7 +5,7 @@ import com.amazonaws.services.s3.model.AmazonS3Exception
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.listing.ListingTestCases
-import uk.ac.wellcome.storage.{S3ObjectLocation, S3ObjectLocationPrefix}
+import uk.ac.wellcome.storage.s3.{S3ObjectLocation, S3ObjectLocationPrefix}
 
 trait S3ListingTestCases[ListingResult]
   extends ListingTestCases[S3ObjectLocation, S3ObjectLocationPrefix, ListingResult, S3Listing[ListingResult], Bucket]

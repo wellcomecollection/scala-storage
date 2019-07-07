@@ -3,7 +3,8 @@ package uk.ac.wellcome.storage.listing.s3
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.iterable.S3Objects
 import com.amazonaws.services.s3.model.S3ObjectSummary
-import uk.ac.wellcome.storage.{ListingFailure, S3ObjectLocationPrefix}
+import uk.ac.wellcome.storage.ListingFailure
+import uk.ac.wellcome.storage.s3.S3ObjectLocationPrefix
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}

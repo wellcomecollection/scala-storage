@@ -13,8 +13,7 @@ import org.scalatest.{Assertion, EitherValues, Matchers}
 import uk.ac.wellcome.fixtures._
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.generators.RandomThings
-import uk.ac.wellcome.storage.{S3ObjectLocation, S3ObjectLocationPrefix}
-import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config}
+import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config, S3ObjectLocation, S3ObjectLocationPrefix}
 import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming.{HasLength, HasMetadata, InputStreamWithLength}
 

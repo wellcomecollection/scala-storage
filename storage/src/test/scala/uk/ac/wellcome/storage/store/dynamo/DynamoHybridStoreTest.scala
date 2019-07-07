@@ -6,6 +6,7 @@ import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.generators.Record
+import uk.ac.wellcome.storage.s3.S3ObjectLocation
 import uk.ac.wellcome.storage.store.HybridIndexedStoreEntry
 
 class DynamoHybridStoreTest extends DynamoHybridStoreTestCases[
