@@ -1,13 +1,15 @@
 package uk.ac.wellcome.storage.listing
 
 import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
+import uk.ac.wellcome.storage.generators.RandomThings
 import uk.ac.wellcome.storage.listing.fixtures.ListingFixtures
 
 trait ListingTestCases[Ident, Prefix, ListingResult, ListingImpl <: Listing[Prefix, ListingResult], ListingContext]
   extends FunSpec
     with Matchers
     with EitherValues
-    with ListingFixtures[Ident, Prefix, ListingResult, ListingImpl, ListingContext] {
+    with ListingFixtures[Ident, Prefix, ListingResult, ListingImpl, ListingContext]
+    with RandomThings {
   def createIdent(implicit context: ListingContext): Ident
   def extendIdent(id: Ident, extension: String): Ident
   def createPrefix: Prefix

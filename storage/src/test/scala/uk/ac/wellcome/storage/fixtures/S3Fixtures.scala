@@ -132,7 +132,7 @@ trait S3Fixtures
     keyPrefix: String = randomAlphanumeric
   ): S3ObjectLocationPrefix =
     S3ObjectLocationPrefix(
-      bucket = bucket,
+      bucket = bucket.name,
       keyPrefix = keyPrefix
     )
 
