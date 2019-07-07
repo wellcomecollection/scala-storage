@@ -2,47 +2,39 @@ package uk.ac.wellcome.storage
 
 import java.nio.file.Paths
 
-trait BetterObjectLocation {
+trait NamespacedPath {
   val namespace: String
   val path: String
 
   override def toString = s"$namespace/$path"
 
-  def join(parts: String*): _ <: BetterObjectLocation
-
-  def asPrefix: _ <: BetterObjectLocationPrefix
+  protected def joinPaths(parts: String*): String =
+    Paths.get(path, parts: _*).toString
 }
 
-trait BetterObjectLocationPrefix {
-  val namespace: String
-  val pathPrefix: String
-
-  def asLocation(parts: String*): _ <: BetterObjectLocation
-}
-
-case class S3ObjectLocation(bucket: String, key: String) extends BetterObjectLocation {
+case class S3ObjectLocation(bucket: String, key: String) extends NamespacedPath {
   val namespace: String = bucket
   val path: String = key
 
   override def toString = s"s3://$bucket/$key"
 
-  override def join(parts: String*): S3ObjectLocation =
+  def join(parts: String*): S3ObjectLocation =
     this.copy(
-      key = Paths.get(this.key, parts: _*).toString
+      key = joinPaths(parts: _*)
     )
 
-  override def asPrefix: S3ObjectLocationPrefix =
+  def asPrefix: S3ObjectLocationPrefix =
     S3ObjectLocationPrefix(
       bucket = bucket,
       keyPrefix = key
     )
 }
 
-case class S3ObjectLocationPrefix(bucket: String, keyPrefix: String) extends BetterObjectLocationPrefix {
+case class S3ObjectLocationPrefix(bucket: String, keyPrefix: String) extends NamespacedPath {
   override val namespace: String = bucket
-  override val pathPrefix: String = keyPrefix
+  override val path: String = keyPrefix
 
-  override def asLocation(parts: String*): S3ObjectLocation =
+  def asLocation(parts: String*): S3ObjectLocation =
     S3ObjectLocation(
       bucket = bucket,
       key = Paths.get(this.keyPrefix, parts: _*).toString
