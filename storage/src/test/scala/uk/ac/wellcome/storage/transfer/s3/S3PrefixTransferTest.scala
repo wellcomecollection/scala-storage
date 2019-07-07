@@ -63,9 +63,11 @@ class S3PrefixTransferTest
     testWith(new S3PrefixTransfer())
   }
 
-  override def createPrefix(implicit bucket: Bucket): S3ObjectLocationPrefix = createS3ObjectLocationWith(bucket).asPrefix
+  override def createPrefix(implicit bucket: Bucket): S3ObjectLocationPrefix =
+    createS3ObjectLocationPrefixWith(bucket)
 
-  override def createLocationFrom(prefix: S3ObjectLocationPrefix, suffix: String): S3ObjectLocation = prefix.asLocation(suffix)
+  override def createLocationFrom(prefix: S3ObjectLocationPrefix, suffix: String): S3ObjectLocation =
+    prefix.asLocation(suffix)
 
   override def createT: TypedStoreEntry[Record] = TypedStoreEntry(createRecord, metadata = createValidMetadata)
 }

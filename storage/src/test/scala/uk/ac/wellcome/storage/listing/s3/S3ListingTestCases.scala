@@ -59,7 +59,7 @@ trait S3ListingTestCases[ListingResult]
         val location = createS3ObjectLocationWith(bucket)
         s3Client.putObject(location.bucket, location.key, "hello world")
 
-        val prefix = createS3ObjectLocationWith(bucket).asPrefix
+        val prefix = createS3ObjectLocationPrefixWith(bucket)
         listing.list(prefix).right.value shouldBe empty
       }
     }

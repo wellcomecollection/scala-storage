@@ -27,7 +27,7 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
 
   def createPrefix(implicit context: (Bucket, Table)): S3ObjectLocationPrefix = {
     val (bucket, _) = context
-    createS3ObjectLocationWith(bucket).asPrefix
+    createS3ObjectLocationPrefixWith(bucket)
   }
 
   override def withTypedStoreImpl[R](testWith: TestWith[S3TypedStoreImpl, R])(implicit context: (Bucket, Table)): R =
