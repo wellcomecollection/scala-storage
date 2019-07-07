@@ -38,6 +38,12 @@ class S3StreamStoreTest
           store.get(createS3ObjectLocation).left.value shouldBe a[DoesNotExistError]
         }
       }
+
+      it("errors if asked to get from an invalid bucket") {
+        withStoreImpl(initialEntries = Map.empty) { store =>
+          store.get(createS3ObjectLocationWith(bucket = Bucket("ABCD"))).left.value shouldBe a[StoreReadError]
+        }
+      }
     }
 
     describe("put") {
@@ -55,6 +61,18 @@ class S3StreamStoreTest
       it("errors if the bucket doesn't exist") {
         withStoreImpl(initialEntries = Map.empty) { store =>
           val result = store.put(createS3ObjectLocation)(createT).left.value
+
+          result shouldBe a[StoreWriteError]
+
+          val err = result.e
+          err shouldBe a[AmazonS3Exception]
+          err.getMessage should startWith("The specified bucket does not exist")
+        }
+      }
+
+      it("errors if asked to get from an invalid bucket") {
+        withStoreImpl(initialEntries = Map.empty) { store =>
+          val result = store.put(createS3ObjectLocationWith(bucket = Bucket("ABCD")))(createT).left.value
 
           result shouldBe a[StoreWriteError]
 
