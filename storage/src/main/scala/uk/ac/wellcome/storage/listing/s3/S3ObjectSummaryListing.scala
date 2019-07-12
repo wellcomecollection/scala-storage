@@ -3,8 +3,7 @@ package uk.ac.wellcome.storage.listing.s3
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.iterable.S3Objects
 import com.amazonaws.services.s3.model.S3ObjectSummary
-import uk.ac.wellcome.storage.ListingFailure
-import uk.ac.wellcome.storage.s3.S3ObjectLocationPrefix
+import uk.ac.wellcome.storage.{ListingFailure, ObjectLocationPrefix}
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
@@ -12,13 +11,13 @@ import scala.util.{Failure, Success, Try}
 class S3ObjectSummaryListing(batchSize: Int = 1000)(
   implicit s3Client: AmazonS3
 ) extends S3Listing[S3ObjectSummary] {
-  override def list(prefix: S3ObjectLocationPrefix): ListingResult =
+  override def list(prefix: ObjectLocationPrefix): ListingResult =
     Try {
       val iterator = S3Objects
         .withPrefix(
           s3Client,
-          prefix.bucket,
-          prefix.keyPrefix
+          prefix.namespace,
+          prefix.path
         )
         .withBatchSize(batchSize)
         .asScala
