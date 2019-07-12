@@ -18,5 +18,5 @@ class DynamoHybridStore[T, Metadata](prefix: S3ObjectLocationPrefix)(
 
   override protected def createTypeStoreId(
     id: Version[String, Int]): S3ObjectLocation =
-    prefix.asLocation(id.id, id.version.toString, UUID.randomUUID().toString)
+    prefix.asLocation(id.id, id.version.toString, UUID.randomUUID().toString + ".json")
 }

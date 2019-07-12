@@ -78,6 +78,31 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
     Version(id = randomAlphanumeric, version = 1)
 
   describe("DynamoHybridStore") {
+    it("appends a .json suffix to object keys") {
+      withStoreContext { implicit context =>
+        withNamespace { implicit namespace =>
+          withTypedStoreImpl { typedStore =>
+            withIndexedStoreImpl { indexedStore =>
+              withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
+                val id = createId
+                val hybridStoreEntry = createT
+
+                val putResult = hybridStore.put(id)(hybridStoreEntry)
+                val putValue = putResult.right.value
+
+                val dynamoResult = indexedStore.get(putValue.id)
+                val dynamoValue = dynamoResult.right.value
+
+                val s3Location = dynamoValue.identifiedT.typedStoreId
+
+                s3Location.path should endWith(".json")
+              }
+            }
+          }
+        }
+      }
+    }
+
     describe("it handles errors from AWS") {
       it("if the prefix refers to a non-existent bucket") {
         withStoreContext { case (_, table) =>
