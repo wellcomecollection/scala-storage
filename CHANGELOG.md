@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.18.4 - 2019-07-12
+
+Add a `.json` suffix to S3 objects stored in a Dynamo hybrid store.  This makes it slightly easier to work with the store in the S3 console.
+
 ## v7.18.3 - 2019-07-07
 
 This replaces the generic `ObjectLocation` case class with a `NamespacedPath` trait and two concrete implementations: `S3ObjectLocation` and `S3ObjectLocationPrefix`.
