@@ -29,20 +29,32 @@ class S3StreamStoreTest
         withLocalS3Bucket { bucket =>
           val location = createS3ObjectLocationWith(bucket)
           withStoreImpl(initialEntries = Map.empty) { store =>
-            store.get(location).left.value shouldBe a[DoesNotExistError]
+            val err = store.get(location).left.value
+            err shouldBe a[DoesNotExistError]
+
+            err.e shouldBe a[AmazonS3Exception]
+            err.e.getMessage should startWith("The specified key does not exist")
           }
         }
       }
 
       it("errors if the bucket doesn't exist") {
         withStoreImpl(initialEntries = Map.empty) { store =>
-          store.get(createS3ObjectLocation).left.value shouldBe a[DoesNotExistError]
+          val err = store.get(createS3ObjectLocation).left.value
+          err shouldBe a[DoesNotExistError]
+
+          err.e shouldBe a[AmazonS3Exception]
+          err.e.getMessage should startWith("The specified bucket does not exist")
         }
       }
 
       it("errors if asked to get from an invalid bucket") {
         withStoreImpl(initialEntries = Map.empty) { store =>
-          store.get(createS3ObjectLocationWith(bucket = Bucket("ABCD"))).left.value shouldBe a[StoreReadError]
+          val err = store.get(createS3ObjectLocationWith(bucket = Bucket("ABCD"))).left.value
+          err shouldBe a[StoreReadError]
+
+          err.e shouldBe a[AmazonS3Exception]
+          err.e.getMessage should startWith("The specified bucket is not valid")
         }
       }
     }
