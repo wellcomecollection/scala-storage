@@ -37,10 +37,10 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
     throwable match {
       case exc: AmazonS3Exception
           if exc.getMessage.startsWith("The specified key does not exist") =>
-        DoesNotExistError()
+        DoesNotExistError(exc)
       case exc: AmazonS3Exception
           if exc.getMessage.startsWith("The specified bucket does not exist") =>
-        DoesNotExistError()
+        DoesNotExistError(exc)
       case exc: AmazonS3Exception
           if exc.getMessage.startsWith("The specified bucket is not valid") =>
         StoreReadError(exc)
