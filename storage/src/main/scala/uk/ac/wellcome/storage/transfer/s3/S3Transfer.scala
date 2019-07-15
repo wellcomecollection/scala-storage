@@ -5,14 +5,13 @@ import java.io.InputStream
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import org.apache.commons.io.IOUtils
-import uk.ac.wellcome.storage.s3.S3ObjectLocation
+import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.store.s3.S3StreamStore
 import uk.ac.wellcome.storage.transfer._
 
 import scala.util.{Failure, Success, Try}
 
-class S3Transfer(implicit s3Client: AmazonS3)
-    extends Transfer[S3ObjectLocation] {
+class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
   private val transferManager = TransferManagerBuilder.standard
     .withS3Client(s3Client)
     .build
@@ -20,11 +19,12 @@ class S3Transfer(implicit s3Client: AmazonS3)
   private val streamStore = new S3StreamStore()
 
   override def transfer(
-    src: S3ObjectLocation,
-    dst: S3ObjectLocation): Either[TransferFailure, TransferSuccess] = {
-    def compare(srcStream: InputStream, dstStream: InputStream)
-      : Either[TransferOverwriteFailure[S3ObjectLocation],
-               TransferNoOp[S3ObjectLocation]] = {
+    src: ObjectLocation,
+    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
+    def compare(
+      srcStream: InputStream,
+      dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation],
+                                      TransferNoOp[ObjectLocation]] = {
       if (IOUtils.contentEquals(srcStream, dstStream)) {
         Right(TransferNoOp(src, dst))
       } else {
@@ -63,13 +63,13 @@ class S3Transfer(implicit s3Client: AmazonS3)
   }
 
   private def runTransfer(
-    src: S3ObjectLocation,
-    dst: S3ObjectLocation): Either[TransferFailure, TransferSuccess] = {
+    src: ObjectLocation,
+    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
     val transfer = transferManager.copy(
-      src.bucket,
-      src.key,
-      dst.bucket,
-      dst.key
+      src.namespace,
+      src.path,
+      dst.namespace,
+      dst.path
     )
 
     Try { transfer.waitForCopyResult() } match {

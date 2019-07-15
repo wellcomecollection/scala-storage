@@ -12,7 +12,6 @@ import com.amazonaws.services.s3.model.{
 }
 import com.amazonaws.services.s3.transfer.{TransferManagerBuilder, Upload}
 import uk.ac.wellcome.storage._
-import uk.ac.wellcome.storage.s3.S3ObjectLocation
 import uk.ac.wellcome.storage.store.StreamStore
 import uk.ac.wellcome.storage.streaming._
 
@@ -20,11 +19,11 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 class S3StreamStore()(implicit s3Client: AmazonS3)
-    extends StreamStore[S3ObjectLocation, InputStreamWithLengthAndMetadata] {
+    extends StreamStore[ObjectLocation, InputStreamWithLengthAndMetadata] {
   type Metadata = Map[String, String]
 
-  override def get(location: S3ObjectLocation): ReadEither = {
-    Try(s3Client.getObject(location.bucket, location.key)) match {
+  override def get(location: ObjectLocation): ReadEither = {
+    Try(s3Client.getObject(location.namespace, location.path)) match {
       case Success(retrievedObject: S3Object) =>
         Right(
           Identified(location, buildStoreEntry(retrievedObject))
@@ -124,11 +123,11 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
   }
 
   private def createPutObjectRequest(
-    location: S3ObjectLocation,
+    location: ObjectLocation,
     stream: InputStreamWithLengthAndMetadata,
     metadataMap: Map[String, String]
   ): Either[WriteError, PutObjectRequest] = {
-    val keyByteLength = location.key.getBytes.length
+    val keyByteLength = location.path.getBytes.length
 
     val metadata = new ObjectMetadata()
 
@@ -136,8 +135,8 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
     metadata.setUserMetadata(metadataMap.asJava)
 
     val request = new PutObjectRequest(
-      location.bucket,
-      location.key,
+      location.namespace,
+      location.path,
       stream,
       metadata
     )
@@ -156,10 +155,10 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
 
   private def uploadWithTransferManager(
     putObjectRequest: PutObjectRequest,
-    location: S3ObjectLocation,
+    location: ObjectLocation,
     inputStream: InputStreamWithLengthAndMetadata
   ): Either[WriteError,
-            Identified[S3ObjectLocation, InputStreamWithLengthAndMetadata]] =
+            Identified[ObjectLocation, InputStreamWithLengthAndMetadata]] =
     Try {
       val upload: Upload = transferManager
         .upload(putObjectRequest)
@@ -170,7 +169,7 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
       case Failure(err) => Left(buildPutError(err))
     }
 
-  override def put(location: S3ObjectLocation)(
+  override def put(location: ObjectLocation)(
     inputStream: InputStreamWithLengthAndMetadata): WriteEither =
     for {
       metadataMap <- coerceMetadata(inputStream.metadata)

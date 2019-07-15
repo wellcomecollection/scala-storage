@@ -6,20 +6,14 @@ import uk.ac.wellcome.storage.Identified
 import uk.ac.wellcome.storage.store.Store
 import uk.ac.wellcome.storage.store.fixtures.NamespaceFixtures
 
-trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store[Location, T]]
-  extends FunSpec
-    with Matchers
-    with EitherValues
-    with NamespaceFixtures[Location, Namespace] {
-  type PrefixTransferImpl = PrefixTransfer[Prefix, Location]
-
+trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store[Location, T]] extends FunSpec with Matchers with EitherValues with NamespaceFixtures[Location, Namespace] {
   def withPrefixTransferStore[R](initialEntries: Map[Location, T])(testWith: TestWith[StoreImpl, R]): R
 
-  def withPrefixTransfer[R](testWith: TestWith[PrefixTransferImpl, R])(implicit store: StoreImpl): R
+  def withPrefixTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
 
-  def withExtraListingTransfer[R](testWith: TestWith[PrefixTransferImpl, R])(implicit store: StoreImpl): R
-  def withBrokenListingTransfer[R](testWith: TestWith[PrefixTransferImpl, R])(implicit store: StoreImpl): R
-  def withBrokenTransfer[R](testWith: TestWith[PrefixTransferImpl, R])(implicit store: StoreImpl): R
+  def withExtraListingTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
+  def withBrokenListingTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
+  def withBrokenTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
 
   def createPrefix(implicit namespace: Namespace): Prefix
 
