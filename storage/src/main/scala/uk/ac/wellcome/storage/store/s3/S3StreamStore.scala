@@ -42,7 +42,7 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
         DoesNotExistError(exc)
       case exc: AmazonS3Exception
           if exc.getMessage.startsWith("The specified bucket is not valid") =>
-        DoesNotExistError()
+        StoreReadError(exc)
       case _ => StoreReadError(throwable)
     }
 

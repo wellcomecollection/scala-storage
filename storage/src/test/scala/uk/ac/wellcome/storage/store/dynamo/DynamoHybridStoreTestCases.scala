@@ -248,7 +248,7 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
 
                   val value = hybridStore.get(id).left.value
 
-                  value shouldBe a[StoreReadError]
+                  value shouldBe a[DanglingHybridStorePointerError]
                   value.e.getMessage should startWith("The specified bucket does not exist")
                 }
               }

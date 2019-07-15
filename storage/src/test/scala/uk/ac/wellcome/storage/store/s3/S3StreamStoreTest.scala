@@ -36,7 +36,7 @@ class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3S
 
       it("errors if the bucket doesn't exist") {
         withStoreImpl(initialEntries = Map.empty) { store =>
-          val err = store.get(createObjectLocation).left.value
+          val err = store.get(createObjectLocationWith(createBucketName)).left.value
           err shouldBe a[DoesNotExistError]
 
           err.e shouldBe a[AmazonS3Exception]

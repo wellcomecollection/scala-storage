@@ -29,7 +29,6 @@ trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
 
       typeStoreEntry <- getTypedStoreEntry(indexedStoreEntry.typedStoreId)
 
-      typeStoreId = indexedStoreEntry.typedStoreId
       metadata = indexedStoreEntry.metadata
       hybridEntry: HybridStoreEntry[T, Metadata] = HybridStoreEntry(
         typeStoreEntry.identifiedT.t,
@@ -40,7 +39,7 @@ trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
   // If the indexed store points to a typed store entry that doesn't exist, that
   // suggests an internal error in the store, so we don't want to bubble up
   // the DoesNotExistError directly.
-  private def getTypedStoreEntry(typedStoreId: TypedStoreId)
+  protected def getTypedStoreEntry(typedStoreId: TypedStoreId)
     : Either[ReadError, Identified[TypedStoreId, TypedStoreEntry[T]]] =
     typedStore.get(typedStoreId) match {
       case Right(t) => Right(t)
