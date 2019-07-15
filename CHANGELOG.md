@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.18.5 - 2019-07-15
+
+If you get a `DoesNotExistError` from S3StreamStore, you now get the underlying S3 exception rather than a generic java.lang.Error.
+
 ## v7.18.4 - 2019-07-12
 
 Add a `.json` suffix to S3 objects stored in a Dynamo hybrid store.  This makes it slightly easier to work with the store in the S3 console.
