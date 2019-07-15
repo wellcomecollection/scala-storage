@@ -22,10 +22,12 @@ class DynamoHybridStore[T, Metadata](prefix: ObjectLocationPrefix)(
       id.version.toString,
       UUID.randomUUID().toString + ".json")
 
-  override protected def getTypedStoreEntry(typedStoreId: ObjectLocation): Either[ReadError, Identified[ObjectLocation, TypedStoreEntry[T]]] =
+  override protected def getTypedStoreEntry(typedStoreId: ObjectLocation)
+    : Either[ReadError, Identified[ObjectLocation, TypedStoreEntry[T]]] =
     super.getTypedStoreEntry(typedStoreId) match {
       case Right(t) => Right(t)
-      case Left(err: StoreReadError) if err.e.getMessage.startsWith("The specified bucket is not valid") =>
+      case Left(err: StoreReadError)
+          if err.e.getMessage.startsWith("The specified bucket is not valid") =>
         Left(DanglingHybridStorePointerError(err.e))
       case Left(err) => Left(err)
     }
