@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.18.6 - 2019-07-15
+
+Revert all the changes to S3ObjectLocation introduced in v7.18.3.
+
 ## v7.18.5 - 2019-07-15
 
 If you get a `DoesNotExistError` from S3StreamStore, you now get the underlying S3 exception rather than a generic java.lang.Error.
