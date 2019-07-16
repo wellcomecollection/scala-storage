@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v7.18.7 - 2019-07-16
+
+Fix a flaky test in DynamoHybridStore.
+
+Also, S3Fixtures now has a `createInvalidBucketName` method, which returns a string which is guaranteed not to be a valid S3 bucket name.
+
 ## v7.18.6 - 2019-07-15
 
 Revert all the changes to S3ObjectLocation introduced in v7.18.3.
