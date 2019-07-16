@@ -108,9 +108,35 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
     describe("it handles errors from AWS") {
       it("if the prefix refers to a non-existent bucket") {
         withStoreContext { case (_, table) =>
-          val nonExistentBucket = Bucket(randomAlphanumeric)
+          val nonExistentBucket = createBucket
 
           implicit val context = (nonExistentBucket, table)
+
+          withNamespace { implicit namespace =>
+
+            withTypedStoreImpl { typedStore =>
+              withIndexedStoreImpl { indexedStore =>
+                withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
+                  val id = createId
+                  val hybridStoreEntry = createT
+
+                  val result = hybridStore.put(id)(hybridStoreEntry)
+                  val value = result.left.value
+
+                  value shouldBe a[StoreWriteError]
+                  value.e.getMessage should startWith("The specified bucket does not exist")
+                }
+              }
+            }
+          }
+        }
+      }
+
+      it("if the prefix refers to an invalid bucket name") {
+        withStoreContext { case (_, table) =>
+          val invalidBucket = Bucket(createInvalidBucketName)
+
+          implicit val context = (invalidBucket, table)
 
           withNamespace { implicit namespace =>
 
@@ -128,7 +154,6 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
                 }
               }
             }
-
           }
         }
       }
