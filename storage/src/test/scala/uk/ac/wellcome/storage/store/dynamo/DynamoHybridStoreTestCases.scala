@@ -134,9 +134,9 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
 
       it("if the prefix refers to an invalid bucket name") {
         withStoreContext { case (_, table) =>
-          val nonExistentBucket = Bucket("ABCD")
+          val invalidBucket = Bucket(createInvalidBucketName)
 
-          implicit val context = (nonExistentBucket, table)
+          implicit val context = (invalidBucket, table)
 
           withNamespace { implicit namespace =>
 

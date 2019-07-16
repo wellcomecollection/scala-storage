@@ -46,7 +46,8 @@ class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3S
 
       it("errors if asked to get from an invalid bucket") {
         withStoreImpl(initialEntries = Map.empty) { store =>
-          val err = store.get(createObjectLocationWith(namespace = "ABCD")).left.value
+          val invalidLocation = createObjectLocationWith(namespace = createInvalidBucketName)
+          val err = store.get(invalidLocation).left.value
           err shouldBe a[StoreReadError]
 
           err.e shouldBe a[AmazonS3Exception]

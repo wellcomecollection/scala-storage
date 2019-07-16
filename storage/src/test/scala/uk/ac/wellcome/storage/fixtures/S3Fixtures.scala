@@ -19,6 +19,7 @@ import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming.{HasLength, HasMetadata, InputStreamWithLength}
 
 import scala.collection.JavaConverters._
+import scala.util.Random
 
 object S3Fixtures {
   class Bucket(val name: String) extends AnyVal {
@@ -105,6 +106,15 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
     //  - between 3 and 63 characters in length.
     // [https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html#bucketnamingrules]
     randomAlphanumeric.toLowerCase
+
+  def createInvalidBucketName: String =
+    // Create a variety of invalid patterns, and choose one at random.
+    Random.shuffle(Seq(
+      "_" + createBucket,
+      randomAlphanumeric.toUpperCase() + createBucket,
+      createBucket + randomAlphanumeric.toUpperCase(),
+      Random.alphanumeric.take(100) mkString
+    )).head
 
   def createBucket: Bucket =
     Bucket(createBucketName)
