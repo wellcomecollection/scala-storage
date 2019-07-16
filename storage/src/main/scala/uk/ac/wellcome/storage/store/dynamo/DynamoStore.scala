@@ -40,7 +40,11 @@ class DynamoHashStore[HashKey, V, T](val config: DynamoConfig)(
     with DynamoHashWritable[HashKey, V, T]
     with Maxima[HashKey, V] {
   override def max(hashKey: HashKey): Either[ReadError, V] =
-    getEntry(hashKey).map { _.version }
+    getEntry(hashKey).map { _.version } match {
+      case Right(value)               => Right(value)
+      case Left(_: DoesNotExistError) => Left(NoMaximaValueError())
+      case Left(err)                  => Left(err)
+    }
 
   override protected val table =
     Table[DynamoHashEntry[HashKey, V, T]](config.tableName)
