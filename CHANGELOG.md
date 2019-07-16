@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.18.8 - 2019-07-16
+
+Fix a bug in DynamoHashStore where getting the `max()` of an ID that didn't exist would return a `DoesNotExistError`, not a `NoMaximaValueError`.
+
 ## v7.18.7 - 2019-07-16
 
 Fix a flaky test in DynamoHybridStore.
