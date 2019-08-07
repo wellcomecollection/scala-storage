@@ -85,11 +85,11 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
         )
       } match {
         case Success(request) => Right(request)
-        case Failure(err) => Left(TransferSourceFailure(src, dst, err))
+        case Failure(err)     => Left(TransferSourceFailure(src, dst, err))
       }
 
       result <- Try { transfer.waitForCopyResult() } match {
-        case Success(_) => Right(TransferPerformed(src, dst))
+        case Success(_)   => Right(TransferPerformed(src, dst))
         case Failure(err) => Left(TransferDestinationFailure(src, dst, err))
       }
     } yield result
