@@ -77,14 +77,16 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
     }
 
     it("copies multiple items") {
+      val objectCount = 5
+
       withNamespace { implicit namespace =>
         val srcPrefix = createPrefix
         val dstPrefix = createPrefix
 
-        val srcLocations = (1 to 5).map { i => createLocationFrom(srcPrefix, suffix = s"$i.txt") }
-        val dstLocations = (1 to 5).map { i => createLocationFrom(dstPrefix, suffix = s"$i.txt") }
+        val srcLocations = (1 to objectCount).map { i => createLocationFrom(srcPrefix, suffix = s"$i.txt") }
+        val dstLocations = (1 to objectCount).map { i => createLocationFrom(dstPrefix, suffix = s"$i.txt") }
 
-        val valuesT = (1 to 5).map { _ => createT }
+        val valuesT = (1 to objectCount).map { _ => createT }
 
         val expectedResults: Seq[TransferPerformed[Location]] = srcLocations.zip(dstLocations).map { case (src, dst) =>
           TransferPerformed(src, dst)
@@ -101,12 +103,6 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
               val transferResult = result.right.value
               transferResult shouldBe a[PrefixTransferSuccess]
               transferResult.asInstanceOf[PrefixTransferSuccess].successes should contain theSameElementsAs expectedResults
-
-              // TODO: I don't think this is doing the right thing!
-//              expectedResults.zip(valuesT).map { case (result, t) =>
-//                store.get(result.source).right.value shouldBe Identified(result.source, t)
-//                store.get(result.destination).right.value shouldBe Identified(result.destination, t)
-//              }
             }
           }
         }
@@ -145,12 +141,6 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
               transferResult shouldBe a[PrefixTransferSuccess]
               val transferSuccess = transferResult.asInstanceOf[PrefixTransferSuccess]
               transferSuccess.successes should contain theSameElementsAs expectedResults
-
-              // TODO: Revisit this
-//              expectedResults.zip(valuesT).map { case (r, t) =>
-//                store.get(transferSuccess.source).right.value shouldBe Identified(r.source, t)
-//                store.get(transferSuccess.destination).right.value shouldBe Identified(r.destination, t)
-//              }
             }
           }
         }
