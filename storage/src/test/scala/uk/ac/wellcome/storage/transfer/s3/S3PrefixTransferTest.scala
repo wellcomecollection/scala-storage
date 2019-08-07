@@ -10,6 +10,8 @@ import uk.ac.wellcome.storage.store.s3.{S3StreamStore, S3TypedStore, S3TypedStor
 import uk.ac.wellcome.storage.{ListingFailure, ObjectLocation, ObjectLocationPrefix}
 import uk.ac.wellcome.storage.transfer._
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 class S3PrefixTransferTest extends PrefixTransferTestCases[ObjectLocation, ObjectLocationPrefix, Bucket, TypedStoreEntry[Record], S3TypedStore[Record]] with BucketNamespaceFixtures with MetadataGenerators with RecordGenerators with S3TypedStoreFixtures[Record] {
   override def withPrefixTransferStore[R](initialEntries: Map[ObjectLocation, TypedStoreEntry[Record]])(testWith: TestWith[S3TypedStore[Record], R]): R = {
     val streamStore = new S3StreamStore()
