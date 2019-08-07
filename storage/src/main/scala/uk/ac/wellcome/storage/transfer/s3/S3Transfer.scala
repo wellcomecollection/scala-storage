@@ -73,17 +73,24 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
 
   private def runTransfer(
     src: ObjectLocation,
-    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
-    val transfer = transferManager.copy(
-      src.namespace,
-      src.path,
-      dst.namespace,
-      dst.path
-    )
+    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] =
+    for {
+      transfer <- Try {
+        // This code will throw if the source object doesn't exist.
+        transferManager.copy(
+          src.namespace,
+          src.path,
+          dst.namespace,
+          dst.path
+        )
+      } match {
+        case Success(request) => Right(request)
+        case Failure(err) => Left(TransferSourceFailure(src, dst, err))
+      }
 
-    Try { transfer.waitForCopyResult() } match {
-      case Success(_)   => Right(TransferPerformed(src, dst))
-      case Failure(err) => Left(TransferDestinationFailure(src, dst, err))
-    }
-  }
+      result <- Try { transfer.waitForCopyResult() } match {
+        case Success(_) => Right(TransferPerformed(src, dst))
+        case Failure(err) => Left(TransferDestinationFailure(src, dst, err))
+      }
+    } yield result
 }
