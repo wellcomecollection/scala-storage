@@ -35,6 +35,13 @@ trait PrefixTransfer[Prefix, Location] {
 
     // TODO: This accumulates all the results in memory.
     // Can we cope with copying a very large prefix?
+    //
+    // How many results this runs in parallel depends on the parallelism of
+    // your ExecutionContext.  It may be worth tweaking your settings for
+    // optimal results.
+    //
+    // See https://github.com/wellcometrust/scala-storage/pull/110
+    // for more discussion.
     Future.sequence(futures).map { results =>
       val failures = results.collect { case Left(error)     => error }
       val successes = results.collect { case Right(success) => success }
