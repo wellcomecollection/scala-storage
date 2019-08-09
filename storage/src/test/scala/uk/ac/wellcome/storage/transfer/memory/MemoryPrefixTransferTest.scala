@@ -17,6 +17,11 @@ class MemoryPrefixTransferTest extends
   override def createT: Array[Byte] = randomBytes()
 
   class InnerMemoryPrefixTransfer(initialEntries: Map[String, Array[Byte]]) extends MemoryStore[String, Array[Byte]](initialEntries) with MemoryPrefixTransfer[String, String, Array[Byte]] {
+    import scala.concurrent.ExecutionContext
+
+    override implicit val ec: ExecutionContext =
+      ExecutionContext.Implicits.global
+
     override protected def startsWith(id: String, prefix: String): Boolean = id.startsWith(prefix)
 
     override protected def buildDstLocation(srcPrefix: String, dstPrefix: String, srcLocation: String): String =
