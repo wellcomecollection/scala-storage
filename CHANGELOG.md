@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v7.19.0 - 2019-08-09
+
+This changes the interface of `PrefixTransfer` to use `Future`, so it can run with concurrency and should be a bit faster.
+
+There's also some refactoring in `S3Transfer` that means it should be faster in the case where the destination object doesn't exist.
+
 ## v7.18.9 - 2019-07-16
 
 Fix a bug in S3Transfer where we weren't closing streams correctly, and the SDK would warn that you hadn't read all the bytes from an S3AbortableInputStream.
