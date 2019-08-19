@@ -1,6 +1,6 @@
 package uk.ac.wellcome.storage.locking
 
-/** This trait defines a generic locking dao (data ccess object).
+/** This trait defines a generic locking dao (data access object).
   *
   * The tests include a basic implementation.
   * See: InMemoryLockDao, InMemoryLockDaoTest.

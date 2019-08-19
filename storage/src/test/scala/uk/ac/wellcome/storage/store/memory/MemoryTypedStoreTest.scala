@@ -41,4 +41,9 @@ class MemoryTypedStoreTest extends TypedStoreTestCases[String, Record, String, M
       }
     )
   }
+
+  it("can be created from a companion object") {
+    val memoryTypedStore = MemoryTypedStore[String, Record]()
+    memoryTypedStore shouldBe a[MemoryTypedStore[_, _]]
+  }
 }

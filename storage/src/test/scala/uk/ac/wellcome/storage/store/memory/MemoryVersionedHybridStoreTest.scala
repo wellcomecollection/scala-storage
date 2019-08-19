@@ -4,10 +4,10 @@ import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.{StoreReadError, StoreWriteError, Version}
 import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 import uk.ac.wellcome.storage.maxima.memory.MemoryMaxima
-import uk.ac.wellcome.storage.store.{HybridIndexedStoreEntry, HybridStoreEntry, VersionedStoreTestCases}
+import uk.ac.wellcome.storage.store.{HybridIndexedStoreEntry, HybridStoreEntry, VersionedStoreWithOverwriteTestCases}
 
 class MemoryVersionedHybridStoreTest
-  extends VersionedStoreTestCases[String, HybridStoreEntry[Record, Record],
+  extends VersionedStoreWithOverwriteTestCases[String, HybridStoreEntry[Record, Record],
     MemoryHybridStoreWithMaxima[String, Record, Record]]
     with RecordGenerators {
 

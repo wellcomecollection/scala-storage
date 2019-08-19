@@ -4,10 +4,10 @@ import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 import uk.ac.wellcome.storage.maxima.memory.MemoryMaxima
-import uk.ac.wellcome.storage.store.VersionedStoreTestCases
+import uk.ac.wellcome.storage.store.VersionedStoreWithOverwriteTestCases
 
 class MemoryVersionedStoreTest
-  extends VersionedStoreTestCases[String, Record, MemoryStore[Version[String, Int], Record] with MemoryMaxima[String, Record]]
+  extends VersionedStoreWithOverwriteTestCases[String, Record, MemoryStore[Version[String, Int], Record] with MemoryMaxima[String, Record]]
     with RecordGenerators {
 
   type UnderlyingMemoryStore = MemoryStore[Version[String, Int], Record] with MemoryMaxima[String, Record]

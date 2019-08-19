@@ -27,8 +27,12 @@ sealed trait DynamoReadable[Ident, DynamoIdent, EntryType, T]
       case Success(List(Right(entry))) => Right(entry)
       case Success(List(Left(err))) =>
         val daoReadError = new Error(s"DynamoReadError: ${err.toString}")
-
         Left(StoreReadError(daoReadError))
+
+      case Success(list) if list.length > 1 =>
+        Left(
+          MultipleRecordsError()
+        )
       case Success(Nil) => Left(DoesNotExistError())
       case Failure(err) => Left(StoreReadError(err))
     }

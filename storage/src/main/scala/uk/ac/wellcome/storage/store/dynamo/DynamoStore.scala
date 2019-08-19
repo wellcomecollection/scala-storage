@@ -25,8 +25,10 @@ class DynamoHashRangeStore[HashKey, RangeKey, T](val config: DynamoConfig)(
       HashKey,
       RangeKey,
       DynamoHashRangeEntry[HashKey, RangeKey, T]] {
+
   override protected val table =
     Table[DynamoHashRangeEntry[HashKey, RangeKey, T]](config.tableName)
+
 }
 
 class DynamoHashStore[HashKey, V, T](val config: DynamoConfig)(

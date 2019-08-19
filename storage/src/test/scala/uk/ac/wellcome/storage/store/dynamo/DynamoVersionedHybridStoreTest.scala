@@ -7,10 +7,10 @@ import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.fixtures.{DynamoFixtures, S3Fixtures}
 import uk.ac.wellcome.storage.generators.{MetadataGenerators, ObjectLocationGenerators, Record, RecordGenerators}
 import uk.ac.wellcome.storage.store.s3.{S3StreamStore, S3TypedStore}
-import uk.ac.wellcome.storage.store.{HybridIndexedStoreEntry, HybridStoreEntry, VersionedStoreTestCases}
+import uk.ac.wellcome.storage.store.{HybridIndexedStoreEntry, HybridStoreEntry, VersionedStoreWithOverwriteTestCases}
 import uk.ac.wellcome.storage.{ObjectLocation, StoreReadError, StoreWriteError, Version}
 
-class DynamoVersionedHybridStoreTest extends VersionedStoreTestCases[String, HybridStoreEntry[Record, Map[String, String]],
+class DynamoVersionedHybridStoreTest extends VersionedStoreWithOverwriteTestCases[String, HybridStoreEntry[Record, Map[String, String]],
   DynamoHybridStoreWithMaxima[String, Int, Record, Map[String, String]]]
   with RecordGenerators
   with ObjectLocationGenerators

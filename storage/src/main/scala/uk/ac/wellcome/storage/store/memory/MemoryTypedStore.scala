@@ -25,3 +25,11 @@ class MemoryTypedStore[Ident, T](
   streamStore.memoryStore.entries =
     streamStore.memoryStore.entries ++ initial
 }
+
+object MemoryTypedStore {
+  def apply[Ident, T](initialEntries: Map[Ident, TypedStoreEntry[T]] =
+                        Map.empty[Ident, TypedStoreEntry[T]])(
+    implicit codec: Codec[T],
+    streamStore: MemoryStreamStore[Ident] = MemoryStreamStore[Ident]()
+  ): MemoryTypedStore[Ident, T] = new MemoryTypedStore(initialEntries)
+}

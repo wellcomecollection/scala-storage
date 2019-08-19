@@ -6,7 +6,7 @@ import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.store.fixtures.VersionedStoreFixtures
 
-trait VersionedStoreTestCases[Id, T, VersionedStoreContext]
+trait VersionedStoreWithOverwriteTestCases[Id, T, VersionedStoreContext]
   extends FunSpec
     with Matchers
     with EitherValues
@@ -207,50 +207,6 @@ trait VersionedStoreTestCases[Id, T, VersionedStoreContext]
         }
       }
 
-      it("gets a stored record at a specified version") {
-        val id = createIdent
-
-        val t1 = createT
-        val t2 = createT
-
-        withVersionedStoreImpl(
-          initialEntries = Map(Version(id, 1) -> t1, Version(id, 2) -> t2)
-        ) { store =>
-
-          val result = store.get(Version(id, 1))
-
-          debug(s"Got $result")
-
-          result.right.value shouldBe Identified(Version(id, 1), t1)
-        }
-      }
-
-      it("is possible to get all versions") {
-        val id = createIdent
-
-        val t1 = createT
-        val t2 = createT
-        val t3 = createT
-        val t4 = createT
-        val t5 = createT
-
-        withVersionedStoreImpl(
-          initialEntries = Map(
-            Version(id, 1) -> t1,
-            Version(id, 2) -> t2,
-            Version(id, 3) -> t3,
-            Version(id, 4) -> t4,
-            Version(id, 5) -> t5
-          )
-        ) { store =>
-          store.get(Version(id, 1)).right.value shouldBe Identified(Version(id, 1), t1)
-          store.get(Version(id, 2)).right.value shouldBe Identified(Version(id, 2), t2)
-          store.get(Version(id, 3)).right.value shouldBe Identified(Version(id, 3), t3)
-          store.get(Version(id, 4)).right.value shouldBe Identified(Version(id, 4), t4)
-          store.get(Version(id, 5)).right.value shouldBe Identified(Version(id, 5), t5)
-        }
-      }
-
       it("fails when getting a non-existent version on an id") {
         val id = createIdent
         val t = createT
@@ -409,3 +365,4 @@ trait VersionedStoreTestCases[Id, T, VersionedStoreContext]
     }
   }
 }
+

@@ -64,6 +64,10 @@ case class DoesNotExistError(e: Throwable = new Error())
     extends NotFoundError
     with BackendError
 
+case class MultipleRecordsError(e: Throwable = new Error())
+    extends ReadError
+    with BackendError
+
 case class StoreReadError(e: Throwable) extends ReadError with BackendError
 
 case class DanglingHybridStorePointerError(e: Throwable) extends ReadError

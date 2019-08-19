@@ -11,15 +11,15 @@ import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 import uk.ac.wellcome.storage.store._
 
-class DynamoVersionedStoreTest
-  extends VersionedStoreTestCases[String, Record, Table]
+class DynamoMultipleVersionStoreTest
+  extends VersionedStoreWithoutOverwriteTestCases[String, Record, Table]
     with RecordGenerators
     with DynamoFixtures {
 
   override def createIdent: String = randomAlphanumeric
   override def createT: Record = createRecord
 
-  type DynamoStoreStub = DynamoHashRangeStore[String, Int, Record]
+  type DynamoStoreStub = DynamoMultipleVersionStore[String, Record]
 
   override def createTable(table: Table): Table =
     createTableWithHashRangeKey(table)
@@ -45,7 +45,7 @@ class DynamoVersionedStoreTest
 
     insertEntries(table)(initialEntries)
 
-    testWith(new VersionedStore(store))
+    testWith(store)
   }
 
   override def withVersionedStoreImpl[R](initialEntries: Entries, storeContext: Table)(testWith: TestWith[VersionedStoreImpl, R]): R = {
@@ -55,7 +55,7 @@ class DynamoVersionedStoreTest
 
     insertEntries(storeContext)(initialEntries)
 
-    testWith(new VersionedStore(store))
+    testWith(store)
   }
 
 
@@ -74,7 +74,7 @@ class DynamoVersionedStoreTest
 
       insertEntries(table)(initialEntries)
 
-      testWith(new VersionedStore(store))
+      testWith(store)
     }
 
   override def withFailingPutVersionedStore[R](initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[VersionedStoreImpl, R]): R =
@@ -89,7 +89,7 @@ class DynamoVersionedStoreTest
 
       insertEntries(table)(initialEntries)
 
-      testWith(new VersionedStore(store))
+      testWith(store)
     }
 
   override def withStoreContext[R](testWith: TestWith[Table, R]): R =
