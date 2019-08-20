@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v7.20.1 - 2019-08-20
+
+Adds `DynamoLockDaoBuilder` to provide `DynamoLockDao` from typesafe config.
+
+Usage:
+
+```scala
+val lockDao = DynamoLockDaoBuilder.buildDynamoLockDao(config)
+```
+
 ## v7.20.0 - 2019-08-19
 
 Adds a:
