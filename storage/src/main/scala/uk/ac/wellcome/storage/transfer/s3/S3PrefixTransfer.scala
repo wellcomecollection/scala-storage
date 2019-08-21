@@ -7,15 +7,13 @@ import uk.ac.wellcome.storage.transfer.ObjectLocationPrefixTransfer
 import scala.concurrent.ExecutionContext
 
 class S3PrefixTransfer()(
-  implicit
-  val transfer: S3Transfer,
+  implicit val transfer: S3Transfer,
   val listing: S3ObjectLocationListing,
   val ec: ExecutionContext
 ) extends ObjectLocationPrefixTransfer
 
 object S3PrefixTransfer {
-  def apply()(implicit
-              s3Client: AmazonS3,
+  def apply()(implicit s3Client: AmazonS3,
               ec: ExecutionContext): S3PrefixTransfer = {
     implicit val transfer: S3Transfer = new S3Transfer()
     implicit val listing: S3ObjectLocationListing = S3ObjectLocationListing()

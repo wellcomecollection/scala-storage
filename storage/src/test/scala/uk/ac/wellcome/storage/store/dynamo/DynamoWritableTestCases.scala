@@ -12,7 +12,7 @@ import uk.ac.wellcome.storage.fixtures.DynamoFixtures
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 
 trait DynamoWritableTestCases[Ident, T, EntryType <: DynamoEntry[Ident, T]]
-  extends FunSpec
+    extends FunSpec
     with Matchers
     with DynamoFixtures
     with EitherValues {
@@ -22,7 +22,9 @@ trait DynamoWritableTestCases[Ident, T, EntryType <: DynamoEntry[Ident, T]]
 
   type DynamoWritableStub = DynamoWritable[Version[Ident, Int], EntryType, T]
 
-  def createDynamoWritableWith(table: Table, initialEntries: Set[EntryType] = Set.empty): DynamoWritableStub
+  def createDynamoWritableWith(
+    table: Table,
+    initialEntries: Set[EntryType] = Set.empty): DynamoWritableStub
 
   def createEntry(hashKey: Ident, v: Int, t: T): EntryType
 
@@ -49,11 +51,14 @@ trait DynamoWritableTestCases[Ident, T, EntryType <: DynamoEntry[Ident, T]]
 
       it("overwrites an old version with a new version") {
         withLocalDynamoDbTable { table =>
-          val writable = createDynamoWritableWith(table, initialEntries = Set(
-            createEntry(hashKey, 1, olderT)
-          ))
+          val writable = createDynamoWritableWith(
+            table,
+            initialEntries = Set(
+              createEntry(hashKey, 1, olderT)
+            ))
 
-          writable.put(id = Version(hashKey, 2))(newerT) shouldBe a[Right[_, _]]
+          writable.put(id = Version(hashKey, 2))(newerT) shouldBe a[Right[_,
+                                                                          _]]
 
           getT(table)(hashKey, 2) shouldBe newerT
         }
@@ -61,9 +66,11 @@ trait DynamoWritableTestCases[Ident, T, EntryType <: DynamoEntry[Ident, T]]
 
       it("fails to overwrite the same version if it is already stored") {
         withLocalDynamoDbTable { table =>
-          val writable = createDynamoWritableWith(table, initialEntries = Set(
-            createEntry(hashKey, 2, newerT)
-          ))
+          val writable = createDynamoWritableWith(
+            table,
+            initialEntries = Set(
+              createEntry(hashKey, 2, newerT)
+            ))
 
           val result = writable.put(id = Version(hashKey, 2))(newerT)
 
@@ -81,11 +88,13 @@ trait DynamoWritableTestCases[Ident, T, EntryType <: DynamoEntry[Ident, T]]
 
       val err = result.left.value
       err.e shouldBe a[ResourceNotFoundException]
-      err.e.getMessage should startWith("Cannot do operations on a non-existent table")
+      err.e.getMessage should startWith(
+        "Cannot do operations on a non-existent table")
     }
   }
 
-  def assertErrorsOnWrongTableDefinition(createWrongTable: Table => Table, message: String): Assertion =
+  def assertErrorsOnWrongTableDefinition(createWrongTable: Table => Table,
+                                         message: String): Assertion =
     withSpecifiedTable(createWrongTable) { table =>
       val writable = createDynamoWritableWith(table)
 
@@ -97,8 +106,12 @@ trait DynamoWritableTestCases[Ident, T, EntryType <: DynamoEntry[Ident, T]]
     }
 
   def assertErrorsOnBadKeyName(createWrongTable: Table => Table): Assertion =
-    assertErrorsOnWrongTableDefinition(createWrongTable, message = "One of the required keys was not given a value")
+    assertErrorsOnWrongTableDefinition(
+      createWrongTable,
+      message = "One of the required keys was not given a value")
 
   def assertErrorsOnBadKeyType(createWrongTable: Table => Table): Assertion =
-    assertErrorsOnWrongTableDefinition(createWrongTable, message = "Type mismatch for attribute to update")
+    assertErrorsOnWrongTableDefinition(
+      createWrongTable,
+      message = "Type mismatch for attribute to update")
 }

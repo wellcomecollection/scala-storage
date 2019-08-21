@@ -1,7 +1,11 @@
 package uk.ac.wellcome.storage.store.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.model.{AmazonDynamoDBException, ConditionalCheckFailedException, ScalarAttributeType}
+import com.amazonaws.services.dynamodbv2.model.{
+  AmazonDynamoDBException,
+  ConditionalCheckFailedException,
+  ScalarAttributeType
+}
 import org.scalatest.OptionValues
 import org.scanamo.auto._
 import org.scanamo.syntax._
@@ -11,7 +15,13 @@ import org.scanamo.{DynamoFormat, Table => ScanamoTable}
 import uk.ac.wellcome.storage.Version
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 
-class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, DynamoHashEntry[String, Int, Record]] with OptionValues with RecordGenerators {
+class DynamoHashWritableTest
+    extends DynamoWritableTestCases[
+      String,
+      Record,
+      DynamoHashEntry[String, Int, Record]]
+    with OptionValues
+    with RecordGenerators {
   type HashEntry = DynamoHashEntry[String, Int, Record]
 
   def createId: String = randomAlphanumeric
@@ -24,18 +34,27 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, Dyn
     implicit val formatV: DynamoFormat[Int]
   ) extends DynamoHashWritable[String, Int, Record]
 
-  override def createDynamoWritableWith(table: Table, initialEntries: Set[HashEntry] = Set.empty): DynamoWritableStub =  {
+  override def createDynamoWritableWith(table: Table,
+                                        initialEntries: Set[HashEntry] =
+                                          Set.empty): DynamoWritableStub = {
     scanamo.exec(ScanamoTable[HashEntry](table.name).putAll(initialEntries))
 
     new TestHashWritable(dynamoClient, ScanamoTable[HashEntry](table.name))
   }
 
   override def getT(table: Table)(hashKey: String, v: Int): Record =
-    scanamo.exec(
-      ScanamoTable[HashEntry](table.name).get('id -> hashKey)
-    ).value.right.value.payload
+    scanamo
+      .exec(
+        ScanamoTable[HashEntry](table.name).get('id -> hashKey)
+      )
+      .value
+      .right
+      .value
+      .payload
 
-  override def createEntry(hashKey: String, v: Int, record: Record): HashEntry =
+  override def createEntry(hashKey: String,
+                           v: Int,
+                           record: Record): HashEntry =
     DynamoHashEntry(hashKey, v, record)
 
   override def createTable(table: Table): Table =
@@ -48,9 +67,11 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, Dyn
       val newerRecord = createRecord
 
       withLocalDynamoDbTable { table =>
-        val writable = createDynamoWritableWith(table, initialEntries = Set(
-          createEntry(hashKey, 2, newerRecord)
-        ))
+        val writable = createDynamoWritableWith(
+          table,
+          initialEntries = Set(
+            createEntry(hashKey, 2, newerRecord)
+          ))
 
         val result = writable.put(id = Version(hashKey, 1))(olderRecord)
 
@@ -69,13 +90,15 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, Dyn
       val record = createRecord
 
       withLocalDynamoDbTable { table =>
-        val writable = createDynamoWritableWith(table, initialEntries = Set.empty)
+        val writable =
+          createDynamoWritableWith(table, initialEntries = Set.empty)
         val result = writable.put(id = Version(hashKey, 1))(record)
 
         val err = result.left.value
 
         err.e shouldBe a[AmazonDynamoDBException]
-        err.e.getMessage should include("Hash primary key values must be under 2048 bytes")
+        err.e.getMessage should include(
+          "Hash primary key values must be under 2048 bytes")
       }
     }
 
@@ -88,7 +111,8 @@ class DynamoHashWritableTest extends DynamoWritableTestCases[String, Record, Dyn
 
       it("hash key is the wrong type") {
         assertErrorsOnBadKeyType(
-          table => createTableWithHashKey(table, keyType = ScalarAttributeType.N)
+          table =>
+            createTableWithHashKey(table, keyType = ScalarAttributeType.N)
         )
       }
     }

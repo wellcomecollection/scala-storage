@@ -10,8 +10,7 @@ import uk.ac.wellcome.storage.store.{
 import uk.ac.wellcome.storage.streaming.Codec
 
 class MemoryHybridStoreWithMaxima[Id, T, Metadata](
-  implicit
-  val typedStore: MemoryTypedStore[String, T],
+  implicit val typedStore: MemoryTypedStore[String, T],
   val indexedStore: Store[
     Version[Id, Int],
     HybridIndexedStoreEntry[String, Metadata]] with Maxima[Id, Int],

@@ -5,7 +5,11 @@ import uk.ac.wellcome.storage.store.StoreWithOverwritesTestCases
 import uk.ac.wellcome.storage.store.fixtures.StringNamespaceFixtures
 
 class MemoryStoreTest
-  extends StoreWithOverwritesTestCases[String, Record, String, MemoryStore[String, Record]]
+    extends StoreWithOverwritesTestCases[
+      String,
+      Record,
+      String,
+      MemoryStore[String, Record]]
     with MemoryStoreFixtures[String, Record, String]
     with StringNamespaceFixtures
     with RecordGenerators {

@@ -10,13 +10,25 @@ import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 import uk.ac.wellcome.storage.store.StoreWithoutOverwritesTestCases
 
-class DynamoHashRangeStoreTest extends StoreWithoutOverwritesTestCases[Version[String, Int], Record, String, Table] with RecordGenerators with DynamoFixtures {
-  override def withStoreImpl[R](initialEntries: Map[Version[String, Int], Record], table: Table)(testWith: TestWith[StoreImpl, R]): R = {
-    val dynamoEntries = initialEntries.map { case (id, record) =>
-      DynamoHashRangeEntry(id.id, id.version, record)
+class DynamoHashRangeStoreTest
+    extends StoreWithoutOverwritesTestCases[
+      Version[String, Int],
+      Record,
+      String,
+      Table]
+    with RecordGenerators
+    with DynamoFixtures {
+  override def withStoreImpl[R](
+    initialEntries: Map[Version[String, Int], Record],
+    table: Table)(testWith: TestWith[StoreImpl, R]): R = {
+    val dynamoEntries = initialEntries.map {
+      case (id, record) =>
+        DynamoHashRangeEntry(id.id, id.version, record)
     }.toSet
 
-    scanamo.exec(ScanamoTable[DynamoHashRangeEntry[String, Int, Record]](table.name).putAll(dynamoEntries))
+    scanamo.exec(
+      ScanamoTable[DynamoHashRangeEntry[String, Int, Record]](table.name)
+        .putAll(dynamoEntries))
 
     val store = new DynamoHashRangeStore[String, Int, Record](
       config = createDynamoConfigWith(table)
@@ -32,7 +44,8 @@ class DynamoHashRangeStoreTest extends StoreWithoutOverwritesTestCases[Version[S
 
   override def createT: Record = createRecord
 
-  override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
+  override def withNamespace[R](testWith: TestWith[String, R]): R =
+    testWith(randomAlphanumeric)
 
   override def createTable(table: Table): Table =
     createTableWithHashRangeKey(table)

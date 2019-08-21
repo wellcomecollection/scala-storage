@@ -4,14 +4,19 @@ import org.scalatest.{Assertion, Matchers}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.store.Store
 
-trait StoreFixtures[Ident, T, Namespace, StoreContext] extends Matchers with NamespaceFixtures[Ident, Namespace] {
+trait StoreFixtures[Ident, T, Namespace, StoreContext]
+    extends Matchers
+    with NamespaceFixtures[Ident, Namespace] {
   type StoreImpl = Store[Ident, T]
 
-  def withStoreImpl[R](initialEntries: Map[Ident, T], storeContext: StoreContext)(testWith: TestWith[StoreImpl, R]): R
+  def withStoreImpl[R](
+    initialEntries: Map[Ident, T],
+    storeContext: StoreContext)(testWith: TestWith[StoreImpl, R]): R
 
   def withStoreContext[R](testWith: TestWith[StoreContext, R]): R
 
-  def withStoreImpl[R](initialEntries: Map[Ident, T])(testWith: TestWith[StoreImpl, R]): R =
+  def withStoreImpl[R](initialEntries: Map[Ident, T])(
+    testWith: TestWith[StoreImpl, R]): R =
     withStoreContext { storeContext =>
       withStoreImpl(initialEntries, storeContext) { storeImpl =>
         testWith(storeImpl)

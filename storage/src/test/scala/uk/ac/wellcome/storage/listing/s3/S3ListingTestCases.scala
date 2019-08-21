@@ -7,8 +7,16 @@ import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.listing.ListingTestCases
 import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
 
-trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation, ObjectLocationPrefix, ListingResult, S3Listing[ListingResult], Bucket] with S3ListingFixtures[ListingResult] {
-  def withListing[R](bucket: Bucket, initialEntries: Seq[ObjectLocation])(testWith: TestWith[S3Listing[ListingResult], R]): R = {
+trait S3ListingTestCases[ListingResult]
+    extends ListingTestCases[
+      ObjectLocation,
+      ObjectLocationPrefix,
+      ListingResult,
+      S3Listing[ListingResult],
+      Bucket]
+    with S3ListingFixtures[ListingResult] {
+  def withListing[R](bucket: Bucket, initialEntries: Seq[ObjectLocation])(
+    testWith: TestWith[S3Listing[ListingResult], R]): R = {
     createInitialEntries(bucket, initialEntries)
 
     testWith(createS3Listing())
@@ -64,7 +72,9 @@ trait S3ListingTestCases[ListingResult] extends ListingTestCases[ObjectLocation,
       withLocalS3Bucket { bucket =>
         val location = createObjectLocationWith(bucket)
 
-        val locations = (1 to 10).map { i => location.join(s"file_$i.txt") }
+        val locations = (1 to 10).map { i =>
+          location.join(s"file_$i.txt")
+        }
         createInitialEntries(bucket, locations)
 
         val smallBatchListing = createS3Listing(batchSize = 5)

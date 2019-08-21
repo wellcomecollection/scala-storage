@@ -7,8 +7,7 @@ import uk.ac.wellcome.storage.store.s3.S3TypedStore
 import uk.ac.wellcome.storage._
 
 class DynamoHybridStore[T, Metadata](prefix: ObjectLocationPrefix)(
-  implicit
-  val indexedStore: DynamoHashStore[
+  implicit val indexedStore: DynamoHashStore[
     String,
     Int,
     HybridIndexedStoreEntry[ObjectLocation, Metadata]],

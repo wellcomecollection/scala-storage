@@ -13,7 +13,7 @@ import uk.ac.wellcome.storage.generators.RandomThings
 import scala.util.Random
 
 class EncoderTest
-  extends FunSpec
+    extends FunSpec
     with EitherValues
     with Matchers
     with RandomThings
@@ -27,14 +27,19 @@ class EncoderTest
         val bytes = randomBytes()
         val stream = bytesEncoder.toStream(bytes)
 
-        IOUtils.contentEquals(stream.right.value, new ByteArrayInputStream(bytes)) shouldBe true
+        IOUtils.contentEquals(
+          stream.right.value,
+          new ByteArrayInputStream(bytes)) shouldBe true
       }
 
       it("a string") {
         val randomString = Random.nextString(8)
         val stream = stringEncoder.toStream(randomString)
 
-        assertStreamEquals(stream.right.value, randomString, expectedLength = randomString.getBytes.length)
+        assertStreamEquals(
+          stream.right.value,
+          randomString,
+          expectedLength = randomString.getBytes.length)
       }
 
       it("some json") {
@@ -44,7 +49,10 @@ class EncoderTest
         val stream = jsonEncoder.toStream(randomJson)
 
         // len( "{8 chars}" ) ~> 10
-        assertStreamEquals(stream.right.value, toJson(randomString).get, expectedLength = randomJson.noSpaces.getBytes.length)
+        assertStreamEquals(
+          stream.right.value,
+          toJson(randomString).get,
+          expectedLength = randomJson.noSpaces.getBytes.length)
       }
 
       it("a type T") {
@@ -54,7 +62,10 @@ class EncoderTest
         val stream = typeEncoder[FilmStar].toStream(michael)
 
         // len( {"name":"Michael J. Fox","age":14"} ) ~> 34
-        assertStreamEquals(stream.right.value, toJson(michael).get, expectedLength = 34)
+        assertStreamEquals(
+          stream.right.value,
+          toJson(michael).get,
+          expectedLength = 34)
       }
     }
 

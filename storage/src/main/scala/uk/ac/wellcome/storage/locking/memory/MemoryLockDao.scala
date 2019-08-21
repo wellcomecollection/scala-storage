@@ -38,17 +38,18 @@ class MemoryLockDao[MemoryIdent, MemoryContextId]
       }
     }
 
-  override def unlock(contextId: MemoryContextId): UnlockResult = synchronized {
-    info(s"Unlocking for context <$contextId>")
+  override def unlock(contextId: MemoryContextId): UnlockResult =
+    synchronized {
+      info(s"Unlocking for context <$contextId>")
 
-    locks = locks.filter {
-      case (id, PermanentLock(_, lockContextId)) =>
-        debug(s"Inspecting $id")
-        contextId != lockContextId
+      locks = locks.filter {
+        case (id, PermanentLock(_, lockContextId)) =>
+          debug(s"Inspecting $id")
+          contextId != lockContextId
+      }
+
+      Right(())
     }
-
-    Right(())
-  }
 
   def getCurrentLocks: Set[MemoryIdent] =
     locks.keys.toSet

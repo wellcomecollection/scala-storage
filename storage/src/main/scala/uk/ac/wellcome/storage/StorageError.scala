@@ -8,10 +8,14 @@ sealed trait CodecError
 sealed trait BackendError
 
 sealed trait UpdateError extends StorageError
+sealed trait UpdateFunctionError extends UpdateError
 
 case class UpdateNoSourceError(e: Throwable) extends UpdateError
 case class UpdateReadError(e: Throwable) extends UpdateError
 case class UpdateWriteError(e: Throwable) extends UpdateError
+
+case class UpdateNotApplied(e: Throwable) extends UpdateFunctionError
+case class UpdateUnexpectedError(e: Throwable) extends UpdateFunctionError
 
 sealed trait WriteError extends StorageError
 sealed trait EncoderError extends WriteError

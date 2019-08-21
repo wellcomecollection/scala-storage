@@ -10,58 +10,70 @@ import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.generators.Record
 import org.scanamo.auto._
 
-
-class DynamoHashRangeReadableTest extends DynamoReadableTestCases[Version[String, Int], DynamoHashRangeEntry[String, Int, Record]] {
+class DynamoHashRangeReadableTest
+    extends DynamoReadableTestCases[
+      Version[String, Int],
+      DynamoHashRangeEntry[String, Int, Record]] {
   type HashRangeEntry = DynamoHashRangeEntry[String, Int, Record]
 
-  override def createDynamoReadableWith(table: Table, initialEntries: Set[DynamoHashRangeEntry[String, Int, Record]]): DynamoReadableStub = {
+  override def createDynamoReadableWith(
+    table: Table,
+    initialEntries: Set[DynamoHashRangeEntry[String, Int, Record]])
+    : DynamoReadableStub = {
     class DynamoHashRangeReadableImpl(
-                                       val client: AmazonDynamoDB,
-                                       val table: ScanamoTable[HashRangeEntry]
-                                     )(
-                                       implicit val formatHashKey: DynamoFormat[String],
-                                       implicit val formatRangeKey: DynamoFormat[Int],
-                                       implicit val format: DynamoFormat[HashRangeEntry]
-                                     ) extends DynamoHashRangeReadable[HashKey, Int, Record]
+      val client: AmazonDynamoDB,
+      val table: ScanamoTable[HashRangeEntry]
+    )(
+      implicit val formatHashKey: DynamoFormat[String],
+      implicit val formatRangeKey: DynamoFormat[Int],
+      implicit val format: DynamoFormat[HashRangeEntry]
+    ) extends DynamoHashRangeReadable[HashKey, Int, Record]
 
-    scanamo.exec(ScanamoTable[HashRangeEntry](table.name).putAll(initialEntries))
+    scanamo.exec(
+      ScanamoTable[HashRangeEntry](table.name).putAll(initialEntries))
 
-    new DynamoHashRangeReadableImpl(dynamoClient, ScanamoTable[HashRangeEntry](table.name))
+    new DynamoHashRangeReadableImpl(
+      dynamoClient,
+      ScanamoTable[HashRangeEntry](table.name))
   }
 
   override def createTable(table: Table): Table =
     createTableWithHashRangeKey(table)
 
-  override def createEntry(hashKey: String, v: Int, record: Record): HashRangeEntry =
+  override def createEntry(hashKey: String,
+                           v: Int,
+                           record: Record): HashRangeEntry =
     DynamoHashRangeEntry(hashKey, v, record)
 
   describe("DynamoHashRangeReadable") {
     describe("it fails if the table has the wrong structure") {
       it("hash key name is wrong") {
         assertErrorsOnBadKeyName(
-          table =>
-            createTableWithHashRangeKey(table, hashKeyName = "wrong")
+          table => createTableWithHashRangeKey(table, hashKeyName = "wrong")
         )
       }
 
       it("hash key is the wrong type") {
         assertErrorsOnBadKeyType(
           table =>
-            createTableWithHashRangeKey(table, hashKeyType = ScalarAttributeType.N)
+            createTableWithHashRangeKey(
+              table,
+              hashKeyType = ScalarAttributeType.N)
         )
       }
 
       it("range key name is wrong") {
         assertErrorsOnBadKeyName(
-          table =>
-            createTableWithHashRangeKey(table, rangeKeyName = "wrong")
+          table => createTableWithHashRangeKey(table, rangeKeyName = "wrong")
         )
       }
 
       it("range key is the wrong type") {
         assertErrorsOnBadKeyType(
           table =>
-            createTableWithHashRangeKey(table, rangeKeyType = ScalarAttributeType.S)
+            createTableWithHashRangeKey(
+              table,
+              rangeKeyType = ScalarAttributeType.S)
         )
       }
 
@@ -78,13 +90,15 @@ class DynamoHashRangeReadableTest extends DynamoReadableTestCases[Version[String
       val record = createRecord
 
       val initialEntries = Set(
-        createEntry(id, v = 1, record),
+        createEntry(id, v = 1, record)
       )
 
       withLocalDynamoDbTable { table =>
         val readable = createDynamoReadableWith(table, initialEntries)
 
-        readable.get(Version(id, 1)).right.value shouldBe Identified(Version(id, 1), record)
+        readable.get(Version(id, 1)).right.value shouldBe Identified(
+          Version(id, 1),
+          record)
       }
     }
 
@@ -93,7 +107,7 @@ class DynamoHashRangeReadableTest extends DynamoReadableTestCases[Version[String
       val record = createRecord
 
       val initialEntries = Set(
-        createEntry(id, v = 2, record),
+        createEntry(id, v = 2, record)
       )
 
       withLocalDynamoDbTable { table =>

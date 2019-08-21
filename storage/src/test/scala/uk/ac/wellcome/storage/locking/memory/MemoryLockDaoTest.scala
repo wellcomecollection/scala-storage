@@ -4,4 +4,6 @@ import java.util.UUID
 
 import uk.ac.wellcome.storage.locking.LockDaoTestCases
 
-class MemoryLockDaoTest extends LockDaoTestCases[String, UUID, Unit] with MemoryLockDaoFixtures
+class MemoryLockDaoTest
+    extends LockDaoTestCases[String, UUID, Unit]
+    with MemoryLockDaoFixtures

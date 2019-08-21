@@ -5,7 +5,11 @@ import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.{IdentityKey, NoMaximaValueError, Version}
 import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 
-trait MaximaTestCases extends FunSpec with Matchers with RecordGenerators with EitherValues {
+trait MaximaTestCases
+    extends FunSpec
+    with Matchers
+    with RecordGenerators
+    with EitherValues {
   type MaximaStub = Maxima[IdentityKey, Int]
 
   def withMaxima[R](initialEntries: Map[Version[IdentityKey, Int], Record])(
@@ -33,7 +37,7 @@ trait MaximaTestCases extends FunSpec with Matchers with RecordGenerators with E
           Version(id, 1) -> createRecord,
           Version(id, 2) -> createRecord,
           Version(id, 3) -> createRecord,
-          Version(id, 5) -> createRecord,
+          Version(id, 5) -> createRecord
         )
 
         withMaxima(initialEntries) { maxima =>
@@ -48,7 +52,7 @@ trait MaximaTestCases extends FunSpec with Matchers with RecordGenerators with E
           Version(id, 1) -> createRecord,
           Version(id, 2) -> createRecord,
           Version(id, 3) -> createRecord,
-          Version(createIdentityKey, 5) -> createRecord,
+          Version(createIdentityKey, 5) -> createRecord
         )
 
         withMaxima(initialEntries) { maxima =>
@@ -58,7 +62,10 @@ trait MaximaTestCases extends FunSpec with Matchers with RecordGenerators with E
 
       it("errors if there are no matching entries") {
         withMaxima(initialEntries = Map.empty) { maxima =>
-          maxima.max(createIdentityKey).left.value shouldBe a[NoMaximaValueError]
+          maxima
+            .max(createIdentityKey)
+            .left
+            .value shouldBe a[NoMaximaValueError]
         }
       }
     }

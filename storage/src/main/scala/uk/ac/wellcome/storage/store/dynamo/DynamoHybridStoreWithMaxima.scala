@@ -11,8 +11,7 @@ import uk.ac.wellcome.storage.store.s3.S3TypedStore
 
 class DynamoHybridStoreWithMaxima[Id, V, T, Metadata](
   prefix: ObjectLocationPrefix)(
-  implicit
-  val indexedStore: DynamoHashRangeStore[
+  implicit val indexedStore: DynamoHashRangeStore[
     Id,
     V,
     HybridIndexedStoreEntry[ObjectLocation, Metadata]],

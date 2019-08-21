@@ -4,13 +4,28 @@ import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
 import uk.ac.wellcome.storage.listing.fixtures.ListingFixtures
 
-trait ListingTestCases[Ident, Prefix, ListingResult, ListingImpl <: Listing[Prefix, ListingResult], ListingContext] extends FunSpec with Matchers with EitherValues with ObjectLocationGenerators with ListingFixtures[Ident, Prefix, ListingResult, ListingImpl, ListingContext] {
+trait ListingTestCases[Ident,
+                       Prefix,
+                       ListingResult,
+                       ListingImpl <: Listing[Prefix, ListingResult],
+                       ListingContext]
+    extends FunSpec
+    with Matchers
+    with EitherValues
+    with ObjectLocationGenerators
+    with ListingFixtures[
+      Ident,
+      Prefix,
+      ListingResult,
+      ListingImpl,
+      ListingContext] {
   def createIdent(implicit context: ListingContext): Ident
   def extendIdent(id: Ident, extension: String): Ident
   def createPrefix: Prefix
   def createPrefixMatching(id: Ident): Prefix
 
-  def assertResultCorrect(result: Iterable[ListingResult], entries: Seq[Ident]): Assertion
+  def assertResultCorrect(result: Iterable[ListingResult],
+                          entries: Seq[Ident]): Assertion
 
   describe("behaves as a Listing") {
     describe("list") {
@@ -58,7 +73,9 @@ trait ListingTestCases[Ident, Prefix, ListingResult, ListingImpl <: Listing[Pref
       it("finds multiple matching entries") {
         withListingContext { implicit context =>
           val ident = createIdent
-          val entries = Seq("1.txt", "2.txt", "3.txt").map { filename => extendIdent(ident, filename) }
+          val entries = Seq("1.txt", "2.txt", "3.txt").map { filename =>
+            extendIdent(ident, filename)
+          }
           val prefix = createPrefixMatching(ident)
 
           withListing(context, initialEntries = entries) { listing =>
@@ -73,16 +90,19 @@ trait ListingTestCases[Ident, Prefix, ListingResult, ListingImpl <: Listing[Pref
       it("ignores entries that don't match") {
         withListingContext { implicit context =>
           val ident = createIdent
-          val entries = Seq("1.txt", "2.txt", "3.txt").map { filename => extendIdent(ident, filename) }
+          val entries = Seq("1.txt", "2.txt", "3.txt").map { filename =>
+            extendIdent(ident, filename)
+          }
           val prefix = createPrefixMatching(ident)
 
           val extraEntries = Seq(createIdent, createIdent)
 
-          withListing(context, initialEntries = entries ++ extraEntries) { listing =>
-            assertResultCorrect(
-              result = listing.list(prefix).right.value,
-              entries = entries
-            )
+          withListing(context, initialEntries = entries ++ extraEntries) {
+            listing =>
+              assertResultCorrect(
+                result = listing.list(prefix).right.value,
+                entries = entries
+              )
           }
         }
       }

@@ -12,7 +12,9 @@ trait NamespaceFixtures[Ident, Namespace] {
   def createId(implicit namespace: Namespace): Ident
 }
 
-trait StringNamespaceFixtures extends NamespaceFixtures[String, String] with RandomThings {
+trait StringNamespaceFixtures
+    extends NamespaceFixtures[String, String]
+    with RandomThings {
   override def withNamespace[R](testWith: TestWith[String, R]): R =
     testWith(randomAlphanumeric)
 
@@ -20,7 +22,9 @@ trait StringNamespaceFixtures extends NamespaceFixtures[String, String] with Ran
     s"$namespace/$randomAlphanumeric"
 }
 
-trait BucketNamespaceFixtures extends NamespaceFixtures[ObjectLocation, Bucket] with S3Fixtures {
+trait BucketNamespaceFixtures
+    extends NamespaceFixtures[ObjectLocation, Bucket]
+    with S3Fixtures {
   override def withNamespace[R](testWith: TestWith[Bucket, R]): R =
     withLocalS3Bucket { bucket =>
       testWith(bucket)

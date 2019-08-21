@@ -4,13 +4,19 @@ import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.maxima.Maxima
 
+import scala.util.{Failure, Success, Try}
+
 class VersionedStore[Id, V, T](
   val store: Store[Version[Id, V], T] with Maxima[Id, V]
 )(implicit N: Numeric[V], O: Ordering[V])
     extends Store[Version[Id, V], T]
     with Logging {
 
+  type StorageEither = Either[StorageError, Identified[Version[Id, V], T]]
   type UpdateEither = Either[UpdateError, Identified[Version[Id, V], T]]
+  type UpdateFunctionEither = Either[UpdateFunctionError, T]
+
+  type UpdateFunction = T => UpdateFunctionEither
 
   private val zero = N.zero
   private def increment(v: V): V = N.plus(v, N.one)
@@ -19,30 +25,47 @@ class VersionedStore[Id, V, T](
     store.max(id).map(increment)
 
   private val matchErrors: PartialFunction[
-    Either[StorageError, Identified[Version[Id, V], T]],
-    Either[UpdateError, Identified[Version[Id, V], T]],
+    StorageEither,
+    UpdateEither
   ] = {
-    case Left(err: NoVersionExistsError) => Left(UpdateNoSourceError(err.e))
-    case Left(err: ReadError)            => Left(UpdateReadError(err.e))
-    case Left(err: WriteError)           => Left(UpdateWriteError(err.e))
-    case Right(r)                        => Right(r)
+    case Left(err: NoVersionExistsError) =>
+      Left(UpdateNoSourceError(err.e))
+
+    case Left(err: ReadError) =>
+      Left(UpdateReadError(err.e))
+
+    case Left(err: WriteError) =>
+      Left(UpdateWriteError(err.e))
+
+    case Left(err: UpdateError) =>
+      Left(err)
+
+    case Right(r) =>
+      Right(r)
   }
+
+  private def safeF(f: UpdateFunction)(t: T): UpdateFunctionEither =
+    Try(f(t)) match {
+      case Success(value) => value
+      case Failure(e)     => Left(UpdateUnexpectedError(e))
+    }
 
   def init(id: Id)(t: T): WriteEither =
     put(Version(id, N.zero))(t)
 
-  def upsert(id: Id)(t: T)(f: T => T): UpdateEither =
+  def upsert(id: Id)(t: T)(f: UpdateFunction): UpdateEither =
     update(id)(f) match {
       case Left(UpdateNoSourceError(_)) =>
         matchErrors.apply(put(Version(id, N.zero))(t))
       case default => default
     }
 
-  def update(id: Id)(f: T => T): UpdateEither =
-    matchErrors.apply(getLatest(id).flatMap { identified =>
-      val v = N.plus(identified.id.version, N.one)
-      put(Version(id, v))(f(identified.identifiedT))
-    })
+  def update(id: Id)(f: UpdateFunction): UpdateEither =
+    matchErrors.apply(for {
+      latest <- getLatest(id)
+      updatedT <- safeF(f)(latest.identifiedT)
+      result <- put(Version(id, increment(latest.id.version)))(updatedT)
+    } yield result)
 
   def get(id: Version[Id, V]): ReadEither =
     store.get(id) match {

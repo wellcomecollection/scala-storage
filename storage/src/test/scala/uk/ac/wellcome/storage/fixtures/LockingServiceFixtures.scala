@@ -9,7 +9,7 @@ import uk.ac.wellcome.storage.locking._
 import scala.util.Try
 
 trait LockingServiceFixtures[Ident, ContextId, LockDaoContext]
-  extends EitherValues
+    extends EitherValues
     with TryValues
     with Matchers
     with Logging
@@ -23,7 +23,8 @@ trait LockingServiceFixtures[Ident, ContextId, LockDaoContext]
 
   private def createLockingServiceContextId: ContextId = createContextId
 
-  def withLockingService[R](lockDaoImpl: LockDaoStub)(testWith: TestWith[LockingServiceStub, R]): R = {
+  def withLockingService[R](lockDaoImpl: LockDaoStub)(
+    testWith: TestWith[LockingServiceStub, R]): R = {
     val lockingService = new LockingServiceStub {
       type UnlockFail = UnlockFailure[Ident]
 
@@ -36,14 +37,10 @@ trait LockingServiceFixtures[Ident, ContextId, LockDaoContext]
   }
 
   def successfulRightOf(result: ResultF): String =
-    result
-      .success.value
-      .right.value
+    result.success.value.right.value
 
   def successfulLeftOf(result: ResultF): FailedLockingServiceOp =
-    result
-      .success.value
-      .left.value
+    result.success.value.left.value
 
   def assertLockSuccess(result: ResultF): Assertion = {
     debug(s"Got $result")

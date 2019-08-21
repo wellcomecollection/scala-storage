@@ -8,8 +8,12 @@ import uk.ac.wellcome.storage.locking.memory.PermanentLock
 
 import scala.util.Try
 
-trait LockingServiceTestCases[Ident, ContextId, LockDaoContext] extends FunSpec with Matchers with LockingServiceFixtures[Ident, ContextId, LockDaoContext] {
-  def getCurrentLocks(lockDao: LockDaoStub, lockDaoContext: LockDaoContext): Set[Ident]
+trait LockingServiceTestCases[Ident, ContextId, LockDaoContext]
+    extends FunSpec
+    with Matchers
+    with LockingServiceFixtures[Ident, ContextId, LockDaoContext] {
+  def getCurrentLocks(lockDao: LockDaoStub,
+                      lockDaoContext: LockDaoContext): Set[Ident]
 
   val commonLockIds = Set(createIdent)
   val nonOverlappingLockIds = Set(createIdent, createIdent)
@@ -112,10 +116,8 @@ trait LockingServiceTestCases[Ident, ContextId, LockDaoContext] extends FunSpec 
 
     it("unlocks a context set when a result throws a Throwable") {
       withLockingService { service =>
-        assertFailedProcess(
-          service.withLocks(lockIds)(fError), expectedError)
-        assertLockSuccess(
-          service.withLocks(lockIds)(f))
+        assertFailedProcess(service.withLocks(lockIds)(fError), expectedError)
+        assertLockSuccess(service.withLocks(lockIds)(f))
       }
     }
 

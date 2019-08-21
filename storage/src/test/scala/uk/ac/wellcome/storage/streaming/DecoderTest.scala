@@ -15,10 +15,11 @@ import uk.ac.wellcome.storage.generators.RandomThings
 
 import scala.util.Random
 
-class DecoderTest extends FunSpec
-  with EitherValues
-  with Matchers
-  with RandomThings {
+class DecoderTest
+    extends FunSpec
+    with EitherValues
+    with Matchers
+    with RandomThings {
 
   import DecoderInstances._
 
@@ -40,7 +41,10 @@ class DecoderTest extends FunSpec
       it("a byte array without a specified length") {
         val byteArray = randomBytes()
 
-        bytesDecoder.fromStream(new ByteArrayInputStream(byteArray)).right.value shouldBe byteArray
+        bytesDecoder
+          .fromStream(new ByteArrayInputStream(byteArray))
+          .right
+          .value shouldBe byteArray
       }
 
       it("a string") {
@@ -85,7 +89,10 @@ class DecoderTest extends FunSpec
       it("from an invalid stream") {
         stringDecoder.fromStream(null).left.value shouldBe a[ByteDecodingError]
         jsonDecoder.fromStream(null).left.value shouldBe a[ByteDecodingError]
-        typeDecoder[Vehicle].fromStream(null).left.value shouldBe a[ByteDecodingError]
+        typeDecoder[Vehicle]
+          .fromStream(null)
+          .left
+          .value shouldBe a[ByteDecodingError]
       }
 
       it("an invalid json string") {
@@ -93,7 +100,10 @@ class DecoderTest extends FunSpec
 
         val jsonStream = createStream(invalidJsonString)
 
-        jsonDecoder.fromStream(jsonStream).left.value shouldBe a[JsonDecodingError]
+        jsonDecoder
+          .fromStream(jsonStream)
+          .left
+          .value shouldBe a[JsonDecodingError]
       }
 
       it("a type T from invalid JSON") {
@@ -101,7 +111,10 @@ class DecoderTest extends FunSpec
 
         val jsonStream = createStream(invalidJsonString)
 
-        typeDecoder[Vehicle].fromStream(jsonStream).left.value shouldBe a[JsonDecodingError]
+        typeDecoder[Vehicle]
+          .fromStream(jsonStream)
+          .left
+          .value shouldBe a[JsonDecodingError]
       }
 
       it("if the specified length is too long") {
@@ -112,7 +125,10 @@ class DecoderTest extends FunSpec
           length = byteArray.length + 1
         )
 
-        stringDecoder.fromStream(badStream).left.value shouldBe a[IncorrectStreamLengthError]
+        stringDecoder
+          .fromStream(badStream)
+          .left
+          .value shouldBe a[IncorrectStreamLengthError]
       }
 
       it("if the specified length is too short") {
@@ -123,13 +139,18 @@ class DecoderTest extends FunSpec
           length = byteArray.length - 1
         )
 
-        stringDecoder.fromStream(badStream).left.value shouldBe a[IncorrectStreamLengthError]
+        stringDecoder
+          .fromStream(badStream)
+          .left
+          .value shouldBe a[IncorrectStreamLengthError]
       }
 
       it("if the Circe decoder is broken") {
         val brokenDecoder = new circe.Decoder[Vehicle] {
           override def apply(c: HCursor): Result[Vehicle] =
-            circe.Decoder[Int].apply(c).map { _ => Vehicle("delorean", 88) }
+            circe.Decoder[Int].apply(c).map { _ =>
+              Vehicle("delorean", 88)
+            }
         }
 
         val jsonString =
@@ -140,7 +161,8 @@ class DecoderTest extends FunSpec
              |}
        """.stripMargin
 
-        val stream = typeDecoder[Vehicle](brokenDecoder).fromStream(createStream(jsonString))
+        val stream = typeDecoder[Vehicle](brokenDecoder)
+          .fromStream(createStream(jsonString))
 
         stream.left.value shouldBe a[JsonDecodingError]
       }

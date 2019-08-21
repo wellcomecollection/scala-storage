@@ -74,8 +74,7 @@ object Codec {
   }
 
   implicit def typeCodec[T](
-    implicit
-    dec: circe.Decoder[T],
+    implicit dec: circe.Decoder[T],
     enc: circe.Encoder[T]
   ): Codec[T] = new Codec[T] {
     override def fromStream(inputStream: InputStream): DecoderResult[T] =

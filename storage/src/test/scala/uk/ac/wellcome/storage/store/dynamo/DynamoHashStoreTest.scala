@@ -12,19 +12,27 @@ import uk.ac.wellcome.storage.maxima.MaximaTestCases
 import uk.ac.wellcome.storage.store.StoreWithoutOverwritesTestCases
 
 class DynamoHashStoreTest
-  extends StoreWithoutOverwritesTestCases[Version[IdentityKey, Int], Record, String, Table]
+    extends StoreWithoutOverwritesTestCases[
+      Version[IdentityKey, Int],
+      Record,
+      String,
+      Table]
     with MaximaTestCases
     with RecordGenerators
     with DynamoFixtures {
   def withDynamoHashStore[R](
-    initialEntries: Map[Version[IdentityKey, Int], Record], table: Table)(
+    initialEntries: Map[Version[IdentityKey, Int], Record],
+    table: Table)(
     testWith: TestWith[DynamoHashStore[IdentityKey, Int, Record], R]): R = {
-    val dynamoEntries = initialEntries.map { case (id, record) =>
-      DynamoHashEntry(id.id, id.version, record)
+    val dynamoEntries = initialEntries.map {
+      case (id, record) =>
+        DynamoHashEntry(id.id, id.version, record)
     }.toSet
 
     dynamoEntries.foreach { entry =>
-      scanamo.exec(ScanamoTable[DynamoHashEntry[IdentityKey, Int, Record]](table.name).put(entry))
+      scanamo.exec(
+        ScanamoTable[DynamoHashEntry[IdentityKey, Int, Record]](table.name)
+          .put(entry))
     }
 
     val store = new DynamoHashStore[IdentityKey, Int, Record](
@@ -34,7 +42,9 @@ class DynamoHashStoreTest
     testWith(store)
   }
 
-  override def withStoreImpl[R](initialEntries: Map[Version[IdentityKey, Int], Record], table: Table)(testWith: TestWith[StoreImpl, R]): R =
+  override def withStoreImpl[R](
+    initialEntries: Map[Version[IdentityKey, Int], Record],
+    table: Table)(testWith: TestWith[StoreImpl, R]): R =
     withDynamoHashStore(initialEntries, table) { store =>
       testWith(store)
     }
@@ -46,14 +56,18 @@ class DynamoHashStoreTest
 
   override def createT: Record = createRecord
 
-  override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
+  override def withNamespace[R](testWith: TestWith[String, R]): R =
+    testWith(randomAlphanumeric)
 
   override def createTable(table: Table): Table = createTableWithHashKey(table)
 
-  override def createId(implicit namespace: String): Version[IdentityKey, Int] =
+  override def createId(
+    implicit namespace: String): Version[IdentityKey, Int] =
     Version(id = IdentityKey(randomAlphanumeric), version = 1)
 
-  override def withMaxima[R](initialEntries: Map[Version[IdentityKey, Int], Record])(testWith: TestWith[MaximaStub, R]): R =
+  override def withMaxima[R](
+    initialEntries: Map[Version[IdentityKey, Int], Record])(
+    testWith: TestWith[MaximaStub, R]): R =
     withLocalDynamoDbTable { table =>
       withDynamoHashStore(initialEntries, table) { store =>
         testWith(store)

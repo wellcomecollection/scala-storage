@@ -11,10 +11,14 @@ import org.scalatest.mockito.MockitoSugar
 import org.scanamo.auto._
 import org.scanamo.time.JavaTimeFormats._
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
-import uk.ac.wellcome.storage.locking.{LockDaoTestCases, LockFailure, UnlockFailure}
+import uk.ac.wellcome.storage.locking.{
+  LockDaoTestCases,
+  LockFailure,
+  UnlockFailure
+}
 
 class DynamoLockDaoTest
-  extends LockDaoTestCases[String, UUID, Table]
+    extends LockDaoTestCases[String, UUID, Table]
     with DynamoLockDaoFixtures
     with MockitoSugar
     with IntegrationPatience {
@@ -26,9 +30,11 @@ class DynamoLockDaoTest
     it("records a lock in DynamoDB") {
       withLocalDynamoDbTable { lockTable =>
         withLockDao(lockTable) { lockDao =>
-
-          lockDao.lock(staticId, staticContextId)
-            .right.value.id shouldBe staticId
+          lockDao
+            .lock(staticId, staticContextId)
+            .right
+            .value
+            .id shouldBe staticId
 
           getExistingTableItem[ExpiringLock](staticId, table = lockTable).id shouldBe staticId
         }
@@ -38,16 +44,24 @@ class DynamoLockDaoTest
     it("refreshes the expiry on an existing lock") {
       withLocalDynamoDbTable { lockTable =>
         withLockDao(lockTable) { lockDao =>
-          lockDao.lock(staticId, staticContextId)
-            .right.value.id shouldBe staticId
+          lockDao
+            .lock(staticId, staticContextId)
+            .right
+            .value
+            .id shouldBe staticId
 
-          val expiry = getExistingTableItem[ExpiringLock](staticId, table = lockTable).expires
+          val expiry = getExistingTableItem[ExpiringLock](
+            staticId,
+            table = lockTable).expires
 
           // Wait at least 1 second
           Thread.sleep(1000)
 
-          lockDao.lock(staticId, staticContextId)
-            .right.value.id shouldBe staticId
+          lockDao
+            .lock(staticId, staticContextId)
+            .right
+            .value
+            .id shouldBe staticId
 
           val updatedExpiry =
             getExistingTableItem[ExpiringLock](staticId, table = lockTable).expires
@@ -57,23 +71,28 @@ class DynamoLockDaoTest
       }
     }
 
-    it("creates a new lock in a different context when the existing lock expires") {
+    it(
+      "creates a new lock in a different context when the existing lock expires") {
       withLocalDynamoDbTable { lockTable =>
         withLockDao(lockTable, seconds = 1) { lockDao =>
           val contextId = createContextId
 
-          lockDao.lock(staticId, staticContextId)
-            .right.value.id shouldBe staticId
+          lockDao
+            .lock(staticId, staticContextId)
+            .right
+            .value
+            .id shouldBe staticId
 
-          lockDao.lock(staticId, contextId)
-            .left.value shouldBe a[LockFailure[_]]
+          lockDao
+            .lock(staticId, contextId)
+            .left
+            .value shouldBe a[LockFailure[_]]
 
           // Allow the existing lock to expire
           Thread.sleep(2000)
 
           // Confirm we can lock expired lock
-          lockDao.lock(staticId, contextId)
-            .right.value.id shouldBe staticId
+          lockDao.lock(staticId, contextId).right.value.id shouldBe staticId
         }
       }
     }
@@ -98,8 +117,10 @@ class DynamoLockDaoTest
         when(putItem).thenThrow(error)
 
         withLockDao(mockClient) { lockDao =>
-          lockDao.lock(staticId, staticContextId)
-            .left.value shouldBe LockFailure(staticId, error)
+          lockDao
+            .lock(staticId, staticContextId)
+            .left
+            .value shouldBe LockFailure(staticId, error)
         }
       }
     }
@@ -114,8 +135,9 @@ class DynamoLockDaoTest
         when(query).thenThrow(error)
 
         withLockDao(mockClient) { lockDao =>
-          lockDao.unlock(staticContextId)
-            .left.value shouldBe UnlockFailure(staticContextId, error)
+          lockDao.unlock(staticContextId).left.value shouldBe UnlockFailure(
+            staticContextId,
+            error)
         }
       }
 
@@ -130,8 +152,9 @@ class DynamoLockDaoTest
           .thenThrow(error)
 
         withLockDao(mockClient) { lockDao =>
-          lockDao.unlock(staticContextId)
-            .left.value shouldBe UnlockFailure(staticContextId, error)
+          lockDao.unlock(staticContextId).left.value shouldBe UnlockFailure(
+            staticContextId,
+            error)
         }
       }
     }

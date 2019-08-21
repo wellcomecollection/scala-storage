@@ -6,11 +6,14 @@ import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.generators.RandomThings
 import uk.ac.wellcome.storage.locking.{LockDao, LockDaoFixtures}
 
-trait MemoryLockDaoFixtures extends LockDaoFixtures[String, UUID, Unit] with RandomThings {
+trait MemoryLockDaoFixtures
+    extends LockDaoFixtures[String, UUID, Unit]
+    with RandomThings {
   override def withLockDaoContext[R](testWith: TestWith[Unit, R]): R =
     testWith(())
 
-  override def withLockDao[R](context: Unit)(testWith: TestWith[LockDao[String, UUID], R]): R =
+  override def withLockDao[R](context: Unit)(
+    testWith: TestWith[LockDao[String, UUID], R]): R =
     testWith(
       new MemoryLockDao[String, UUID]()
     )

@@ -19,9 +19,7 @@ import scala.util.Try
 class DynamoLockDao(
   val client: AmazonDynamoDB,
   config: DynamoLockDaoConfig
-)(implicit
-  val ec: ExecutionContext,
-  val df: DynamoFormat[ExpiringLock])
+)(implicit val ec: ExecutionContext, val df: DynamoFormat[ExpiringLock])
     extends LockDao[String, UUID]
     with Logging
     with ScanamoHelpers[ExpiringLock] {

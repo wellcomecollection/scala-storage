@@ -10,8 +10,7 @@ import uk.ac.wellcome.storage.dynamo.{
 import uk.ac.wellcome.storage.store.VersionedStore
 
 class DynamoMultipleVersionStore[Id, T](val config: DynamoConfig)(
-  implicit
-  val client: AmazonDynamoDB,
+  implicit val client: AmazonDynamoDB,
   val formatHashKey: DynamoFormat[Id],
   val formatRangeKey: DynamoFormat[Int],
   val formatT: DynamoFormat[T],
@@ -21,8 +20,7 @@ class DynamoMultipleVersionStore[Id, T](val config: DynamoConfig)(
     )
 
 class DynamoSingleVersionStore[Id, T](val config: DynamoConfig)(
-  implicit
-  val client: AmazonDynamoDB,
+  implicit val client: AmazonDynamoDB,
   val formatHashKey: DynamoFormat[Id],
   val formatRangeKey: DynamoFormat[Int],
   val formatT: DynamoFormat[T],

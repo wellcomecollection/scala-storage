@@ -2,7 +2,8 @@ package uk.ac.wellcome.storage.store
 
 import uk.ac.wellcome.storage.{Identified, Version}
 
-trait VersionedStoreWithoutOverwriteTestCases[Id, T, VersionedStoreContext] extends VersionedStoreWithOverwriteTestCases[Id, T, VersionedStoreContext] {
+trait VersionedStoreWithoutOverwriteTestCases[Id, T, VersionedStoreContext]
+    extends VersionedStoreWithOverwriteTestCases[Id, T, VersionedStoreContext] {
   describe("it behaves as a VersionedStore") {
     describe("get") {
       describe("without overwrite") {
@@ -15,7 +16,6 @@ trait VersionedStoreWithoutOverwriteTestCases[Id, T, VersionedStoreContext] exte
           withVersionedStoreImpl(
             initialEntries = Map(Version(id, 1) -> t1, Version(id, 2) -> t2)
           ) { store =>
-
             val result = for {
               result <- store.get(Version(id, 1))
             } yield result
@@ -44,11 +44,21 @@ trait VersionedStoreWithoutOverwriteTestCases[Id, T, VersionedStoreContext] exte
               Version(id, 5) -> t5
             )
           ) { store =>
-            store.get(Version(id, 1)).right.value shouldBe Identified(Version(id, 1), t1)
-            store.get(Version(id, 2)).right.value shouldBe Identified(Version(id, 2), t2)
-            store.get(Version(id, 3)).right.value shouldBe Identified(Version(id, 3), t3)
-            store.get(Version(id, 4)).right.value shouldBe Identified(Version(id, 4), t4)
-            store.get(Version(id, 5)).right.value shouldBe Identified(Version(id, 5), t5)
+            store.get(Version(id, 1)).right.value shouldBe Identified(
+              Version(id, 1),
+              t1)
+            store.get(Version(id, 2)).right.value shouldBe Identified(
+              Version(id, 2),
+              t2)
+            store.get(Version(id, 3)).right.value shouldBe Identified(
+              Version(id, 3),
+              t3)
+            store.get(Version(id, 4)).right.value shouldBe Identified(
+              Version(id, 4),
+              t4)
+            store.get(Version(id, 5)).right.value shouldBe Identified(
+              Version(id, 5),
+              t5)
           }
         }
       }

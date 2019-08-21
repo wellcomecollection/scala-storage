@@ -14,7 +14,11 @@ import org.scanamo.error.InvalidPropertiesError
 import org.scanamo.{Table => ScanamoTable}
 import org.scanamo.time.JavaTimeFormats._
 
-trait DynamoFormatTestCases[T] extends FunSpec with Matchers with DynamoFixtures with EitherValues {
+trait DynamoFormatTestCases[T]
+    extends FunSpec
+    with Matchers
+    with DynamoFixtures
+    with EitherValues {
   def createTable(table: Table): Table =
     createTableWithHashKey(table)
 
@@ -32,7 +36,11 @@ trait DynamoFormatTestCases[T] extends FunSpec with Matchers with DynamoFixtures
       val scanamoTable = ScanamoTable[RecordT](table.name)
 
       scanamo.exec(scanamoTable.put(record))
-      scanamo.exec(scanamoTable.get('id -> record.id)).get.right.value shouldBe record
+      scanamo
+        .exec(scanamoTable.get('id -> record.id))
+        .get
+        .right
+        .value shouldBe record
     }
   }
 

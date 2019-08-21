@@ -5,7 +5,7 @@ import uk.ac.wellcome.storage.{ObjectLocation, ObjectLocationPrefix}
 trait ObjectLocationGenerators extends RandomThings {
   def createObjectLocationWith(
     namespace: String = randomAlphanumeric,
-    path: String = randomAlphanumeric,
+    path: String = randomAlphanumeric
   ): ObjectLocation =
     ObjectLocation(
       namespace = namespace,

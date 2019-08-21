@@ -7,19 +7,29 @@ import uk.ac.wellcome.storage.Identified
 import uk.ac.wellcome.storage.store.Store
 import uk.ac.wellcome.storage.store.fixtures.NamespaceFixtures
 
-trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store[Location, T]]
-  extends FunSpec
+trait PrefixTransferTestCases[
+  Location, Prefix, Namespace, T, StoreImpl <: Store[Location, T]]
+    extends FunSpec
     with Matchers
     with EitherValues
     with NamespaceFixtures[Location, Namespace]
     with ScalaFutures {
-  def withPrefixTransferStore[R](initialEntries: Map[Location, T])(testWith: TestWith[StoreImpl, R]): R
+  def withPrefixTransferStore[R](initialEntries: Map[Location, T])(
+    testWith: TestWith[StoreImpl, R]): R
 
-  def withPrefixTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
+  def withPrefixTransfer[R](
+    testWith: TestWith[PrefixTransfer[Prefix, Location], R])(
+    implicit store: StoreImpl): R
 
-  def withExtraListingTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
-  def withBrokenListingTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
-  def withBrokenTransfer[R](testWith: TestWith[PrefixTransfer[Prefix, Location], R])(implicit store: StoreImpl): R
+  def withExtraListingTransfer[R](
+    testWith: TestWith[PrefixTransfer[Prefix, Location], R])(
+    implicit store: StoreImpl): R
+  def withBrokenListingTransfer[R](
+    testWith: TestWith[PrefixTransfer[Prefix, Location], R])(
+    implicit store: StoreImpl): R
+  def withBrokenTransfer[R](
+    testWith: TestWith[PrefixTransfer[Prefix, Location], R])(
+    implicit store: StoreImpl): R
 
   def createPrefix(implicit namespace: Namespace): Prefix
 
@@ -55,23 +65,27 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
 
         val t = createT
 
-        withPrefixTransferStore(initialEntries = Map(srcLocation -> t)) { implicit store =>
-          withPrefixTransfer { prefixTransfer =>
-            val future = prefixTransfer.transferPrefix(
-              srcPrefix = srcPrefix,
-              dstPrefix = dstPrefix
-            )
-
-            whenReady(future) {
-              _.right.value shouldBe PrefixTransferSuccess(
-                Seq(TransferPerformed(srcLocation, dstLocation))
+        withPrefixTransferStore(initialEntries = Map(srcLocation -> t)) {
+          implicit store =>
+            withPrefixTransfer { prefixTransfer =>
+              val future = prefixTransfer.transferPrefix(
+                srcPrefix = srcPrefix,
+                dstPrefix = dstPrefix
               )
+
+              whenReady(future) {
+                _.right.value shouldBe PrefixTransferSuccess(
+                  Seq(TransferPerformed(srcLocation, dstLocation))
+                )
+              }
+
+              store.get(srcLocation).right.value shouldBe Identified(
+                srcLocation,
+                t)
+              store.get(dstLocation).right.value shouldBe Identified(
+                dstLocation,
+                t)
             }
-
-
-            store.get(srcLocation).right.value shouldBe Identified(srcLocation, t)
-            store.get(dstLocation).right.value shouldBe Identified(dstLocation, t)
-          }
         }
       }
     }
@@ -83,16 +97,25 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
         val srcPrefix = createPrefix
         val dstPrefix = createPrefix
 
-        val srcLocations = (1 to objectCount).map { i => createLocationFrom(srcPrefix, suffix = s"$i.txt") }
-        val dstLocations = (1 to objectCount).map { i => createLocationFrom(dstPrefix, suffix = s"$i.txt") }
-
-        val valuesT = (1 to objectCount).map { _ => createT }
-
-        val expectedResults: Seq[TransferPerformed[Location]] = srcLocations.zip(dstLocations).map { case (src, dst) =>
-          TransferPerformed(src, dst)
+        val srcLocations = (1 to objectCount).map { i =>
+          createLocationFrom(srcPrefix, suffix = s"$i.txt")
+        }
+        val dstLocations = (1 to objectCount).map { i =>
+          createLocationFrom(dstPrefix, suffix = s"$i.txt")
         }
 
-        withPrefixTransferStore(initialEntries = srcLocations.zip(valuesT).toMap) { implicit store =>
+        val valuesT = (1 to objectCount).map { _ =>
+          createT
+        }
+
+        val expectedResults: Seq[TransferPerformed[Location]] =
+          srcLocations.zip(dstLocations).map {
+            case (src, dst) =>
+              TransferPerformed(src, dst)
+          }
+
+        withPrefixTransferStore(
+          initialEntries = srcLocations.zip(valuesT).toMap) { implicit store =>
           withPrefixTransfer { prefixTransfer =>
             val future = prefixTransfer.transferPrefix(
               srcPrefix = srcPrefix,
@@ -102,7 +125,9 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
             whenReady(future) { result =>
               val transferResult = result.right.value
               transferResult shouldBe a[PrefixTransferSuccess]
-              transferResult.asInstanceOf[PrefixTransferSuccess].successes should contain theSameElementsAs expectedResults
+              transferResult
+                .asInstanceOf[PrefixTransferSuccess]
+                .successes should contain theSameElementsAs expectedResults
             }
           }
         }
@@ -114,35 +139,47 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
         val srcPrefix = createPrefix
         val dstPrefix = createPrefix
 
-        val srcLocations = (1 to 5).map { i => createLocationFrom(srcPrefix, suffix = s"$i.txt") }
-        val dstLocations = (1 to 5).map { i => createLocationFrom(dstPrefix, suffix = s"$i.txt") }
-
-        val valuesT = (1 to 5).map { _ => createT }
-
-        val expectedResults: Seq[TransferPerformed[Location]] = srcLocations.zip(dstLocations).map { case (src, dst) =>
-          TransferPerformed(src, dst)
+        val srcLocations = (1 to 5).map { i =>
+          createLocationFrom(srcPrefix, suffix = s"$i.txt")
+        }
+        val dstLocations = (1 to 5).map { i =>
+          createLocationFrom(dstPrefix, suffix = s"$i.txt")
         }
 
-        val otherPrefix = createPrefix
-        val otherLocation = createLocationFrom(otherPrefix, suffix = "other.txt")
+        val valuesT = (1 to 5).map { _ =>
+          createT
+        }
 
-        val initialEntries = srcLocations.zip(valuesT).toMap ++ Map(otherLocation -> createT)
-
-        withPrefixTransferStore(initialEntries = initialEntries) { implicit store =>
-          withPrefixTransfer { prefixTransfer =>
-            val future = prefixTransfer.transferPrefix(
-              srcPrefix = srcPrefix,
-              dstPrefix = dstPrefix
-            )
-
-            whenReady(future) { result =>
-              val transferResult = result.right.value
-
-              transferResult shouldBe a[PrefixTransferSuccess]
-              val transferSuccess = transferResult.asInstanceOf[PrefixTransferSuccess]
-              transferSuccess.successes should contain theSameElementsAs expectedResults
-            }
+        val expectedResults: Seq[TransferPerformed[Location]] =
+          srcLocations.zip(dstLocations).map {
+            case (src, dst) =>
+              TransferPerformed(src, dst)
           }
+
+        val otherPrefix = createPrefix
+        val otherLocation =
+          createLocationFrom(otherPrefix, suffix = "other.txt")
+
+        val initialEntries = srcLocations.zip(valuesT).toMap ++ Map(
+          otherLocation -> createT)
+
+        withPrefixTransferStore(initialEntries = initialEntries) {
+          implicit store =>
+            withPrefixTransfer { prefixTransfer =>
+              val future = prefixTransfer.transferPrefix(
+                srcPrefix = srcPrefix,
+                dstPrefix = dstPrefix
+              )
+
+              whenReady(future) { result =>
+                val transferResult = result.right.value
+
+                transferResult shouldBe a[PrefixTransferSuccess]
+                val transferSuccess =
+                  transferResult.asInstanceOf[PrefixTransferSuccess]
+                transferSuccess.successes should contain theSameElementsAs expectedResults
+              }
+            }
         }
       }
     }
@@ -151,11 +188,16 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
       withNamespace { implicit namespace =>
         val srcPrefix = createPrefix
 
-        val srcLocations = (1 to 5).map { i => createLocationFrom(srcPrefix, suffix = s"$i.txt") }
+        val srcLocations = (1 to 5).map { i =>
+          createLocationFrom(srcPrefix, suffix = s"$i.txt")
+        }
 
-        val valuesT = (1 to 5).map { _ => createT }
+        val valuesT = (1 to 5).map { _ =>
+          createT
+        }
 
-        withPrefixTransferStore(initialEntries = srcLocations.zip(valuesT).toMap) { implicit store =>
+        withPrefixTransferStore(
+          initialEntries = srcLocations.zip(valuesT).toMap) { implicit store =>
           withExtraListingTransfer { prefixTransfer =>
             val future = prefixTransfer.transferPrefix(
               srcPrefix = srcPrefix,
@@ -182,17 +224,18 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
 
         val t = createT
 
-        withPrefixTransferStore(initialEntries = Map(srcLocation -> t)) { implicit store =>
-          withBrokenTransfer { prefixTransfer =>
-            val future = prefixTransfer.transferPrefix(
-              srcPrefix = srcPrefix,
-              dstPrefix = createPrefix
-            )
+        withPrefixTransferStore(initialEntries = Map(srcLocation -> t)) {
+          implicit store =>
+            withBrokenTransfer { prefixTransfer =>
+              val future = prefixTransfer.transferPrefix(
+                srcPrefix = srcPrefix,
+                dstPrefix = createPrefix
+              )
 
-            whenReady(future) {
-              _.left.value shouldBe a[PrefixTransferFailure]
+              whenReady(future) {
+                _.left.value shouldBe a[PrefixTransferFailure]
+              }
             }
-          }
         }
       }
     }
@@ -215,4 +258,3 @@ trait PrefixTransferTestCases[Location, Prefix, Namespace, T, StoreImpl <: Store
     }
   }
 }
-

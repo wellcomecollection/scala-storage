@@ -10,7 +10,11 @@ import uk.ac.wellcome.storage.generators.RandomThings
 
 import scala.util.Random
 
-class CodecTest extends FunSpec with Matchers with EitherValues with RandomThings {
+class CodecTest
+    extends FunSpec
+    with Matchers
+    with EitherValues
+    with RandomThings {
 
   import Codec._
 
@@ -54,13 +58,17 @@ class CodecTest extends FunSpec with Matchers with EitherValues with RandomThing
         it("can coerce a valid string into a StandardCharset") {
           val randomString = randomLowercaseLatinAlphabetString()
 
-          Codec.coerce(StandardCharsets.UTF_8)(randomString)
-            .right.value shouldBe randomString
+          Codec
+            .coerce(StandardCharsets.UTF_8)(randomString)
+            .right
+            .value shouldBe randomString
         }
 
         it("errors when coercing an invalid string into a StandardCharset") {
-          Codec.coerce(StandardCharsets.US_ASCII)(randomUTF16String)
-            .left.value shouldBe a[LossyEncodingDetected]
+          Codec
+            .coerce(StandardCharsets.US_ASCII)(randomUTF16String)
+            .left
+            .value shouldBe a[LossyEncodingDetected]
         }
       }
     }

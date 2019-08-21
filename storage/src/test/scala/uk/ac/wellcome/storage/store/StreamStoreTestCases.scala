@@ -9,26 +9,36 @@ import uk.ac.wellcome.storage.store.fixtures.{
 }
 import uk.ac.wellcome.storage.streaming._
 
-
 // TODO: Strictly speaking, a StreamingStore just cares about a vanilla InputStream,
 // and we should put the `HasLength` and `HasMetadata` test cases into separate
 // traits.  This starts to get awkward with the underlying StoreTestCases trait
 // if you want them both, so I've left it for now.  Would be nice to fix another time.
 //
-trait StreamStoreTestCases[Ident, Namespace, StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata], StreamStoreContext]
-  extends FunSpec
+trait StreamStoreTestCases[
+  Ident,
+  Namespace,
+  StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata],
+  StreamStoreContext]
+    extends FunSpec
     with Matchers
     with StreamAssertions
     with ReplayableStreamFixtures
     with StreamStoreFixtures[Ident, StreamStoreImpl, StreamStoreContext]
-    with StoreWithOverwritesTestCases[Ident, InputStreamWithLengthAndMetadata, Namespace, StreamStoreContext] {
+    with StoreWithOverwritesTestCases[
+      Ident,
+      InputStreamWithLengthAndMetadata,
+      Namespace,
+      StreamStoreContext] {
 
-  override def withStoreImpl[R](initialEntries: Map[Ident, InputStreamWithLengthAndMetadata], storeContext: StreamStoreContext)(testWith: TestWith[StoreImpl, R]): R =
+  override def withStoreImpl[R](
+    initialEntries: Map[Ident, InputStreamWithLengthAndMetadata],
+    storeContext: StreamStoreContext)(testWith: TestWith[StoreImpl, R]): R =
     withStreamStoreImpl(storeContext, initialEntries) { streamStore =>
       testWith(streamStore)
     }
 
-  override def withStoreContext[R](testWith: TestWith[StreamStoreContext, R]): R =
+  override def withStoreContext[R](
+    testWith: TestWith[StreamStoreContext, R]): R =
     withStreamStoreContext { context =>
       testWith(context)
     }
@@ -36,11 +46,16 @@ trait StreamStoreTestCases[Ident, Namespace, StreamStoreImpl <: StreamStore[Iden
   override def createT: ReplayableStream =
     createReplayableStream
 
-  override def assertEqualT(original: InputStreamWithLengthAndMetadata, stored: InputStreamWithLengthAndMetadata): Assertion = {
+  override def assertEqualT(
+    original: InputStreamWithLengthAndMetadata,
+    stored: InputStreamWithLengthAndMetadata): Assertion = {
     original.metadata shouldBe stored.metadata
 
     val originalBytes = original.asInstanceOf[ReplayableStream].originalBytes
-    assertStreamEquals(stored, originalBytes, expectedLength = originalBytes.length)
+    assertStreamEquals(
+      stored,
+      originalBytes,
+      expectedLength = originalBytes.length)
   }
 
   describe("it behaves as a StreamStore") {
@@ -48,7 +63,8 @@ trait StreamStoreTestCases[Ident, Namespace, StreamStoreImpl <: StreamStore[Iden
       it("can get a stream without metadata") {
         withNamespace { implicit namespace =>
           val id = createId
-          val initialEntry = ReplayableStream(randomBytes(), metadata = Map.empty)
+          val initialEntry =
+            ReplayableStream(randomBytes(), metadata = Map.empty)
 
           withStoreImpl(initialEntries = Map(id -> initialEntry)) { store =>
             val retrievedEntry = store.get(id).right.value
@@ -61,7 +77,8 @@ trait StreamStoreTestCases[Ident, Namespace, StreamStoreImpl <: StreamStore[Iden
       it("can get a stream with metadata") {
         withNamespace { implicit namespace =>
           val id = createId
-          val initialEntry = ReplayableStream(randomBytes(), metadata = createValidMetadata)
+          val initialEntry =
+            ReplayableStream(randomBytes(), metadata = createValidMetadata)
 
           withStoreImpl(initialEntries = Map(id -> initialEntry)) { store =>
             val retrievedEntry = store.get(id).right.value
@@ -87,7 +104,8 @@ trait StreamStoreTestCases[Ident, Namespace, StreamStoreImpl <: StreamStore[Iden
       it("can put a stream with metadata") {
         withNamespace { implicit namespace =>
           val id = createId
-          val entry = ReplayableStream(randomBytes(), metadata = createValidMetadata)
+          val entry =
+            ReplayableStream(randomBytes(), metadata = createValidMetadata)
 
           withStoreImpl(initialEntries = Map.empty) { store =>
             store.put(id)(entry) shouldBe a[Right[_, _]]

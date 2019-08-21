@@ -1,6 +1,9 @@
 package uk.ac.wellcome.storage.store.dynamo
 
-import com.amazonaws.services.dynamodbv2.model.{AmazonDynamoDBException, ResourceNotFoundException}
+import com.amazonaws.services.dynamodbv2.model.{
+  AmazonDynamoDBException,
+  ResourceNotFoundException
+}
 import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
 import org.scanamo.{Table => ScanamoTable}
 import uk.ac.wellcome.storage.dynamo.DynamoEntry
@@ -10,8 +13,9 @@ import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 import uk.ac.wellcome.storage.{DoesNotExistError, Identified, Version}
 import org.scanamo.auto._
 
-trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Record]]
-  extends FunSpec
+trait DynamoReadableTestCases[
+  DynamoIdent, EntryType <: DynamoEntry[String, Record]]
+    extends FunSpec
     with Matchers
     with DynamoFixtures
     with EitherValues
@@ -19,12 +23,13 @@ trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Reco
 
   type HashKey = String
 
-  type DynamoReadableStub = DynamoReadable[Version[HashKey, Int], DynamoIdent, EntryType, Record]
+  type DynamoReadableStub =
+    DynamoReadable[Version[HashKey, Int], DynamoIdent, EntryType, Record]
 
   // TODO: Make initialEntries an arbitrary type
   def createDynamoReadableWith(
-                                table: Table,
-                                initialEntries: Set[EntryType] = Set.empty): DynamoReadableStub
+    table: Table,
+    initialEntries: Set[EntryType] = Set.empty): DynamoReadableStub
 
   def createEntry(hashKey: String, v: Int, record: Record): EntryType
 
@@ -34,13 +39,15 @@ trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Reco
       val record = createRecord
 
       val initialEntries = Set(
-        createEntry(id, v = 1, record),
+        createEntry(id, v = 1, record)
       )
 
       withLocalDynamoDbTable { table =>
         val readable = createDynamoReadableWith(table, initialEntries)
 
-        readable.get(Version(id, 1)).right.value shouldBe Identified(Version(id, 1), record)
+        readable.get(Version(id, 1)).right.value shouldBe Identified(
+          Version(id, 1),
+          record)
       }
     }
 
@@ -48,7 +55,10 @@ trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Reco
       withLocalDynamoDbTable { table =>
         val readable = createDynamoReadableWith(table)
 
-        readable.get(Version(randomAlphanumeric, 1)).left.value shouldBe a[DoesNotExistError]
+        readable
+          .get(Version(randomAlphanumeric, 1))
+          .left
+          .value shouldBe a[DoesNotExistError]
       }
     }
 
@@ -56,13 +66,16 @@ trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Reco
       val id = randomAlphanumeric
 
       val initialEntries = Set(
-        createEntry(id, v = 1, createRecord),
+        createEntry(id, v = 1, createRecord)
       )
 
       withLocalDynamoDbTable { table =>
         val readable = createDynamoReadableWith(table, initialEntries)
 
-        readable.get(Version(randomAlphanumeric, 1)).left.value shouldBe a[DoesNotExistError]
+        readable
+          .get(Version(randomAlphanumeric, 1))
+          .left
+          .value shouldBe a[DoesNotExistError]
       }
     }
 
@@ -73,7 +86,8 @@ trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Reco
       val err = result.left.value.e
 
       err shouldBe a[ResourceNotFoundException]
-      err.getMessage should startWith("Cannot do operations on a non-existent table")
+      err.getMessage should startWith(
+        "Cannot do operations on a non-existent table")
     }
 
     it("fails if the row doesn't match the model") {
@@ -83,9 +97,10 @@ trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Reco
       val id = randomAlphanumeric
 
       withLocalDynamoDbTable { table =>
-        scanamo.exec(ScanamoTable[BadModel](table.name).putAll(
-          Set(BadModel(id, version = 1, t = randomAlphanumeric))
-        ))
+        scanamo.exec(
+          ScanamoTable[BadModel](table.name).putAll(
+            Set(BadModel(id, version = 1, t = randomAlphanumeric))
+          ))
 
         val readable = createDynamoReadableWith(table)
 
@@ -93,12 +108,14 @@ trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Reco
         val err = result.left.value.e
 
         err shouldBe a[Error]
-        err.getMessage should startWith("DynamoReadError: InvalidPropertiesError")
+        err.getMessage should startWith(
+          "DynamoReadError: InvalidPropertiesError")
       }
     }
   }
 
-  def assertErrorsOnWrongTableDefinition(createWrongTable: Table => Table, message: String): Assertion =
+  def assertErrorsOnWrongTableDefinition(createWrongTable: Table => Table,
+                                         message: String): Assertion =
     withSpecifiedTable(createWrongTable) { table =>
       val readable = createDynamoReadableWith(table)
 
@@ -110,8 +127,13 @@ trait DynamoReadableTestCases[DynamoIdent, EntryType <: DynamoEntry[String, Reco
     }
 
   def assertErrorsOnBadKeyName(createWrongTable: Table => Table): Assertion =
-    assertErrorsOnWrongTableDefinition(createWrongTable, message = "Query condition missed key schema element")
+    assertErrorsOnWrongTableDefinition(
+      createWrongTable,
+      message = "Query condition missed key schema element")
 
   def assertErrorsOnBadKeyType(createWrongTable: Table => Table): Assertion =
-    assertErrorsOnWrongTableDefinition(createWrongTable, message = "One or more parameter values were invalid: Condition parameter type does not match schema type")
+    assertErrorsOnWrongTableDefinition(
+      createWrongTable,
+      message =
+        "One or more parameter values were invalid: Condition parameter type does not match schema type")
 }

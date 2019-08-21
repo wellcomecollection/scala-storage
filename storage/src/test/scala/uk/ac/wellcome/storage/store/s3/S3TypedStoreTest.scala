@@ -5,21 +5,38 @@ import java.io.InputStream
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
-import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGenerators}
+import uk.ac.wellcome.storage.generators.{
+  MetadataGenerators,
+  Record,
+  RecordGenerators
+}
 import uk.ac.wellcome.storage.store.fixtures.BucketNamespaceFixtures
 import uk.ac.wellcome.storage.store.{TypedStoreEntry, TypedStoreTestCases}
 import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
 
 import scala.util.Random
 
-class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucket, S3StreamStore, S3TypedStore[Record], Unit] with S3TypedStoreFixtures[Record] with MetadataGenerators with RecordGenerators with BucketNamespaceFixtures {
-  override def withBrokenStreamStore[R](testWith: TestWith[S3StreamStore, R]): R = {
+class S3TypedStoreTest
+    extends TypedStoreTestCases[
+      ObjectLocation,
+      Record,
+      Bucket,
+      S3StreamStore,
+      S3TypedStore[Record],
+      Unit]
+    with S3TypedStoreFixtures[Record]
+    with MetadataGenerators
+    with RecordGenerators
+    with BucketNamespaceFixtures {
+  override def withBrokenStreamStore[R](
+    testWith: TestWith[S3StreamStore, R]): R = {
     val brokenS3StreamStore = new S3StreamStore {
       override def get(location: ObjectLocation): ReadEither = Left(
         StoreReadError(new Throwable("get: BOOM!"))
       )
 
-      override def put(location: ObjectLocation)(inputStream: InputStreamWithLengthAndMetadata): WriteEither = Left(
+      override def put(location: ObjectLocation)(
+        inputStream: InputStreamWithLengthAndMetadata): WriteEither = Left(
         StoreWriteError(
           new Throwable("put: BOOM!")
         )
@@ -29,18 +46,25 @@ class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucke
     testWith(brokenS3StreamStore)
   }
 
-  override def withSingleValueStreamStore[R](rawStream: InputStream)(testWith: TestWith[S3StreamStore, R]): R = {
+  override def withSingleValueStreamStore[R](rawStream: InputStream)(
+    testWith: TestWith[S3StreamStore, R]): R = {
     val s3StreamStore: S3StreamStore = new S3StreamStore() {
       override def get(location: ObjectLocation): ReadEither =
         Right(
-          Identified(location, new InputStreamWithLengthAndMetadata(rawStream, length = 0, metadata = Map.empty))
+          Identified(
+            location,
+            new InputStreamWithLengthAndMetadata(
+              rawStream,
+              length = 0,
+              metadata = Map.empty))
         )
     }
 
     testWith(s3StreamStore)
   }
 
-  override def createT: TypedStoreEntry[Record] = TypedStoreEntry(createRecord, metadata = createValidMetadata)
+  override def createT: TypedStoreEntry[Record] =
+    TypedStoreEntry(createRecord, metadata = createValidMetadata)
 
   describe("S3TypedStore") {
     it("errors when given metadata that cannot be stored in S3") {
@@ -53,14 +77,12 @@ class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucke
           // that can be represented in US-ASCII
           // See: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html#UserMetadata
           val invalidMetadata =
-          (1 to 10)
-            .map { _ =>
+            (1 to 10).map { _ =>
               (
                 Random.nextString(8),
                 Random.nextString(8)
               )
-            }
-            .toMap
+            }.toMap
 
           val invalidEntry = entry.copy(metadata = invalidMetadata)
           val result = store.put(location)(invalidEntry)
@@ -72,7 +94,6 @@ class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucke
 
     it("errors if the object key is too long") {
       withNamespace { implicit namespace =>
-
         // Maximum length of an s3 key is 1024 bytes as of 25/06/2019
         // https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html
 
@@ -85,7 +106,8 @@ class S3TypedStoreTest extends TypedStoreTestCases[ObjectLocation, Record, Bucke
           val value = store.put(id)(entry).left.value
 
           value shouldBe a[InvalidIdentifierFailure]
-          value.e.getMessage should startWith("S3 object key byte length is too big")
+          value.e.getMessage should startWith(
+            "S3 object key byte length is too big")
         }
       }
     }

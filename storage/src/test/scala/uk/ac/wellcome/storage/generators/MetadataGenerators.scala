@@ -4,7 +4,9 @@ trait MetadataGenerators extends RandomThings {
   def createValidMetadata: Map[String, String] = {
     val metadata = (1 to 10)
       .map { _ =>
-        (randomLowercaseLatinAlphabetString(), randomLowercaseLatinAlphabetString())
+        (
+          randomLowercaseLatinAlphabetString(),
+          randomLowercaseLatinAlphabetString())
       }
 
     metadata.toMap

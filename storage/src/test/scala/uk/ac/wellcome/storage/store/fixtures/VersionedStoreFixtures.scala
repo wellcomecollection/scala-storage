@@ -14,14 +14,18 @@ trait VersionedStoreFixtures[Id, V, T, VersionedStoreContext] {
   def createIdent: Id
   def createT: T
 
-  def withVersionedStoreImpl[R](initialEntries: Entries, storeContext: VersionedStoreContext)(testWith: TestWith[VersionedStoreImpl, R]): R
-  def withVersionedStoreContext[R](testWith: TestWith[VersionedStoreContext, R]): R
+  def withVersionedStoreImpl[R](initialEntries: Entries,
+                                storeContext: VersionedStoreContext)(
+    testWith: TestWith[VersionedStoreImpl, R]): R
+  def withVersionedStoreContext[R](
+    testWith: TestWith[VersionedStoreContext, R]): R
 
-  def withVersionedStoreImpl[R](initialEntries: Entries = Map.empty)(testWith: TestWith[VersionedStoreImpl, R]): R =
+  def withVersionedStoreImpl[R](initialEntries: Entries = Map.empty)(
+    testWith: TestWith[VersionedStoreImpl, R]): R =
     withVersionedStoreContext { storeContext =>
-      withVersionedStoreImpl(initialEntries, storeContext) { versionedStoreImpl =>
-        testWith(versionedStoreImpl)
+      withVersionedStoreImpl(initialEntries, storeContext) {
+        versionedStoreImpl =>
+          testWith(versionedStoreImpl)
       }
     }
 }
-

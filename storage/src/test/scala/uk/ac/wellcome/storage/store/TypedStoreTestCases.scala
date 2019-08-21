@@ -7,26 +7,49 @@ import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.generators.RandomThings
 import uk.ac.wellcome.storage.store.fixtures.TypedStoreFixtures
 import uk.ac.wellcome.storage.streaming.Codec._
-import uk.ac.wellcome.storage.streaming.{Codec, InputStreamWithLength, InputStreamWithLengthAndMetadata}
+import uk.ac.wellcome.storage.streaming.{
+  Codec,
+  InputStreamWithLength,
+  InputStreamWithLengthAndMetadata
+}
 
-trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata], TypedStoreImpl <: TypedStore[Ident, T], StreamStoreContext]
-  extends StoreWithOverwritesTestCases[Ident, TypedStoreEntry[T], Namespace, StreamStoreContext]
-  with TypedStoreFixtures[Ident, T, StreamStoreImpl, TypedStoreImpl, StreamStoreContext]
-  with RandomThings {
+trait TypedStoreTestCases[
+  Ident,
+  T,
+  Namespace,
+  StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata],
+  TypedStoreImpl <: TypedStore[Ident, T],
+  StreamStoreContext]
+    extends StoreWithOverwritesTestCases[
+      Ident,
+      TypedStoreEntry[T],
+      Namespace,
+      StreamStoreContext]
+    with TypedStoreFixtures[
+      Ident,
+      T,
+      StreamStoreImpl,
+      TypedStoreImpl,
+      StreamStoreContext]
+    with RandomThings {
 
-  override def withStoreImpl[R](initialEntries: Map[Ident, TypedStoreEntry[T]], storeContext: StreamStoreContext)(testWith: TestWith[StoreImpl, R]): R =
+  override def withStoreImpl[R](
+    initialEntries: Map[Ident, TypedStoreEntry[T]],
+    storeContext: StreamStoreContext)(testWith: TestWith[StoreImpl, R]): R =
     withTypedStoreImpl(storeContext, initialEntries) { typedStore =>
       testWith(typedStore)
     }
 
-  override def withStoreContext[R](testWith: TestWith[StreamStoreContext, R]): R =
+  override def withStoreContext[R](
+    testWith: TestWith[StreamStoreContext, R]): R =
     withStreamStoreContext { context =>
       testWith(context)
     }
 
   def withBrokenStreamStore[R](testWith: TestWith[StreamStoreImpl, R]): R
 
-  class CloseDetectionStream(bytes: Array[Byte]) extends FilterInputStream(bytesCodec.toStream(bytes).right.value) {
+  class CloseDetectionStream(bytes: Array[Byte])
+      extends FilterInputStream(bytesCodec.toStream(bytes).right.value) {
     var isClosed = false
 
     override def close(): Unit = {
@@ -35,17 +58,19 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
     }
   }
 
-  def withSingleValueStreamStore[R](rawStream: InputStream)(testWith: TestWith[StreamStoreImpl, R]): R
+  def withSingleValueStreamStore[R](rawStream: InputStream)(
+    testWith: TestWith[StreamStoreImpl, R]): R
 
   describe("it behaves as a TypedStore") {
     describe("get") {
       it("errors if the streaming store has an error") {
         withNamespace { implicit namespace =>
           withBrokenStreamStore { brokenStreamStore =>
-            withTypedStore(brokenStreamStore, initialEntries = Map.empty) { typedStore =>
-              val result = typedStore.get(createId).left.value
+            withTypedStore(brokenStreamStore, initialEntries = Map.empty) {
+              typedStore =>
+                val result = typedStore.get(createId).left.value
 
-              result shouldBe a[StoreReadError]
+                result shouldBe a[StoreReadError]
             }
           }
         }
@@ -56,10 +81,11 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
           val closeDetectionStream = new CloseDetectionStream(randomBytes())
 
           withSingleValueStreamStore(closeDetectionStream) { streamingStore =>
-            withTypedStore(streamingStore, initialEntries = Map.empty) { typedStore =>
-              typedStore.get(createId)
+            withTypedStore(streamingStore, initialEntries = Map.empty) {
+              typedStore =>
+                typedStore.get(createId)
 
-              closeDetectionStream.isClosed shouldBe true
+                closeDetectionStream.isClosed shouldBe true
             }
           }
         }
@@ -77,25 +103,26 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
             }
 
           withSingleValueStreamStore(closeShieldStream) { streamingStore =>
-            withTypedStore(streamingStore, initialEntries = Map.empty) { typedStore =>
-              val result = typedStore.get(createId).left.value
-              result shouldBe a[CannotCloseStreamError]
-              result.e shouldBe exception
+            withTypedStore(streamingStore, initialEntries = Map.empty) {
+              typedStore =>
+                val result = typedStore.get(createId).left.value
+                result shouldBe a[CannotCloseStreamError]
+                result.e shouldBe exception
             }
           }
         }
       }
     }
 
-
     describe("put") {
       it("errors if the stream store has an error") {
         withNamespace { implicit namespace =>
           withBrokenStreamStore { implicit brokenStreamStore =>
-            withTypedStore(brokenStreamStore, initialEntries = Map.empty) { typedStore =>
-              val result = typedStore.put(createId)(createT).left.value
+            withTypedStore(brokenStreamStore, initialEntries = Map.empty) {
+              typedStore =>
+                val result = typedStore.put(createId)(createT).left.value
 
-              result shouldBe a[StoreWriteError]
+                result shouldBe a[StoreWriteError]
             }
           }
         }
@@ -106,10 +133,11 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
           val stream = stringCodec.toStream("Not a JSON string").right.value
 
           withSingleValueStreamStore(stream) { streamStore =>
-            withTypedStore(streamStore, initialEntries = Map.empty) { typedStore =>
-              val result = typedStore.get(createId).left.value
+            withTypedStore(streamStore, initialEntries = Map.empty) {
+              typedStore =>
+                val result = typedStore.get(createId).left.value
 
-              result shouldBe a[DecoderError]
+                result shouldBe a[DecoderError]
             }
           }
         }
@@ -121,17 +149,20 @@ trait TypedStoreTestCases[Ident, T, Namespace, StreamStoreImpl <: StreamStore[Id
             val exception = new Throwable("BOOM!")
 
             implicit val brokenCodec: Codec[T] = new Codec[T] {
-              override def toStream(t: T): Either[EncoderError, InputStreamWithLength] =
+              override def toStream(
+                t: T): Either[EncoderError, InputStreamWithLength] =
                 Left(JsonEncodingError(exception))
 
-              override def fromStream(inputStream: InputStream): Either[DecoderError, T] =
+              override def fromStream(
+                inputStream: InputStream): Either[DecoderError, T] =
                 Left(JsonDecodingError(exception))
             }
 
-            withTypedStoreImpl(storeContext, initialEntries = Map.empty) { typedStore =>
-              val result = typedStore.put(createId)(createT).left.value
+            withTypedStoreImpl(storeContext, initialEntries = Map.empty) {
+              typedStore =>
+                val result = typedStore.put(createId)(createT).left.value
 
-              result shouldBe a[JsonEncodingError]
+                result shouldBe a[JsonEncodingError]
             }(brokenCodec)
           }
         }

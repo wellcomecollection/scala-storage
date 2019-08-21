@@ -10,14 +10,18 @@ trait ReplayableStreamFixtures extends EitherValues with MetadataGenerators {
   // value.  A regular InputStream gets consumed on the initial PUT, so we wrap it in
   // a ReplayableStream so we can do comparisons later.
 
-  class ReplayableStream(val originalBytes: Array[Byte], length: Long, metadata: Map[String, String]) extends InputStreamWithLengthAndMetadata(
-    inputStream = bytesCodec.toStream(originalBytes).right.value,
-    length = length,
-    metadata = metadata
-  )
+  class ReplayableStream(val originalBytes: Array[Byte],
+                         length: Long,
+                         metadata: Map[String, String])
+      extends InputStreamWithLengthAndMetadata(
+        inputStream = bytesCodec.toStream(originalBytes).right.value,
+        length = length,
+        metadata = metadata
+      )
 
   object ReplayableStream {
-    def apply(bytes: Array[Byte], metadata: Map[String, String]): ReplayableStream =
+    def apply(bytes: Array[Byte],
+              metadata: Map[String, String]): ReplayableStream =
       new ReplayableStream(bytes, length = bytes.length, metadata = metadata)
   }
 

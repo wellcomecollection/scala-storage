@@ -7,7 +7,10 @@ import uk.ac.wellcome.storage.store.StreamStoreTestCases
 import uk.ac.wellcome.storage.store.fixtures.BucketNamespaceFixtures
 import uk.ac.wellcome.storage._
 
-class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3StreamStore, Unit] with S3StreamStoreFixtures with BucketNamespaceFixtures {
+class S3StreamStoreTest
+    extends StreamStoreTestCases[ObjectLocation, Bucket, S3StreamStore, Unit]
+    with S3StreamStoreFixtures
+    with BucketNamespaceFixtures {
   describe("handles errors from S3") {
     describe("get") {
       it("errors if S3 has a problem") {
@@ -29,29 +32,34 @@ class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3S
             err shouldBe a[DoesNotExistError]
 
             err.e shouldBe a[AmazonS3Exception]
-            err.e.getMessage should startWith("The specified key does not exist")
+            err.e.getMessage should startWith(
+              "The specified key does not exist")
           }
         }
       }
 
       it("errors if the bucket doesn't exist") {
         withStoreImpl(initialEntries = Map.empty) { store =>
-          val err = store.get(createObjectLocationWith(createBucketName)).left.value
+          val err =
+            store.get(createObjectLocationWith(createBucketName)).left.value
           err shouldBe a[DoesNotExistError]
 
           err.e shouldBe a[AmazonS3Exception]
-          err.e.getMessage should startWith("The specified bucket does not exist")
+          err.e.getMessage should startWith(
+            "The specified bucket does not exist")
         }
       }
 
       it("errors if asked to get from an invalid bucket") {
         withStoreImpl(initialEntries = Map.empty) { store =>
-          val invalidLocation = createObjectLocationWith(namespace = createInvalidBucketName)
+          val invalidLocation =
+            createObjectLocationWith(namespace = createInvalidBucketName)
           val err = store.get(invalidLocation).left.value
           err shouldBe a[StoreReadError]
 
           err.e shouldBe a[AmazonS3Exception]
-          err.e.getMessage should startWith("The specified bucket is not valid")
+          err.e.getMessage should startWith(
+            "The specified bucket is not valid")
         }
       }
     }
@@ -82,7 +90,6 @@ class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3S
 
       it("errors if the object key is too long") {
         withNamespace { implicit namespace =>
-
           // Maximum length of an s3 key is 1024 bytes as of 25/06/2019
           // https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html
 
@@ -95,7 +102,8 @@ class S3StreamStoreTest extends StreamStoreTestCases[ObjectLocation, Bucket, S3S
             val value = store.put(id)(entry).left.value
 
             value shouldBe a[InvalidIdentifierFailure]
-            value.e.getMessage should startWith("S3 object key byte length is too big")
+            value.e.getMessage should startWith(
+              "S3 object key byte length is too big")
           }
         }
       }

@@ -17,11 +17,11 @@ trait RandomThings extends Matchers {
   )
 
   def randomLowercaseLatinAlphabetString(n: Int = 8) =
-    (1 to n) map(_ => randomLowercaseLatinAlphabetChar) mkString
+    (1 to n) map (_ => randomLowercaseLatinAlphabetChar) mkString
 
   def randomUTF16String = Random.nextString(8)
 
-  def randomInt(from: Int, to: Int)  = {
+  def randomInt(from: Int, to: Int) = {
     val difference = to - from
 
     assert(difference > 0)
@@ -31,7 +31,8 @@ trait RandomThings extends Matchers {
     from + randomOffset
   }
 
-  def randomStringOfByteLength(length: Int)(utfStart: Int = 97, utfEnd: Int = 122) = {
+  def randomStringOfByteLength(length: Int)(utfStart: Int = 97,
+                                            utfEnd: Int = 122) = {
     // Generate bytes within UTF-16 mappable range
     // 0 to 127 maps directly to Unicode code points in the ASCII range
     val chars = (1 to length).map { _ =>

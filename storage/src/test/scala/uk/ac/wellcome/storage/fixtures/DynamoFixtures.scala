@@ -19,7 +19,10 @@ object DynamoFixtures {
   case class Table(name: String, index: String)
 }
 
-trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
+trait DynamoFixtures
+    extends Eventually
+    with Matchers
+    with IntegrationPatience {
   import DynamoFixtures._
 
   private val port = 45678
@@ -40,7 +43,7 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
   def nonExistentTable: Table =
     Table(
       name = Random.alphanumeric.take(10).mkString,
-      index = Random.alphanumeric.take(10).mkString,
+      index = Random.alphanumeric.take(10).mkString
     )
 
   def withSpecifiedLocalDynamoDbTable[R](
@@ -52,7 +55,8 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
       }
     )
 
-  def withSpecifiedTable[R](tableDefinition: Table => Table): Fixture[Table, R] = fixture[Table, R](
+  def withSpecifiedTable[R](
+    tableDefinition: Table => Table): Fixture[Table, R] = fixture[Table, R](
     create = {
       val tableName = Random.alphanumeric.take(10).mkString
       val indexName = Random.alphanumeric.take(10).mkString
@@ -71,17 +75,23 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
 
   def createTable(table: DynamoFixtures.Table): Table
 
-  def putTableItem[T: DynamoFormat](item: T, table: Table): Option[Either[DynamoReadError, T]] =
+  def putTableItem[T: DynamoFormat](
+    item: T,
+    table: Table): Option[Either[DynamoReadError, T]] =
     scanamo.exec(
       ScanamoTable[T](table.name).put(item)
     )
 
-  def putTableItems[T: DynamoFormat](items: Seq[T], table: Table): List[BatchWriteItemResult] =
+  def putTableItems[T: DynamoFormat](
+    items: Seq[T],
+    table: Table): List[BatchWriteItemResult] =
     scanamo.exec(
       ScanamoTable[T](table.name).putAll(items.toSet)
     )
 
-  def getTableItem[T: DynamoFormat](id: String, table: Table): Option[Either[DynamoReadError, T]] =
+  def getTableItem[T: DynamoFormat](
+    id: String,
+    table: Table): Option[Either[DynamoReadError, T]] =
     scanamo.exec(
       ScanamoTable[T](table.name).get('id -> id)
     )
@@ -98,7 +108,8 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
     record.get.right.get
   }
 
-  def scanTable[T: DynamoFormat](table: Table): immutable.Seq[Either[DynamoReadError, T]] =
+  def scanTable[T: DynamoFormat](
+    table: Table): immutable.Seq[Either[DynamoReadError, T]] =
     scanamo.exec(
       ScanamoTable[T](table.name).scan()
     )
@@ -109,7 +120,8 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
       maybeIndexName = Some(table.index)
     )
 
-  def createTableFromRequest(table: Table, request: CreateTableRequest): Table = {
+  def createTableFromRequest(table: Table,
+                             request: CreateTableRequest): Table = {
     dynamoClient.createTable(request)
 
     eventually {
@@ -127,9 +139,10 @@ trait DynamoFixtures extends Eventually with Matchers with IntegrationPatience {
       table = table,
       new CreateTableRequest()
         .withTableName(table.name)
-        .withKeySchema(new KeySchemaElement()
-          .withAttributeName(keyName)
-          .withKeyType(KeyType.HASH))
+        .withKeySchema(
+          new KeySchemaElement()
+            .withAttributeName(keyName)
+            .withKeyType(KeyType.HASH))
         .withAttributeDefinitions(
           new AttributeDefinition()
             .withAttributeName(keyName)

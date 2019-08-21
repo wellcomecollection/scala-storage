@@ -1,7 +1,11 @@
 package uk.ac.wellcome.storage.maxima.dynamo
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.model.{AmazonDynamoDBException, ResourceNotFoundException, ScalarAttributeType}
+import com.amazonaws.services.dynamodbv2.model.{
+  AmazonDynamoDBException,
+  ResourceNotFoundException,
+  ScalarAttributeType
+}
 import org.scanamo.{DynamoFormat, Table => ScanamoTable}
 import org.scanamo.auto._
 import uk.ac.wellcome.fixtures.TestWith
@@ -16,11 +20,12 @@ import uk.ac.wellcome.storage.{IdentityKey, Version}
 class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
   type Entry = DynamoHashRangeEntry[IdentityKey, Int, Record]
 
-  def withMaxima[R](table: Table, initialEntries: Map[Version[IdentityKey, Int], Record] = Map.empty)(
-    testWith: TestWith[MaximaStub, R]): R = {
-    val dynamoEntries = initialEntries
-      .map { case (id, record) => DynamoHashRangeEntry(id.id, id.version, record) }
-      .toSeq
+  def withMaxima[R](table: Table,
+                    initialEntries: Map[Version[IdentityKey, Int], Record] =
+                      Map.empty)(testWith: TestWith[MaximaStub, R]): R = {
+    val dynamoEntries = initialEntries.map {
+      case (id, record) => DynamoHashRangeEntry(id.id, id.version, record)
+    }.toSeq
 
     putTableItems(dynamoEntries, table)
 
@@ -37,7 +42,8 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
     testWith(new DynamoMaxima(table))
   }
 
-  override def withMaxima[R](initialEntries: Map[Version[IdentityKey, Int], Record])(
+  override def withMaxima[R](
+    initialEntries: Map[Version[IdentityKey, Int], Record])(
     testWith: TestWith[MaximaStub, R]): R =
     withLocalDynamoDbTable { table =>
       withMaxima(table, initialEntries) { maxima =>
@@ -71,7 +77,8 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
             val err = result.left.value
             err shouldBe a[MaximaReadError]
             err.e shouldBe a[AmazonDynamoDBException]
-            err.e.getMessage should startWith("Query condition missed key schema element")
+            err.e.getMessage should startWith(
+              "Query condition missed key schema element")
           }
         }
       }
@@ -87,7 +94,8 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
             val err = result.left.value
             err shouldBe a[MaximaReadError]
             err.e shouldBe a[AmazonDynamoDBException]
-            err.e.getMessage should include("Condition parameter type does not match schema type")
+            err.e.getMessage should include(
+              "Condition parameter type does not match schema type")
           }
         }
       }
@@ -101,12 +109,13 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
         val id = createIdentityKey
 
         withSpecifiedTable(createWrongTable) { table =>
-          scanamo.exec(ScanamoTable[WrongEntry](table.name).putAll(
-            Set(
-              WrongEntry(id, wrong = 1, record = createRecord),
-              WrongEntry(id, wrong = 2, record = createRecord),
-            )
-          ))
+          scanamo.exec(
+            ScanamoTable[WrongEntry](table.name).putAll(
+              Set(
+                WrongEntry(id, wrong = 1, record = createRecord),
+                WrongEntry(id, wrong = 2, record = createRecord)
+              )
+            ))
 
           withMaxima(table) { maxima =>
             val result = maxima.max(id)
@@ -114,7 +123,8 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
             val err = result.left.value
             err shouldBe a[MaximaReadError]
             err.e shouldBe a[Error]
-            err.e.getMessage should startWith("DynamoReadError: InvalidPropertiesError")
+            err.e.getMessage should startWith(
+              "DynamoReadError: InvalidPropertiesError")
           }
         }
       }
@@ -125,15 +135,24 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
         val id = createIdentityKey
 
         def createWrongTable(table: Table): Table =
-          createTableWithHashRangeKey(table, rangeKeyType = ScalarAttributeType.S)
+          createTableWithHashRangeKey(
+            table,
+            rangeKeyType = ScalarAttributeType.S)
 
         withSpecifiedTable(createWrongTable) { table =>
-          scanamo.exec(ScanamoTable[WrongEntry](table.name).putAll(
-            Set(
-              WrongEntry(id, version = randomAlphanumeric, record = createRecord),
-              WrongEntry(id, version = randomAlphanumeric, record = createRecord),
-            )
-          ))
+          scanamo.exec(
+            ScanamoTable[WrongEntry](table.name).putAll(
+              Set(
+                WrongEntry(
+                  id,
+                  version = randomAlphanumeric,
+                  record = createRecord),
+                WrongEntry(
+                  id,
+                  version = randomAlphanumeric,
+                  record = createRecord)
+              )
+            ))
 
           withMaxima(table) { maxima =>
             val result = maxima.max(id)
@@ -141,7 +160,8 @@ class DynamoHashRangeMaximaTest extends MaximaTestCases with DynamoFixtures {
             val err = result.left.value
             err shouldBe a[MaximaReadError]
             err.e shouldBe a[Error]
-            err.e.getMessage should include("DynamoReadError: InvalidPropertiesError")
+            err.e.getMessage should include(
+              "DynamoReadError: InvalidPropertiesError")
           }
         }
       }

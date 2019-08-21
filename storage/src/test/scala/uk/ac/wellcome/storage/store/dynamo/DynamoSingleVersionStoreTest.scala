@@ -12,7 +12,7 @@ import uk.ac.wellcome.storage.{StoreReadError, StoreWriteError, Version}
 import org.scanamo.auto._
 
 class DynamoSingleVersionStoreTest
-  extends VersionedStoreWithOverwriteTestCases[String, Record, Table]
+    extends VersionedStoreWithOverwriteTestCases[String, Record, Table]
     with RecordGenerators
     with DynamoFixtures {
 
@@ -24,8 +24,10 @@ class DynamoSingleVersionStoreTest
   override def createTable(table: Table): Table =
     createTableWithHashKey(table)
 
-  private def insertEntries(table: Table)(entries: Map[Version[String, Int], Record]): Seq[BatchWriteItemResult] = {
-    val scanamoTable = new ScanamoTable[DynamoHashEntry[String, Int, Record]](table.name)
+  private def insertEntries(table: Table)(
+    entries: Map[Version[String, Int], Record]): Seq[BatchWriteItemResult] = {
+    val scanamoTable =
+      new ScanamoTable[DynamoHashEntry[String, Int, Record]](table.name)
 
     val rows = entries.map {
       case (Version(id, version), payload) =>
@@ -37,18 +39,22 @@ class DynamoSingleVersionStoreTest
     scanamo.exec(scanamoTable.putAll(rows.toSet))
   }
 
-  override def withVersionedStoreImpl[R](initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[VersionedStoreImpl, R]): R =
+  override def withVersionedStoreImpl[R](
+    initialEntries: Map[Version[String, Int], Record])(
+    testWith: TestWith[VersionedStoreImpl, R]): R =
     withLocalDynamoDbTable { table =>
       val store = new DynamoStoreStub(
         config = createDynamoConfigWith(table)
       )
 
-    insertEntries(table)(initialEntries)
+      insertEntries(table)(initialEntries)
 
-    testWith(store)
-  }
+      testWith(store)
+    }
 
-  override def withVersionedStoreImpl[R](initialEntries: Entries, storeContext: Table)(testWith: TestWith[VersionedStoreImpl, R]): R = {
+  override def withVersionedStoreImpl[R](
+    initialEntries: Entries,
+    storeContext: Table)(testWith: TestWith[VersionedStoreImpl, R]): R = {
     val store = new DynamoStoreStub(
       config = createDynamoConfigWith(storeContext)
     )
@@ -58,11 +64,14 @@ class DynamoSingleVersionStoreTest
     testWith(store)
   }
 
-
   override def withVersionedStoreContext[R](testWith: TestWith[Table, R]): R =
-    withLocalDynamoDbTable { table => testWith(table) }
+    withLocalDynamoDbTable { table =>
+      testWith(table)
+    }
 
-  override def withFailingGetVersionedStore[R](initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[VersionedStoreImpl, R]): R =
+  override def withFailingGetVersionedStore[R](
+    initialEntries: Map[Version[String, Int], Record])(
+    testWith: TestWith[VersionedStoreImpl, R]): R =
     withLocalDynamoDbTable { table =>
       val store = new DynamoStoreStub(
         config = createDynamoConfigWith(table)
@@ -77,7 +86,9 @@ class DynamoSingleVersionStoreTest
       testWith(store)
     }
 
-  override def withFailingPutVersionedStore[R](initialEntries: Map[Version[String, Int], Record])(testWith: TestWith[VersionedStoreImpl, R]): R =
+  override def withFailingPutVersionedStore[R](
+    initialEntries: Map[Version[String, Int], Record])(
+    testWith: TestWith[VersionedStoreImpl, R]): R =
     withLocalDynamoDbTable { table =>
       val store = new DynamoStoreStub(
         config = createDynamoConfigWith(table)
@@ -95,10 +106,15 @@ class DynamoSingleVersionStoreTest
   override def withStoreContext[R](testWith: TestWith[Table, R]): R =
     withVersionedStoreContext(testWith)
 
-  override def withNamespace[R](testWith: TestWith[String, R]): R = testWith(randomAlphanumeric)
+  override def withNamespace[R](testWith: TestWith[String, R]): R =
+    testWith(randomAlphanumeric)
 
-  override def createId(implicit namespace: String): Version[String, Int] = Version(randomAlphanumeric, 0)
+  override def createId(implicit namespace: String): Version[String, Int] =
+    Version(randomAlphanumeric, 0)
 
-  override def withStoreImpl[R](initialEntries: Map[Version[String, Int], Record], storeContext: Table)(testWith: TestWith[StoreImpl, R]): R = withVersionedStoreImpl(initialEntries, storeContext)(testWith)
+  override def withStoreImpl[R](
+    initialEntries: Map[Version[String, Int], Record],
+    storeContext: Table)(testWith: TestWith[StoreImpl, R]): R =
+    withVersionedStoreImpl(initialEntries, storeContext)(testWith)
 
 }

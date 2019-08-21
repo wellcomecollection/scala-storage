@@ -6,7 +6,13 @@ import uk.ac.wellcome.storage.store.Store
 import uk.ac.wellcome.storage.store.fixtures.NamespaceFixtures
 import uk.ac.wellcome.storage.transfer.fixtures.TransferFixtures
 
-trait TransferTestCases[Location, T, Namespace, StoreImpl <: Store[Location, T]] extends FunSpec with Matchers with EitherValues with TransferFixtures[Location, T, StoreImpl] with NamespaceFixtures[Location, Namespace] {
+trait TransferTestCases[
+  Location, T, Namespace, StoreImpl <: Store[Location, T]]
+    extends FunSpec
+    with Matchers
+    with EitherValues
+    with TransferFixtures[Location, T, StoreImpl]
+    with NamespaceFixtures[Location, Namespace] {
   def createSrcLocation(implicit namespace: Namespace): Location
   def createDstLocation(implicit namespace: Namespace): Location
 
@@ -19,7 +25,9 @@ trait TransferTestCases[Location, T, Namespace, StoreImpl <: Store[Location, T]]
 
         withTransferStore(initialEntries = Map(src -> t)) { implicit store =>
           withTransfer { transfer =>
-            transfer.transfer(src, dst).right.value shouldBe TransferPerformed(src, dst)
+            transfer.transfer(src, dst).right.value shouldBe TransferPerformed(
+              src,
+              dst)
 
             store.get(src) shouldBe Right(Identified(src, t))
             store.get(dst) shouldBe Right(Identified(dst, t))
@@ -37,8 +45,12 @@ trait TransferTestCases[Location, T, Namespace, StoreImpl <: Store[Location, T]]
           withTransfer { transfer =>
             val err = transfer.transfer(src, dst).left.get
             err shouldBe a[TransferSourceFailure[_]]
-            err.asInstanceOf[TransferSourceFailure[Location]].source shouldBe src
-            err.asInstanceOf[TransferSourceFailure[Location]].destination shouldBe dst
+            err
+              .asInstanceOf[TransferSourceFailure[Location]]
+              .source shouldBe src
+            err
+              .asInstanceOf[TransferSourceFailure[Location]]
+              .destination shouldBe dst
           }
         }
       }
@@ -49,30 +61,39 @@ trait TransferTestCases[Location, T, Namespace, StoreImpl <: Store[Location, T]]
         val src = createSrcLocation
         val dst = createDstLocation
 
-        withTransferStore(initialEntries = Map(src -> createT, dst -> createT)) { implicit store =>
-          withTransfer { transfer =>
-            val err = transfer.transfer(src, dst).left.get
-            err shouldBe a[TransferOverwriteFailure[_]]
-            err.asInstanceOf[TransferOverwriteFailure[Location]].source shouldBe src
-            err.asInstanceOf[TransferOverwriteFailure[Location]].destination shouldBe dst
-          }
+        withTransferStore(initialEntries = Map(src -> createT, dst -> createT)) {
+          implicit store =>
+            withTransfer { transfer =>
+              val err = transfer.transfer(src, dst).left.get
+              err shouldBe a[TransferOverwriteFailure[_]]
+              err
+                .asInstanceOf[TransferOverwriteFailure[Location]]
+                .source shouldBe src
+              err
+                .asInstanceOf[TransferOverwriteFailure[Location]]
+                .destination shouldBe dst
+            }
         }
       }
     }
 
-    it("allows a no-op copy if the source and destination both exist and are the same") {
+    it(
+      "allows a no-op copy if the source and destination both exist and are the same") {
       withNamespace { implicit namespace =>
         val src = createSrcLocation
         val dst = createDstLocation
         val t = createT
 
-        withTransferStore(initialEntries = Map(src -> t, dst -> t)) { implicit store =>
-          withTransfer { transfer =>
-            transfer.transfer(src, dst).right.value shouldBe TransferNoOp(src, dst)
+        withTransferStore(initialEntries = Map(src -> t, dst -> t)) {
+          implicit store =>
+            withTransfer { transfer =>
+              transfer.transfer(src, dst).right.value shouldBe TransferNoOp(
+                src,
+                dst)
 
-            store.get(src) shouldBe Right(Identified(src, t))
-            store.get(dst) shouldBe Right(Identified(dst, t))
-          }
+              store.get(src) shouldBe Right(Identified(src, t))
+              store.get(dst) shouldBe Right(Identified(dst, t))
+            }
         }
       }
     }
@@ -84,12 +105,12 @@ trait TransferTestCases[Location, T, Namespace, StoreImpl <: Store[Location, T]]
 
         withTransferStore(initialEntries = Map(src -> t)) { implicit store =>
           withTransfer { transfer =>
-            transfer.transfer(src, src).right.value shouldBe TransferNoOp(src, src)
+            transfer.transfer(src, src).right.value shouldBe TransferNoOp(
+              src,
+              src)
           }
         }
       }
     }
   }
 }
-
-

@@ -5,10 +5,9 @@ import uk.ac.wellcome.storage.store.fixtures.StoreFixtures
 import uk.ac.wellcome.storage.{Identified, NotFoundError, WriteError}
 
 trait StoreTestCases[Id, T, Namespace, StoreContext]
-  extends FunSpec
+    extends FunSpec
     with EitherValues
     with StoreFixtures[Id, T, Namespace, StoreContext] {
-
 
   describe("it behaves as a Store") {
     describe("get") {
@@ -52,7 +51,6 @@ trait StoreTestCases[Id, T, Namespace, StoreContext]
     it("persists entries over instances of the store") {
       withStoreContext { storeContext =>
         withNamespace { implicit namespace =>
-
           val id = createId
           val t = createT
 
@@ -72,7 +70,7 @@ trait StoreTestCases[Id, T, Namespace, StoreContext]
 }
 
 trait StoreWithOverwritesTestCases[Id, T, Namespace, StoreContext]
-  extends StoreTestCases[Id, T, Namespace, StoreContext] {
+    extends StoreTestCases[Id, T, Namespace, StoreContext] {
 
   describe("it behaves as a StoreWithOverwrites") {
     it("can overwrite an existing entry") {
@@ -118,7 +116,7 @@ trait StoreWithOverwritesTestCases[Id, T, Namespace, StoreContext]
 }
 
 trait StoreWithoutOverwritesTestCases[Id, T, Namespace, StoreContext]
-  extends StoreTestCases[Id, T, Namespace, StoreContext] {
+    extends StoreTestCases[Id, T, Namespace, StoreContext] {
 
   describe("it behaves as a StoreWithoutOverwrites") {
     it("does not allow overwriting an existing entry") {

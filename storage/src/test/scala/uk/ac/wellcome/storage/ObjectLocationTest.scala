@@ -21,7 +21,8 @@ class ObjectLocationTest extends FunSpec with Matchers {
 
   it("can join multiple parts") {
     val root = ObjectLocation(namespace = namespace, path = "images")
-    val file = ObjectLocation(namespace = namespace, path = "images/red/dogs/001.jpg")
+    val file =
+      ObjectLocation(namespace = namespace, path = "images/red/dogs/001.jpg")
 
     root.join("red", "dogs", "001.jpg") shouldBe file
   }

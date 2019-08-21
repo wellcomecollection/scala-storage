@@ -7,8 +7,7 @@ import uk.ac.wellcome.storage.streaming.Codec
 class MemoryTypedStore[Ident, T](
   initialEntries: Map[Ident, TypedStoreEntry[T]] =
     Map.empty[Ident, TypedStoreEntry[T]])(
-  implicit
-  val streamStore: MemoryStreamStore[Ident],
+  implicit val streamStore: MemoryStreamStore[Ident],
   val codec: Codec[T]
 ) extends TypedStore[Ident, T] {
 

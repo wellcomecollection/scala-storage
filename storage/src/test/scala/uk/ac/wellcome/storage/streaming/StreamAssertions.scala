@@ -10,17 +10,25 @@ trait StreamAssertions extends Matchers {
   def assertStreamsEqual(x: InputStream, y: InputStream): Assertion =
     IOUtils.contentEquals(x, y) shouldBe true
 
-  def assertStreamEquals(inputStream: InputStream with HasLength, string: String): Assertion =
-    assertStreamEquals(inputStream, string, expectedLength = string.getBytes.length)
+  def assertStreamEquals(inputStream: InputStream with HasLength,
+                         string: String): Assertion =
+    assertStreamEquals(
+      inputStream,
+      string,
+      expectedLength = string.getBytes.length)
 
-  def assertStreamEquals(inputStream: InputStream with HasLength, string: String, expectedLength: Long): Assertion =
+  def assertStreamEquals(inputStream: InputStream with HasLength,
+                         string: String,
+                         expectedLength: Long): Assertion =
     assertStreamEquals(
       inputStream,
       bytes = string.getBytes(StandardCharsets.UTF_8),
       expectedLength = expectedLength
     )
 
-  def assertStreamEquals(inputStream: InputStream with HasLength, bytes: Array[Byte], expectedLength: Long): Assertion = {
+  def assertStreamEquals(inputStream: InputStream with HasLength,
+                         bytes: Array[Byte],
+                         expectedLength: Long): Assertion = {
     inputStream.length shouldBe expectedLength
 
     IOUtils.contentEquals(inputStream, new ByteArrayInputStream(bytes)) shouldBe true

@@ -6,24 +6,36 @@ import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.fixtures.{DynamoFixtures, S3Fixtures}
-import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGenerators}
+import uk.ac.wellcome.storage.generators.{
+  MetadataGenerators,
+  Record,
+  RecordGenerators
+}
 import uk.ac.wellcome.storage.store._
 import uk.ac.wellcome.storage.store.s3.{S3StreamStore, S3TypedStore}
 
-trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]]]
-  extends HybridStoreWithoutOverwritesTestCases[
+trait DynamoHybridStoreTestCases[
+  DynamoStoreImpl <: Store[
     Version[String, Int],
-    ObjectLocation,
-    Record,
-    Map[String, String],
-    Unit,
-    S3TypedStore[Record],
-    DynamoStoreImpl,
-    (Bucket, Table)
-    ] with RecordGenerators with S3Fixtures with DynamoFixtures with MetadataGenerators {
+    HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]]]
+    extends HybridStoreWithoutOverwritesTestCases[
+      Version[String, Int],
+      ObjectLocation,
+      Record,
+      Map[String, String],
+      Unit,
+      S3TypedStore[Record],
+      DynamoStoreImpl,
+      (Bucket, Table)
+    ]
+    with RecordGenerators
+    with S3Fixtures
+    with DynamoFixtures
+    with MetadataGenerators {
   type S3TypedStoreImpl = S3TypedStore[Record]
   type DynamoIndexedStoreImpl = DynamoStoreImpl
-  type IndexedStoreEntry = HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]
+  type IndexedStoreEntry =
+    HybridIndexedStoreEntry[ObjectLocation, Map[String, String]]
 
   def createPrefix(implicit context: (Bucket, Table)): ObjectLocationPrefix = {
     val (bucket, _) = context
@@ -33,7 +45,8 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
     )
   }
 
-  override def withTypedStoreImpl[R](testWith: TestWith[S3TypedStoreImpl, R])(implicit context: (Bucket, Table)): R =
+  override def withTypedStoreImpl[R](testWith: TestWith[S3TypedStoreImpl, R])(
+    implicit context: (Bucket, Table)): R =
     testWith(S3TypedStore[Record])
 
   override def createTypedStoreId(implicit bucket: Unit): ObjectLocation =
@@ -41,18 +54,23 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
 
   override def createMetadata: Map[String, String] = createValidMetadata
 
-  override def withBrokenPutTypedStoreImpl[R](testWith: TestWith[S3TypedStoreImpl, R])(implicit context: (Bucket, Table)): R = {
+  override def withBrokenPutTypedStoreImpl[R](
+    testWith: TestWith[S3TypedStoreImpl, R])(
+    implicit context: (Bucket, Table)): R = {
     val s3StreamStore: S3StreamStore = new S3StreamStore()
 
     testWith(
       new S3TypedStore[Record]()(codec, s3StreamStore) {
-        override def put(id: ObjectLocation)(entry: TypedStoreEntry[Record]): WriteEither =
+        override def put(id: ObjectLocation)(
+          entry: TypedStoreEntry[Record]): WriteEither =
           Left(StoreWriteError(new Error("BOOM!")))
       }
     )
   }
 
-  override def withBrokenGetTypedStoreImpl[R](testWith: TestWith[S3TypedStoreImpl, R])(implicit context: (Bucket, Table)): R = {
+  override def withBrokenGetTypedStoreImpl[R](
+    testWith: TestWith[S3TypedStoreImpl, R])(
+    implicit context: (Bucket, Table)): R = {
     val s3StreamStore: S3StreamStore = new S3StreamStore()
 
     testWith(
@@ -107,54 +125,58 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
 
     describe("it handles errors from AWS") {
       it("if the prefix refers to a non-existent bucket") {
-        withStoreContext { case (_, table) =>
-          val nonExistentBucket = createBucket
+        withStoreContext {
+          case (_, table) =>
+            val nonExistentBucket = createBucket
 
-          implicit val context = (nonExistentBucket, table)
+            implicit val context = (nonExistentBucket, table)
 
-          withNamespace { implicit namespace =>
+            withNamespace { implicit namespace =>
+              withTypedStoreImpl { typedStore =>
+                withIndexedStoreImpl { indexedStore =>
+                  withHybridStoreImpl(typedStore, indexedStore) {
+                    hybridStore =>
+                      val id = createId
+                      val hybridStoreEntry = createT
 
-            withTypedStoreImpl { typedStore =>
-              withIndexedStoreImpl { indexedStore =>
-                withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
-                  val id = createId
-                  val hybridStoreEntry = createT
+                      val result = hybridStore.put(id)(hybridStoreEntry)
+                      val value = result.left.value
 
-                  val result = hybridStore.put(id)(hybridStoreEntry)
-                  val value = result.left.value
-
-                  value shouldBe a[StoreWriteError]
-                  value.e.getMessage should startWith("The specified bucket does not exist")
+                      value shouldBe a[StoreWriteError]
+                      value.e.getMessage should startWith(
+                        "The specified bucket does not exist")
+                  }
                 }
               }
             }
-          }
         }
       }
 
       it("if the prefix refers to an invalid bucket name") {
-        withStoreContext { case (_, table) =>
-          val invalidBucket = Bucket(createInvalidBucketName)
+        withStoreContext {
+          case (_, table) =>
+            val invalidBucket = Bucket(createInvalidBucketName)
 
-          implicit val context = (invalidBucket, table)
+            implicit val context = (invalidBucket, table)
 
-          withNamespace { implicit namespace =>
+            withNamespace { implicit namespace =>
+              withTypedStoreImpl { typedStore =>
+                withIndexedStoreImpl { indexedStore =>
+                  withHybridStoreImpl(typedStore, indexedStore) {
+                    hybridStore =>
+                      val id = createId
+                      val hybridStoreEntry = createT
 
-            withTypedStoreImpl { typedStore =>
-              withIndexedStoreImpl { indexedStore =>
-                withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
-                  val id = createId
-                  val hybridStoreEntry = createT
+                      val result = hybridStore.put(id)(hybridStoreEntry)
+                      val value = result.left.value
 
-                  val result = hybridStore.put(id)(hybridStoreEntry)
-                  val value = result.left.value
-
-                  value shouldBe a[StoreWriteError]
-                  value.e.getMessage should startWith("The specified bucket is not valid")
+                      value shouldBe a[StoreWriteError]
+                      value.e.getMessage should startWith(
+                        "The specified bucket is not valid")
+                  }
                 }
               }
             }
-          }
         }
       }
 
@@ -164,7 +186,6 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
             withTypedStoreImpl { typedStore =>
               withIndexedStoreImpl { indexedStore =>
                 withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
-
                   // Maximum length of an s3 key is 1024 bytes as of 25/06/2019
                   // https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html
 
@@ -187,7 +208,8 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
                   val value = result.left.value
 
                   value shouldBe a[InvalidIdentifierFailure]
-                  value.e.getMessage should startWith("S3 object key byte length is too big")
+                  value.e.getMessage should startWith(
+                    "S3 object key byte length is too big")
                 }
               }
             }
@@ -196,115 +218,132 @@ trait DynamoHybridStoreTestCases[DynamoStoreImpl <: Store[Version[String, Int], 
       }
 
       it("if the underlying DynamoDB table doesn't exist") {
-        withStoreContext { case (bucket, _) =>
-          val nonExistentTable = Table(randomAlphanumeric, randomAlphanumeric)
+        withStoreContext {
+          case (bucket, _) =>
+            val nonExistentTable =
+              Table(randomAlphanumeric, randomAlphanumeric)
 
-          implicit val context = (bucket, nonExistentTable)
+            implicit val context = (bucket, nonExistentTable)
 
-          withNamespace { implicit namespace =>
+            withNamespace { implicit namespace =>
+              withTypedStoreImpl { typedStore =>
+                withIndexedStoreImpl { indexedStore =>
+                  withHybridStoreImpl(typedStore, indexedStore) {
+                    hybridStore =>
+                      val id = createId
+                      val hybridStoreEntry = createT
 
-            withTypedStoreImpl { typedStore =>
-              withIndexedStoreImpl { indexedStore =>
-                withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
-                  val id = createId
-                  val hybridStoreEntry = createT
+                      val result = hybridStore.put(id)(hybridStoreEntry)
+                      val value = result.left.value
 
-                  val result = hybridStore.put(id)(hybridStoreEntry)
-                  val value = result.left.value
-
-                  value shouldBe a[StoreWriteError]
-                  value.e.getMessage should startWith("Cannot do operations on a non-existent table")
+                      value shouldBe a[StoreWriteError]
+                      value.e.getMessage should startWith(
+                        "Cannot do operations on a non-existent table")
+                  }
                 }
               }
-            }
 
-          }
+            }
         }
       }
 
       it("if a DynamoDB index entry points to a non-existent S3 key") {
-        withStoreContext { case (bucket, table) =>
-          withNamespace { implicit namespace =>
+        withStoreContext {
+          case (bucket, table) =>
+            withNamespace { implicit namespace =>
+              implicit val context = (bucket, table)
 
-            implicit val context = (bucket, table)
+              withTypedStoreImpl { typedStore =>
+                withIndexedStoreImpl { indexedStore =>
+                  withHybridStoreImpl(typedStore, indexedStore) {
+                    hybridStore =>
+                      val id = createId
+                      val hybridStoreEntry = createT
 
-            withTypedStoreImpl { typedStore =>
-              withIndexedStoreImpl { indexedStore =>
-                withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
-                  val id = createId
-                  val hybridStoreEntry = createT
+                      hybridStore.put(id)(hybridStoreEntry) shouldBe a[
+                        Right[_, _]]
 
-                  hybridStore.put(id)(hybridStoreEntry) shouldBe a[Right[_,_]]
+                      val indexedEntry = indexedStore.get(id).right.value
+                      val typeStoreId = indexedEntry.identifiedT.typedStoreId
 
-                  val indexedEntry = indexedStore.get(id).right.value
-                  val typeStoreId = indexedEntry.identifiedT.typedStoreId
+                      s3Client.deleteObject(
+                        typeStoreId.namespace,
+                        typeStoreId.path)
 
-                  s3Client.deleteObject(typeStoreId.namespace, typeStoreId.path)
+                      val value = hybridStore.get(id).left.value
 
-                  val value = hybridStore.get(id).left.value
-
-                  value shouldBe a[DanglingHybridStorePointerError]
+                      value shouldBe a[DanglingHybridStorePointerError]
+                  }
                 }
               }
             }
-          }
         }
       }
 
       it("if a DynamoDB index entry points to a non-existent S3 bucket") {
-        withStoreContext { case (bucket, table) =>
-          withNamespace { implicit namespace =>
+        withStoreContext {
+          case (bucket, table) =>
+            withNamespace { implicit namespace =>
+              implicit val context = (bucket, table)
 
-            implicit val context = (bucket, table)
+              withTypedStoreImpl { typedStore =>
+                withIndexedStoreImpl { indexedStore =>
+                  withHybridStoreImpl(typedStore, indexedStore) {
+                    hybridStore =>
+                      val id = createId
+                      val hybridStoreEntry = createT
 
-            withTypedStoreImpl { typedStore =>
-              withIndexedStoreImpl { indexedStore =>
-                withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
-                  val id = createId
-                  val hybridStoreEntry = createT
+                      hybridStore.put(id)(hybridStoreEntry) shouldBe a[
+                        Right[_, _]]
 
-                  hybridStore.put(id)(hybridStoreEntry) shouldBe a[Right[_,_]]
+                      val indexedEntry = indexedStore.get(id).right.value
+                      val typeStoreId = indexedEntry.identifiedT.typedStoreId
 
-                  val indexedEntry = indexedStore.get(id).right.value
-                  val typeStoreId = indexedEntry.identifiedT.typedStoreId
+                      s3Client.deleteObject(
+                        typeStoreId.namespace,
+                        typeStoreId.path)
+                      s3Client.deleteBucket(typeStoreId.namespace)
 
-                  s3Client.deleteObject(typeStoreId.namespace, typeStoreId.path)
-                  s3Client.deleteBucket(typeStoreId.namespace)
+                      val value = hybridStore.get(id).left.value
 
-                  val value = hybridStore.get(id).left.value
-
-                  value shouldBe a[DanglingHybridStorePointerError]
-                  value.e.getMessage should startWith("The specified bucket does not exist")
+                      value shouldBe a[DanglingHybridStorePointerError]
+                      value.e.getMessage should startWith(
+                        "The specified bucket does not exist")
+                  }
                 }
               }
             }
-          }
         }
       }
 
       it("if the DynamoDB row is in the wrong format") {
-        withStoreContext { case (bucket, table) =>
-          withNamespace { implicit namespace =>
+        withStoreContext {
+          case (bucket, table) =>
+            withNamespace { implicit namespace =>
+              implicit val context = (bucket, table)
 
-            implicit val context = (bucket, table)
+              withTypedStoreImpl { typedStore =>
+                withIndexedStoreImpl { indexedStore =>
+                  withHybridStoreImpl(typedStore, indexedStore) {
+                    hybridStore =>
+                      val id = createId
 
-            withTypedStoreImpl { typedStore =>
-              withIndexedStoreImpl { indexedStore =>
-                withHybridStoreImpl(typedStore, indexedStore) { hybridStore =>
-                  val id = createId
+                      case class BadRow(id: String,
+                                        version: Int,
+                                        contents: String)
 
-                  case class BadRow(id: String, version: Int, contents: String)
+                      putTableItem(
+                        BadRow(id.id, id.version, randomAlphanumeric),
+                        table)
 
-                  putTableItem(BadRow(id.id, id.version, randomAlphanumeric), table)
+                      val value = hybridStore.get(id).left.value
 
-                  val value = hybridStore.get(id).left.value
-
-                  value shouldBe a[StoreReadError]
-                  value.e.getMessage should startWith("DynamoReadError")
+                      value shouldBe a[StoreReadError]
+                      value.e.getMessage should startWith("DynamoReadError")
+                  }
                 }
               }
             }
-          }
         }
       }
     }

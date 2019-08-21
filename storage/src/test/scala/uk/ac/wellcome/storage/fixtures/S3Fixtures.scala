@@ -4,7 +4,11 @@ import java.io.InputStream
 
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.iterable.S3Objects
-import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest, S3ObjectSummary}
+import com.amazonaws.services.s3.model.{
+  ObjectMetadata,
+  PutObjectRequest,
+  S3ObjectSummary
+}
 import grizzled.slf4j.Logging
 import io.circe.parser.parse
 import io.circe.{Decoder, Json}
@@ -16,7 +20,11 @@ import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config}
 import uk.ac.wellcome.storage.streaming.Codec._
-import uk.ac.wellcome.storage.streaming.{HasLength, HasMetadata, InputStreamWithLength}
+import uk.ac.wellcome.storage.streaming.{
+  HasLength,
+  HasMetadata,
+  InputStreamWithLength
+}
 
 import scala.collection.JavaConverters._
 import scala.util.Random
@@ -31,7 +39,13 @@ object S3Fixtures {
   }
 }
 
-trait S3Fixtures extends Logging with Eventually with IntegrationPatience with Matchers with EitherValues with ObjectLocationGenerators {
+trait S3Fixtures
+    extends Logging
+    with Eventually
+    with IntegrationPatience
+    with Matchers
+    with EitherValues
+    with ObjectLocationGenerators {
 
   import S3Fixtures._
 
@@ -96,7 +110,8 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
   def getJsonFromS3(location: ObjectLocation): Json =
     parse(getContentFromS3(location)).right.get
 
-  def getObjectFromS3[T](location: ObjectLocation)(implicit decoder: Decoder[T]): T =
+  def getObjectFromS3[T](location: ObjectLocation)(
+    implicit decoder: Decoder[T]): T =
     fromJson[T](getContentFromS3(location)).get
 
   def createBucketName: String =
@@ -109,12 +124,15 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
 
   def createInvalidBucketName: String =
     // Create a variety of invalid patterns, and choose one at random.
-    Random.shuffle(Seq(
-      "_" + createBucket,
-      randomAlphanumeric.toUpperCase() + createBucket,
-      createBucket + randomAlphanumeric.toUpperCase(),
-      Random.alphanumeric.take(100) mkString
-    )).head
+    Random
+      .shuffle(
+        Seq(
+          "_" + createBucket,
+          randomAlphanumeric.toUpperCase() + createBucket,
+          createBucket + randomAlphanumeric.toUpperCase(),
+          Random.alphanumeric.take(100) mkString
+        ))
+      .head
 
   def createBucket: Bucket =
     Bucket(createBucketName)
@@ -136,7 +154,9 @@ trait S3Fixtures extends Logging with Eventually with IntegrationPatience with M
       path = key
     )
 
-  def putStream(location: ObjectLocation, inputStream: InputStream with HasLength with HasMetadata): Unit = {
+  def putStream(
+    location: ObjectLocation,
+    inputStream: InputStream with HasLength with HasMetadata): Unit = {
     val metadata = new ObjectMetadata()
 
     metadata.setContentLength(inputStream.length)

@@ -9,7 +9,12 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.runtime.BoxedUnit
 
-trait LockDaoTestCases[Ident, ContextId, LockDaoContext] extends FunSpec with Matchers with EitherValues with ScalaFutures with LockDaoFixtures[Ident, ContextId, LockDaoContext] {
+trait LockDaoTestCases[Ident, ContextId, LockDaoContext]
+    extends FunSpec
+    with Matchers
+    with EitherValues
+    with ScalaFutures
+    with LockDaoFixtures[Ident, ContextId, LockDaoContext] {
   describe("behaves as a LockDao") {
     it("behaves correctly") {
       withLockDaoContext { lockDaoContext =>
@@ -55,11 +60,9 @@ trait LockDaoTestCases[Ident, ContextId, LockDaoContext] extends FunSpec with Ma
         val contextId1 = createContextId
         val contextId2 = createContextId
 
-        lockDao.lock(id, contextId1)
-          .right.value.id shouldBe id
+        lockDao.lock(id, contextId1).right.value.id shouldBe id
 
-        lockDao.lock(id, contextId2)
-          .left.value shouldBe a[LockFailure[_]]
+        lockDao.lock(id, contextId2).left.value shouldBe a[LockFailure[_]]
       }
     }
 

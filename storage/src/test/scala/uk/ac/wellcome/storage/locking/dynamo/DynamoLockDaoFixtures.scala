@@ -17,7 +17,10 @@ import uk.ac.wellcome.storage.locking.{LockDao, LockDaoFixtures}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait DynamoLockDaoFixtures extends LockDaoFixtures[String, UUID, Table] with DynamoFixtures with RandomThings {
+trait DynamoLockDaoFixtures
+    extends LockDaoFixtures[String, UUID, Table]
+    with DynamoFixtures
+    with RandomThings {
   def createTable(table: Table): Table =
     createLockTable(table)
 
@@ -26,7 +29,8 @@ trait DynamoLockDaoFixtures extends LockDaoFixtures[String, UUID, Table] with Dy
       testWith(table)
     }
 
-  override def withLockDao[R](lockTable: Table)(testWith: TestWith[LockDao[String, UUID], R]): R =
+  override def withLockDao[R](lockTable: Table)(
+    testWith: TestWith[LockDao[String, UUID], R]): R =
     withLockDao(dynamoClient, lockTable = lockTable) { lockDao =>
       testWith(lockDao)
     }
@@ -38,10 +42,9 @@ trait DynamoLockDaoFixtures extends LockDaoFixtures[String, UUID, Table] with Dy
     scanTable[ExpiringLock](lockTable) shouldBe empty
 
   def withLockDao[R](
-                      dynamoClient: AmazonDynamoDB,
-                      lockTable: Table,
-                      seconds: Int = 180)(
-                      testWith: TestWith[DynamoLockDao, R]): R = {
+    dynamoClient: AmazonDynamoDB,
+    lockTable: Table,
+    seconds: Int = 180)(testWith: TestWith[DynamoLockDao, R]): R = {
     val rowLockDaoConfig = DynamoLockDaoConfig(
       dynamoConfig = createDynamoConfigWith(lockTable),
       expiryTime = Duration.ofSeconds(seconds)
@@ -65,8 +68,9 @@ trait DynamoLockDaoFixtures extends LockDaoFixtures[String, UUID, Table] with Dy
 
   def withLockDao[R](lockTable: Table, seconds: Int)(
     testWith: TestWith[DynamoLockDao, R]): R =
-    withLockDao(dynamoClient, lockTable = lockTable, seconds = seconds) { lockDao =>
-      testWith(lockDao)
+    withLockDao(dynamoClient, lockTable = lockTable, seconds = seconds) {
+      lockDao =>
+        testWith(lockDao)
     }
 
   def createLockTable(table: Table): Table = {
