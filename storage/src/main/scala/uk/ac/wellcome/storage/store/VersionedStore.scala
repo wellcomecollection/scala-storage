@@ -29,13 +29,13 @@ class VersionedStore[Id, V, T](
     UpdateEither
   ] = {
     case Left(err: NoVersionExistsError) =>
-      Left(UpdateNoSourceError(err.e))
+      Left(UpdateNoSourceError(err))
 
     case Left(err: ReadError) =>
-      Left(UpdateReadError(err.e))
+      Left(UpdateReadError(err))
 
     case Left(err: WriteError) =>
-      Left(UpdateWriteError(err.e))
+      Left(UpdateWriteError(err))
 
     case Left(err: UpdateError) =>
       Left(err)
