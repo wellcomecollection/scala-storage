@@ -35,6 +35,8 @@ sealed trait DynamoWritable[Ident, EntryType, T] extends Writable[Ident, T] {
       case Success(Right(_)) => Right(Identified(id, parseEntry(entry)))
       case Success(Left(err: ConditionalCheckFailedException)) =>
         Left(new StoreWriteError(err) with RetryableError)
+      case Failure(err: ConditionalCheckFailedException) =>
+        Left(new StoreWriteError(err) with RetryableError)
       case Success(Left(err)) => Left(StoreWriteError(err))
       case Failure(err)       => Left(StoreWriteError(err))
     }
