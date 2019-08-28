@@ -6,7 +6,7 @@ import com.amazonaws.services.dynamodbv2.model.{
   ResourceNotFoundException
 }
 import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
-import uk.ac.wellcome.storage.Version
+import uk.ac.wellcome.storage.{RetryableError, Version}
 import uk.ac.wellcome.storage.dynamo.DynamoEntry
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
@@ -75,6 +75,7 @@ trait DynamoWritableTestCases[Ident, T, EntryType <: DynamoEntry[Ident, T]]
           val result = writable.put(id = Version(hashKey, 2))(newerT)
 
           val err = result.left.value
+          err shouldBe a[RetryableError]
           err.e shouldBe a[ConditionalCheckFailedException]
           err.e.getMessage should startWith("The conditional request failed")
         }

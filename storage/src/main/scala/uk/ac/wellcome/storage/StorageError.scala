@@ -4,15 +4,30 @@ sealed trait StorageError {
   val e: Throwable
 }
 
+/** Used to mark errors that can be retried.
+  *
+  * For example, a DynamoDB update() might fail with a ConditionalCheckFailed
+  * exception if two processes try to write at the same time.  The operation
+  * can be retried and will likely succeed.
+  *
+  */
+trait RetryableError
+
 sealed trait CodecError
 sealed trait BackendError
 
 sealed trait UpdateError extends StorageError
 sealed trait UpdateFunctionError extends UpdateError
 
-case class UpdateNoSourceError(e: Throwable) extends UpdateError
-case class UpdateReadError(e: Throwable) extends UpdateError
-case class UpdateWriteError(e: Throwable) extends UpdateError
+case class UpdateNoSourceError(err: NoVersionExistsError) extends UpdateError {
+  val e: Throwable = err.e
+}
+case class UpdateReadError(err: ReadError) extends UpdateError {
+  val e: Throwable = err.e
+}
+case class UpdateWriteError(err: WriteError) extends UpdateError {
+  val e: Throwable = err.e
+}
 
 case class UpdateNotApplied(e: Throwable) extends UpdateFunctionError
 case class UpdateUnexpectedError(e: Throwable) extends UpdateFunctionError
