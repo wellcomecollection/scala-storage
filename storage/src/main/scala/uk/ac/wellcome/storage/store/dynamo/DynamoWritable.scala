@@ -5,7 +5,12 @@ import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import org.scanamo.query._
 import org.scanamo.syntax._
 import org.scanamo.{DynamoFormat, Scanamo, Table}
-import uk.ac.wellcome.storage.{Identified, RetryableError, StoreWriteError, Version}
+import uk.ac.wellcome.storage.{
+  Identified,
+  RetryableError,
+  StoreWriteError,
+  Version
+}
 import uk.ac.wellcome.storage.dynamo.{DynamoHashEntry, DynamoHashRangeEntry}
 import uk.ac.wellcome.storage.store.Writable
 
@@ -27,9 +32,9 @@ sealed trait DynamoWritable[Ident, EntryType, T] extends Writable[Ident, T] {
     val ops = tableGiven(id).put(entry)
 
     Try(Scanamo(client).exec(ops)) match {
-      case Success(Right(_))  => Right(Identified(id, parseEntry(entry)))
-      case Success(Left(err: ConditionalCheckFailedException))
-                              => Left(new StoreWriteError(err) with RetryableError)
+      case Success(Right(_)) => Right(Identified(id, parseEntry(entry)))
+      case Success(Left(err: ConditionalCheckFailedException)) =>
+        Left(new StoreWriteError(err) with RetryableError)
       case Success(Left(err)) => Left(StoreWriteError(err))
       case Failure(err)       => Left(StoreWriteError(err))
     }
