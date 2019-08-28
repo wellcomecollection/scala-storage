@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.22.1 - 2019-08-28
+
+Map more Dynamo conditional update errors to retryable errors.
+
 ## v7.22.0 - 2019-08-28
 
 This release adds a `RetryableError` trait which indicates when an error is transient, and could be retried.  For example, a DynamoDB update() might fail with a `ConditionalCheckFailed` exception if two processes try to write at the same time.  The operation can be retried and will likely succeed.
