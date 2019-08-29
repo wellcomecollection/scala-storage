@@ -6,7 +6,7 @@ case class ObjectLocation(namespace: String, path: String) {
   override def toString = s"$namespace/$path"
 
   def join(parts: String*): ObjectLocation = this.copy(
-    path = Paths.get(this.path, parts: _*).toString
+    path = Paths.get(this.path, parts: _*).normalize().toString
   )
 
   def asPrefix: ObjectLocationPrefix =
@@ -17,9 +17,8 @@ case class ObjectLocation(namespace: String, path: String) {
 }
 
 case class ObjectLocationPrefix(namespace: String, path: String) {
+  override def toString = s"$namespace/$path"
+
   def asLocation(parts: String*): ObjectLocation =
-    ObjectLocation(
-      namespace,
-      path = Paths.get(this.path, parts: _*).toString
-    )
+    ObjectLocation(namespace, path).join(parts: _*)
 }
