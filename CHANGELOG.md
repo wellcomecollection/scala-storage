@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.22.2 - 2019-08-29
+
+Normalise the paths created by `ObjectLocation.join(…)` and `ObjectLocationPrefix.asLocation(…)`.
+
 ## v7.22.1 - 2019-08-28
 
 Map more Dynamo conditional update errors to retryable errors.
