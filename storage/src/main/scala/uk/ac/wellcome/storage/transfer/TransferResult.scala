@@ -38,5 +38,4 @@ case class TransferNoOp[Location](source: Location, destination: Location)
 case class TransferPerformed[Location](source: Location, destination: Location)
     extends TransferSuccess
 
-case class PrefixTransferSuccess(successes: Int)
-    extends TransferSuccess
+case class PrefixTransferSuccess(successes: Int) extends TransferSuccess
