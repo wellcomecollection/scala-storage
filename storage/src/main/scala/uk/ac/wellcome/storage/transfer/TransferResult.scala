@@ -21,8 +21,8 @@ case class TransferOverwriteFailure[Location](source: Location,
                                               e: Throwable = new Error())
     extends TransferFailure
 
-case class PrefixTransferFailure(failures: Seq[TransferFailure],
-                                 successes: Seq[TransferSuccess],
+case class PrefixTransferFailure(failures: Int,
+                                 successes: Int,
                                  e: Throwable = new Error())
     extends TransferFailure
 
@@ -38,5 +38,5 @@ case class TransferNoOp[Location](source: Location, destination: Location)
 case class TransferPerformed[Location](source: Location, destination: Location)
     extends TransferSuccess
 
-case class PrefixTransferSuccess(successes: Seq[TransferSuccess])
+case class PrefixTransferSuccess(successes: Int)
     extends TransferSuccess
