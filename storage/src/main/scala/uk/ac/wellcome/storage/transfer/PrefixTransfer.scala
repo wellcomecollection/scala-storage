@@ -1,14 +1,13 @@
 package uk.ac.wellcome.storage.transfer
 
+import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage.listing.Listing
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.collection.parallel.ParIterable
 
-trait PrefixTransfer[Prefix, Location] {
+trait PrefixTransfer[Prefix, Location] extends Logging {
   implicit val transfer: Transfer[Location]
   implicit val listing: Listing[Prefix, Location]
-
-  implicit val ec: ExecutionContext
 
   protected def buildDstLocation(
     srcPrefix: Prefix,
@@ -20,49 +19,51 @@ trait PrefixTransfer[Prefix, Location] {
     iterator: Iterable[Location],
     srcPrefix: Prefix,
     dstPrefix: Prefix
-  ): Future[Either[PrefixTransferFailure, PrefixTransferSuccess]] = {
-    val futures = iterator.map { srcLocation =>
-      Future {
-        transfer.transfer(
-          src = srcLocation,
-          dst = buildDstLocation(
-            srcPrefix = srcPrefix,
-            dstPrefix = dstPrefix,
-            srcLocation = srcLocation)
-        )
+  ): Either[PrefixTransferFailure, PrefixTransferSuccess] = {
+    var successes = 0
+    var failures = 0
+
+    iterator
+      .grouped(10)
+      .foreach { locations =>
+        val results: ParIterable[(Location, Either[TransferFailure, TransferSuccess])] =
+          locations.par.map { srcLocation =>
+            (
+              srcLocation,
+              transfer.transfer(
+                src = srcLocation,
+                dst = buildDstLocation(
+                  srcPrefix = srcPrefix,
+                  dstPrefix = dstPrefix,
+                  srcLocation = srcLocation)
+              )
+            )
+          }
+
+        results.foreach {
+          case (srcLocation, Right(_)) =>
+            debug(s"Successfully copied $srcLocation to $dstPrefix")
+            successes += 1
+          case (srcLocation, Left(err)) =>
+            warn(s"Error copying $srcLocation to $dstPrefix: $err")
+            failures += 1
+        }
       }
-    }
 
-    // TODO: This accumulates all the results in memory.
-    // Can we cope with copying a very large prefix?
-    //
-    // How many results this runs in parallel depends on the parallelism of
-    // your ExecutionContext.  It may be worth tweaking your settings for
-    // optimal results.
-    //
-    // See https://github.com/wellcometrust/scala-storage/pull/110
-    // for more discussion.
-    Future.sequence(futures).map { results =>
-      val failures = results.collect { case Left(error)     => error }
-      val successes = results.collect { case Right(success) => success }
-
-      Either.cond(
-        test = failures.isEmpty,
-        right = PrefixTransferSuccess(successes.toSeq),
-        left = PrefixTransferFailure(failures.toSeq, successes.toSeq)
-      )
-    }
+    Either.cond(
+      test = failures == 0,
+      right = PrefixTransferSuccess(successes),
+      left = PrefixTransferFailure(failures, successes)
+    )
   }
 
   def transferPrefix(
     srcPrefix: Prefix,
     dstPrefix: Prefix
-  ): Future[Either[TransferFailure, TransferSuccess]] = {
+  ): Either[TransferFailure, PrefixTransferSuccess] = {
     listing.list(srcPrefix) match {
       case Left(error) =>
-        Future.successful(
-          Left(PrefixTransferListingFailure(srcPrefix, error.e))
-        )
+        Left(PrefixTransferListingFailure(srcPrefix, error.e))
 
       case Right(iterable) =>
         copyPrefix(iterable, srcPrefix, dstPrefix)
