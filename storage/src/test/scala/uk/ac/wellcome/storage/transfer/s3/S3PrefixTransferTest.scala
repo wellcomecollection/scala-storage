@@ -25,6 +25,8 @@ import uk.ac.wellcome.storage.{
 }
 import uk.ac.wellcome.storage.transfer._
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 class S3PrefixTransferTest
     extends PrefixTransferTestCases[
       ObjectLocation,
