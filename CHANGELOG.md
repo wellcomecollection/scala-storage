@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.23.0 - 2019-09-02
+
+Change the way `PrefixTransfer` work so it doesn't accumulate all the results in memory, and instead just reports a count of the number of files that transferred or not successfully.
+
 ## v7.22.2 - 2019-08-29
 
 Normalise the paths created by `ObjectLocation.join(…)` and `ObjectLocationPrefix.asLocation(…)`.
