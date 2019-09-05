@@ -71,7 +71,7 @@ trait VersionedStoreWithOverwriteTestCases[Id, T, VersionedStoreContext]
       }
     }
 
-    describe("put") {
+    describe("putLatest") {
       it("stores a new record") {
         withVersionedStoreImpl() { store =>
           val id = createIdent
@@ -106,6 +106,35 @@ trait VersionedStoreWithOverwriteTestCases[Id, T, VersionedStoreContext]
         }
       }
 
+      it("increments version monotonically (despite gaps in the version sequence)") {
+        val id = createIdent
+
+        val t2 = createT
+        val t3 = createT
+
+        withVersionedStoreImpl(
+          initialEntries = Map(Version(id, 2) -> t2)
+        ) { store =>
+          val result = store.putLatest(id)(t3)
+          val value = result.right.value
+
+          value.identifiedT shouldEqual t3
+          value.id shouldEqual Version(id, 3)
+        }
+      }
+
+      it("fails if the underlying store fails to put") {
+        withFailingPutVersionedStore() { store =>
+          val id = createIdent
+          val t = createT
+
+          val result = store.putLatest(id)(t)
+          result.left.value shouldBe a[StoreWriteError]
+        }
+      }
+    }
+
+    describe("put") {
       it("puts to a version if specified and that version represents an increase") {
         val id = createIdent
 
@@ -123,44 +152,24 @@ trait VersionedStoreWithOverwriteTestCases[Id, T, VersionedStoreContext]
         }
       }
 
-      describe(
-        "increments version monotonically where there are gaps in the version sequence") {
-        it("version is specified") {
-          val id = createIdent
+      it("allows gaps in the version sequence") {
+        val id = createIdent
 
-          val t0 = createT
-          val t2 = createT
+        val t0 = createT
+        val t2 = createT
 
-          withVersionedStoreImpl(
-            initialEntries = Map(Version(id, 0) -> t0)
-          ) { store =>
-            val result = store.put(Version(id, 2))(t2)
-            val value = result.right.value
+        withVersionedStoreImpl(
+          initialEntries = Map(Version(id, 0) -> t0)
+        ) { store =>
+          val result = store.put(Version(id, 2))(t2)
+          val value = result.right.value
 
-            value.identifiedT shouldEqual t2
-            value.id shouldEqual Version(id, 2)
-          }
-        }
-
-        it("version is not specified") {
-          val id = createIdent
-
-          val t2 = createT
-          val t3 = createT
-
-          withVersionedStoreImpl(
-            initialEntries = Map(Version(id, 2) -> t2)
-          ) { store =>
-            val result = store.putLatest(id)(t3)
-            val value = result.right.value
-
-            value.identifiedT shouldEqual t3
-            value.id shouldEqual Version(id, 3)
-          }
+          value.identifiedT shouldEqual t2
+          value.id shouldEqual Version(id, 2)
         }
       }
 
-      it("refuses to add a version lower than the latest version for an id") {
+      it("refuses to add a version lower than the latest version") {
         val id = createIdent
 
         val t2 = createT
@@ -176,7 +185,7 @@ trait VersionedStoreWithOverwriteTestCases[Id, T, VersionedStoreContext]
         }
       }
 
-      it("refuses to put to an existing id & version") {
+      it("refuses to overwrite an existing id/version") {
         val id = createIdent
 
         val t = createT
@@ -188,16 +197,6 @@ trait VersionedStoreWithOverwriteTestCases[Id, T, VersionedStoreContext]
             .put(Version(id, 0))(t)
             .left
             .value shouldBe a[VersionAlreadyExistsError]
-        }
-      }
-
-      it("fails if the underlying store fails to put") {
-        withFailingPutVersionedStore() { store =>
-          val id = createIdent
-          val t = createT
-
-          val result = store.putLatest(id)(t)
-          result.left.value shouldBe a[StoreWriteError]
         }
       }
     }

@@ -84,7 +84,7 @@ class VersionedStore[Id, V, T](
     }
 
   def put(id: Version[Id, V])(t: T): WriteEither =
-    store.max(id.id: Id) match {
+    store.max(id.id) match {
       case Right(latestV) if O.gt(latestV, id.version) =>
         Left(HigherVersionExistsError())
       case Right(latestV) if latestV == id.version =>
@@ -94,8 +94,8 @@ class VersionedStore[Id, V, T](
           .put(id)(t)
     }
 
-  def putLatest(id: Id)(t: T): WriteEither =
-    nextVersionFor(id) match {
+  def putLatest(id: Id)(t: T): WriteEither = {
+    val result = nextVersionFor(id) match {
       case Right(v) =>
         put(Version(id, v))(t)
       case Left(NoMaximaValueError(_)) =>
@@ -103,4 +103,23 @@ class VersionedStore[Id, V, T](
       case Left(err: StorageError) =>
         Left(StoreWriteError(err.e))
     }
+
+    result match {
+      case Right(value) => Right(value)
+
+      // We need to handle the case where two processes call putLatest() simultaneously,
+      // and the version checking logic in put() throws an error.
+      //
+      // See VersionedStoreRaceConditionsTest for examples of how this can occur.
+      case Left(_: VersionAlreadyExistsError) | Left(
+            _: HigherVersionExistsError) =>
+        Left(
+          new StoreWriteError(
+            new Throwable(s"Another process wrote to id=$id simultaneously"))
+          with RetryableError
+        )
+
+      case Left(err) => Left(err)
+    }
+  }
 }
