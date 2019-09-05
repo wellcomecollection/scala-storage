@@ -48,7 +48,7 @@ class VersionedStoreRaceConditionsTest
     it("handles a VersionAlreadyExistsError") {
       // Desired sequence of events:
       //
-      //      putLatest("trouble")        putLatest("tantrum")       putLatest("toucan")
+      //      putLatest("trouble")        putLatest("tantrum")
       //
       //      - assign version v = 0
       //                                  - assign version v = 0
