@@ -177,7 +177,7 @@ class VersionedStoreRaceConditionsTest
         val writeError = result.left.value
         writeError shouldBe a[StoreWriteError]
         writeError shouldBe a[RetryableError]
-        writeError.e.getMessage shouldBe "Multiple processes wrote to id=1 simultaneously"
+        writeError.e.getMessage shouldBe "Another process wrote to id=1 simultaneously"
       }
     }
   }

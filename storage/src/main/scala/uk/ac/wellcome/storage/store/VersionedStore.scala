@@ -111,16 +111,10 @@ class VersionedStore[Id, V, T](
       // and the version checking logic in put() throws an error.
       //
       // See VersionedStoreRaceConditionsTest for examples of how this can occur.
-      case Left(_: VersionAlreadyExistsError) =>
+      case Left(_: VersionAlreadyExistsError) | Left(_: HigherVersionExistsError) =>
         Left(
           new StoreWriteError(
             new Throwable(s"Another process wrote to id=$id simultaneously"))
-          with RetryableError
-        )
-      case Left(_: HigherVersionExistsError) =>
-        Left(
-          new StoreWriteError(
-            new Throwable(s"Multiple processes wrote to id=$id simultaneously"))
           with RetryableError
         )
 
