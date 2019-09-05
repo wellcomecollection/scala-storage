@@ -17,7 +17,7 @@ class MemoryStore[Ident, T](initialEntries: Map[Ident, T])
   var entries: Map[Ident, T] = initialEntries
 
   override def put(id: Ident)(
-    t: T): Either[WriteError, Identified[Ident, T]] = {
+    t: T): Either[WriteError, Identified[Ident, T]] = synchronized {
     debug(s"put($id)($t)")
 
     debug(s"Pre-update state: $entries")
