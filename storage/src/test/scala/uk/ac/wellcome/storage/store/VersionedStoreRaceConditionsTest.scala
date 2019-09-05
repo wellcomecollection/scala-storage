@@ -2,8 +2,9 @@ package uk.ac.wellcome.storage.store
 
 import grizzled.slf4j.Logging
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.{EitherValues, FunSpec, Matchers}
 import uk.ac.wellcome.storage._
+import uk.ac.wellcome.storage.maxima.Maxima
 import uk.ac.wellcome.storage.maxima.memory.MemoryMaxima
 import uk.ac.wellcome.storage.store.memory.MemoryStore
 
@@ -14,6 +15,7 @@ class VersionedStoreRaceConditionsTest
   extends FunSpec
     with Matchers
     with ScalaFutures
+    with EitherValues
     with IntegrationPatience
     with Logging {
 
@@ -44,7 +46,21 @@ class VersionedStoreRaceConditionsTest
   //
   describe("handles races in putLatest") {
     it("handles a VersionAlreadyExistsError") {
-      // In this case, we want to block allow the second max() in one call
+      // Desired sequence of events:
+      //
+      //      putLatest("trouble")        putLatest("tantrum")       putLatest("toucan")
+      //
+      //      - assign version v = 0
+      //                                  - assign version v = 0
+      //                                  - check version
+      //                                  - store version v = 0
+      //      - check version
+      //        # ERROR! #
+      //
+      // This should get a VersionAlreadyExistsError error from the underlying store.
+      // Calling putLatest() twice needs four calls to max().
+      //
+      // In this test, we want to block allow the second max() in one call
       // to putLatest() until the other putLatest() has completed.
       var actualMaxCalls = 0
       var allowedMaxCalls = 3
@@ -64,8 +80,10 @@ class VersionedStoreRaceConditionsTest
         override def put(id: Version[String, Int])(t: String): Either[WriteError, Identified[Version[String, Int], String]] = {
           debug(s"Calling put(id = $id, t = $t)")
           val result = super.put(id)(t)
+
           allowedMaxCalls += 1
           debug(s"put: actualMaxCalls = $actualMaxCalls, allowedMaxCalls = $allowedMaxCalls")
+
           result
         }
       }
@@ -82,11 +100,85 @@ class VersionedStoreRaceConditionsTest
         result.count { _.isRight } shouldBe 1
 
         val errors = result.collect { case Left(err) => err }
-        errors.count { _.isInstanceOf[StoreWriteError] } shouldBe 1
-        errors.count { _.isInstanceOf[RetryableError] } shouldBe 1
+
+        val writeError = errors.collect { case e: StoreWriteError => e }.head
+        writeError shouldBe a[RetryableError]
+        writeError.e.getMessage shouldBe "Another process wrote to id=1 simultaneously"
       }
     }
 
+    it("handles a HigherVersionAlreadyExistsError") {
+      // Desired sequence of events:
+      //
+      //      putLatest("tapir")          putLatest("turtle")       putLatest("toucan")
+      //
+      //      - assign version v = 0
+      //                                  - assign version v = 0
+      //                                  - check version
+      //                                  - store version v = 0
+      //                                                            - assign version v = 1
+      //                                                            - check version
+      //                                                            - assign version v = 2
+      //      - check version
+      //        # ERROR! #
+      //
+      // This should get a HigherVersionAlreadyExists error from the underlying store.
+      //
+      // So we want to block the second call to max() in putLatest("tapir") until
+      // both the other put calls have completed.
 
+      val workingStore = new MemoryStore[Version[String, Int], String](initialEntries = Map.empty)
+        with MemoryMaxima[String, String]
+
+      var actualMaxCalls = 0
+      var allowedMaxCalls = 1
+
+      // The two stores share their entries, but we want to gate the calls
+      // to max() in this store.
+      val stoppingStore = new Store[Version[String, Int], String] with Maxima[String, Int] {
+        override def max(id: String): Either[MaximaError, Int] = {
+          debug(s"Calling max(id = $id)")
+          while (allowedMaxCalls <= actualMaxCalls) {
+            debug(s"max: actualMaxCalls = $actualMaxCalls, allowedMaxCalls = $allowedMaxCalls")
+            debug(s"Waiting for max() to be available")
+            Thread.sleep(10)
+          }
+          actualMaxCalls += 1
+
+          workingStore.max(id)
+        }
+
+        override def get(id: Version[String, Int]): Either[ReadError, Identified[Version[String, Int], String]] =
+          workingStore.get(id)
+
+        override def put(id: Version[String, Int])(t: String): WriteEither =
+          workingStore.put(id)(t)
+      }
+
+      val workingVersionedStore = new VersionedStore[String, Int, String](workingStore)
+      val stoppingVersionedStore = new VersionedStore[String, Int, String](stoppingStore)
+
+      // Call putLatest() in the stopping store.  This will get stuck waiting max().
+      val future = Future { stoppingVersionedStore.putLatest(id = "1")(t = "tapir") }
+
+      // Wait for a bit, so it gets stuck.
+      Thread.sleep(250)
+
+      // Now call putLatest() in the working store, so incrementing the version.
+      workingVersionedStore.putLatest(id = "1")(t = "turtle")
+      workingVersionedStore.putLatest(id = "1")(t = "toucan")
+
+      // Once those both succeed, we can allow the second max() call to proceed.
+      allowedMaxCalls += 1
+
+      whenReady(future) { result =>
+        debug(s"result = $result")
+
+        val writeError = result.left.value
+        writeError shouldBe a[StoreWriteError]
+        writeError shouldBe a[RetryableError]
+        writeError.e.getMessage shouldBe "Multiple processes wrote to id=1 simultaneously"
+      }
+    }
   }
 }
