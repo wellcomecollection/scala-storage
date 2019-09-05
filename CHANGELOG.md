@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.23.1 - 2019-09-05
+
+This fixes a pair of race conditions in VersionedStore where multiple processes calling `putLatest(…)` simultaneously could return a `VersionAlreadyExistsError` or `HigherVersionExistsError`.  If there is an error, it should return `StoreWriteError`, with `RetryableError` as appropriate.
+
 ## v7.23.0 - 2019-09-02
 
 Change the way `PrefixTransfer` work so it doesn't accumulate all the results in memory, and instead just reports a count of the number of files that transferred or not successfully.
