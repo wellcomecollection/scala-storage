@@ -16,18 +16,18 @@ class MemoryStore[Ident, T](initialEntries: Map[Ident, T])
 
   var entries: Map[Ident, T] = initialEntries
 
-  override def put(id: Ident)(
-    t: T): Either[WriteError, Identified[Ident, T]] = synchronized {
-    debug(s"put($id)($t)")
+  override def put(id: Ident)(t: T): Either[WriteError, Identified[Ident, T]] =
+    synchronized {
+      debug(s"put($id)($t)")
 
-    debug(s"Pre-update state: $entries")
+      debug(s"Pre-update state: $entries")
 
-    entries = entries.updated(id, t)
+      entries = entries.updated(id, t)
 
-    debug(s"Post-update state: $entries")
+      debug(s"Post-update state: $entries")
 
-    Right(Identified(id, t))
-  }
+      Right(Identified(id, t))
+    }
 
   override def get(id: Ident): Either[ReadError, Identified[Ident, T]] = {
     debug(s"get($id)")

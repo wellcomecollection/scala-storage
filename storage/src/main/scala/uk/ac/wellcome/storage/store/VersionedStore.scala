@@ -114,12 +114,14 @@ class VersionedStore[Id, V, T](
       case Left(_: VersionAlreadyExistsError) =>
         Left(
           new StoreWriteError(
-            new Throwable(s"Another process wrote to id=$id simultaneously")) with RetryableError
+            new Throwable(s"Another process wrote to id=$id simultaneously"))
+          with RetryableError
         )
       case Left(_: HigherVersionExistsError) =>
         Left(
           new StoreWriteError(
-            new Throwable(s"Multiple processes wrote to id=$id simultaneously")) with RetryableError
+            new Throwable(s"Multiple processes wrote to id=$id simultaneously"))
+          with RetryableError
         )
 
       case Left(err) => Left(err)
