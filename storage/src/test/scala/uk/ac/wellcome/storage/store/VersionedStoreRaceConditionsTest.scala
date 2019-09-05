@@ -62,10 +62,15 @@ class VersionedStoreRaceConditionsTest
       //
       // In this test, we want to block allow the second max() in one call
       // to putLatest() until the other putLatest() has completed.
-      var actualMaxCalls = 0
-      var allowedMaxCalls = 3
+      val workingStore = new MemoryStore[Version[String, Int], String](initialEntries = Map.empty)
+        with MemoryMaxima[String, String]
 
-      val store = new MemoryStore[Version[String, Int], String](initialEntries = Map.empty) with MemoryMaxima[String, String] {
+      var actualMaxCalls = 0
+      var allowedMaxCalls = 1
+
+      // The two stores share their entries, but we want to gate the calls
+      // to max() in this store.
+      val stoppingStore = new Store[Version[String, Int], String] with Maxima[String, Int] {
         override def max(id: String): Either[MaximaError, Int] = {
           debug(s"Calling max(id = $id)")
           while (allowedMaxCalls <= actualMaxCalls) {
@@ -74,34 +79,37 @@ class VersionedStoreRaceConditionsTest
             Thread.sleep(10)
           }
           actualMaxCalls += 1
-          super.max(id)
+
+          workingStore.max(id)
         }
 
-        override def put(id: Version[String, Int])(t: String): Either[WriteError, Identified[Version[String, Int], String]] = {
-          debug(s"Calling put(id = $id, t = $t)")
-          val result = super.put(id)(t)
+        override def get(id: Version[String, Int]): Either[ReadError, Identified[Version[String, Int], String]] =
+          workingStore.get(id)
 
-          allowedMaxCalls += 1
-          debug(s"put: actualMaxCalls = $actualMaxCalls, allowedMaxCalls = $allowedMaxCalls")
-
-          result
-        }
+        override def put(id: Version[String, Int])(t: String): WriteEither =
+          workingStore.put(id)(t)
       }
 
-      val versionedStore = new VersionedStore[String, Int, String](store)
+      val workingVersionedStore = new VersionedStore[String, Int, String](workingStore)
+      val stoppingVersionedStore = new VersionedStore[String, Int, String](stoppingStore)
 
-      val future: Future[Seq[versionedStore.WriteEither]] = Future.sequence(Seq(
-        Future { versionedStore.putLatest(id = "1")(t = "trouble") },
-        Future { versionedStore.putLatest(id = "1")(t = "tantrum") }
-      ))
+      // Call putLatest() in the stopping store.  This will get stuck waiting max().
+      val future = Future { stoppingVersionedStore.putLatest(id = "1")(t = "trouble") }
+
+      // Wait for a bit, so it gets stuck.
+      Thread.sleep(250)
+
+      // Now call putLatest() in the working store, so incrementing the version.
+      workingVersionedStore.putLatest(id = "1")(t = "tantrum")
+
+      // Once those both succeed, we can allow the second max() call to proceed.
+      allowedMaxCalls += 1
 
       whenReady(future) { result =>
         debug(s"result = $result")
-        result.count { _.isRight } shouldBe 1
 
-        val errors = result.collect { case Left(err) => err }
-
-        val writeError = errors.collect { case e: StoreWriteError => e }.head
+        val writeError = result.left.value
+        writeError shouldBe a[StoreWriteError]
         writeError shouldBe a[RetryableError]
         writeError.e.getMessage shouldBe "Another process wrote to id=1 simultaneously"
       }
