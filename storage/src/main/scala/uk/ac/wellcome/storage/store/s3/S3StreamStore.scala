@@ -36,7 +36,7 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
     throwable match {
       case exc: AmazonS3Exception
           if exc.getMessage.startsWith("The specified key does not exist") ||
-             exc.getMessage.startsWith("The specified bucket does not exist") =>
+            exc.getMessage.startsWith("The specified bucket does not exist") =>
         DoesNotExistError(exc)
 
       case exc: AmazonS3Exception
@@ -45,7 +45,8 @@ class S3StreamStore()(implicit s3Client: AmazonS3)
 
       case exc: AmazonS3Exception
           if exc.getMessage.startsWith("Read timed out") ||
-             exc.getMessage.startsWith("We encountered an internal error. Please try again.") =>
+            exc.getMessage.startsWith(
+              "We encountered an internal error. Please try again.") =>
         new StoreReadError(exc) with RetryableError
 
       case _ => StoreReadError(throwable)
