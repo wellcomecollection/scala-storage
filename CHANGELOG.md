@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.23.2 - 2019-09-09
+
+Add `RetryableError` to a couple of error cases in S3StreamStore.
+
 ## v7.23.1 - 2019-09-05
 
 This fixes a pair of race conditions in VersionedStore where multiple processes calling `putLatest(…)` simultaneously could return a `VersionAlreadyExistsError` or `HigherVersionExistsError`.  If there is an error, it should return `StoreWriteError`, with `RetryableError` as appropriate.
