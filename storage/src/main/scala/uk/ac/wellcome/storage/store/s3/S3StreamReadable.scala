@@ -48,8 +48,8 @@ trait S3StreamReadable
         StoreReadError(exc)
 
       case exc: AmazonS3Exception
-        if exc.getMessage.startsWith(
-          "We encountered an internal error. Please try again.") =>
+          if exc.getMessage.startsWith(
+            "We encountered an internal error. Please try again.") =>
         new StoreReadError(exc) with RetryableError
 
       case exc: SocketTimeoutException =>
