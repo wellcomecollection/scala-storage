@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.24.1 - 2019-09-10
+
+Try catching the "Read timed out" exception inside S3StreamStore again, and log errors we don't recognise.
+
 ## v7.24.0 - 2019-09-09
 
 This release adds a `RetryOps` class for retrying functions which have non-deterministic results.  In particular, any function that returns a `RetryableError` will be retried.
