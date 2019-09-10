@@ -1,5 +1,7 @@
 package uk.ac.wellcome.storage.store.s3
 
+import java.net.SocketTimeoutException
+
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{AmazonS3Exception, S3Object}
 import grizzled.slf4j.Logging
@@ -46,12 +48,16 @@ trait S3StreamReadable
         StoreReadError(exc)
 
       case exc: AmazonS3Exception
-          if exc.getMessage.startsWith("Read timed out") ||
-            exc.getMessage.startsWith(
-              "We encountered an internal error. Please try again.") =>
+          if exc.getMessage.startsWith(
+            "We encountered an internal error. Please try again.") =>
         new StoreReadError(exc) with RetryableError
 
-      case _ => StoreReadError(throwable)
+      case exc: SocketTimeoutException =>
+        new StoreReadError(exc) with RetryableError
+
+      case _ =>
+        warn(s"Unrecognised error inside S3StreamStore.get: $throwable")
+        StoreReadError(throwable)
     }
 
   private def buildStoreEntry(
