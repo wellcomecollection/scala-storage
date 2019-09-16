@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v7.24.2 - 2019-09-16
+
+Change the behaviour of two methods in VersionedStore (update and upsert) to return a `RetryableError` in race conditions where two or more processes try to write simultaneously.
+
+(See also: v7.24.0.)
+
 ## v7.24.1 - 2019-09-10
 
 Try catching the "Read timed out" exception inside S3StreamStore again, and log errors we don't recognise.
