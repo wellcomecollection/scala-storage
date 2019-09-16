@@ -34,6 +34,15 @@ class VersionedStore[Id, V, T](
     case Left(err: ReadError) =>
       Left(UpdateReadError(err))
 
+    // We need to handle the case where two processes call update() simultaneously,
+    // and the version checking logic in put() throws an error.
+    //
+    // See VersionedStoreRaceConditionsTest for examples of how this can occur.
+    case Left(err: VersionAlreadyExistsError) =>
+      Left(new UpdateWriteError(err) with RetryableError)
+    case Left(err: HigherVersionExistsError) =>
+      Left(new UpdateWriteError(err) with RetryableError)
+
     case Left(err: WriteError) =>
       Left(UpdateWriteError(err))
 
