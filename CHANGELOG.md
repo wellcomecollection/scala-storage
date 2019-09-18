@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.24.3 - 2019-09-18
+
+If you try to read an object from S3 with `S3StreamStore` and you get a rate limiting error from S3 (_Please reduce your request rate_), the error is marked as retryable.
+
 ## v7.24.2 - 2019-09-16
 
 Change the behaviour of two methods in VersionedStore (update and upsert) to return a `RetryableError` in race conditions where two or more processes try to write simultaneously.
