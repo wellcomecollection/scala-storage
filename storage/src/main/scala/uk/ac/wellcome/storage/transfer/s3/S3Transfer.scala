@@ -17,7 +17,8 @@ import scala.util.{Failure, Success, Try}
 
 class S3Transfer(
   storageClass: StorageClass = StorageClass.StandardInfrequentAccess
-)(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
+)(implicit s3Client: AmazonS3)
+    extends Transfer[ObjectLocation] {
   private val transferManager = TransferManagerBuilder.standard
     .withS3Client(s3Client)
     .build
@@ -80,8 +81,9 @@ class S3Transfer(
   private def runTransfer(
     src: ObjectLocation,
     dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
-    val copyRequest = new CopyObjectRequest(src.namespace, src.path, dst.namespace, dst.path)
-      .withStorageClass(storageClass)
+    val copyRequest =
+      new CopyObjectRequest(src.namespace, src.path, dst.namespace, dst.path)
+        .withStorageClass(storageClass)
 
     for {
       transfer <- Try {
@@ -89,13 +91,13 @@ class S3Transfer(
         transferManager.copy(copyRequest)
       } match {
         case Success(request) => Right(request)
-        case Failure(err) => Left(TransferSourceFailure(src, dst, err))
+        case Failure(err)     => Left(TransferSourceFailure(src, dst, err))
       }
 
       result <- Try {
         transfer.waitForCopyResult()
       } match {
-        case Success(_) => Right(TransferPerformed(src, dst))
+        case Success(_)   => Right(TransferPerformed(src, dst))
         case Failure(err) => Left(TransferDestinationFailure(src, dst, err))
       }
     } yield result
