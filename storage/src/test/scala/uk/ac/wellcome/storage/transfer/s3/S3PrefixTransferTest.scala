@@ -1,5 +1,6 @@
 package uk.ac.wellcome.storage.transfer.s3
 
+import com.amazonaws.services.s3.model.StorageClass
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.generators.{
@@ -107,4 +108,28 @@ class S3PrefixTransferTest
 
   override def createT: TypedStoreEntry[Record] =
     TypedStoreEntry(createRecord, metadata = createValidMetadata)
+
+  it("uses the specified storage class for the copied object") {
+    withLocalS3Bucket { srcBucket =>
+      withLocalS3Bucket { dstBucket =>
+        val src = createObjectLocationWith(srcBucket)
+        val dst = ObjectLocation(namespace = dstBucket.name, path = src.path)
+
+        val contents = randomAlphanumeric
+        s3Client.putObject(src.namespace, src.path, contents)
+
+        val prefixTransfer = S3PrefixTransfer(
+          storageClass = StorageClass.OneZoneInfrequentAccess
+        )
+
+        val srcPrefix = ObjectLocationPrefix(namespace = srcBucket.name, path = "")
+        val dstPrefix = ObjectLocationPrefix(namespace = dstBucket.name, path = "")
+
+        prefixTransfer.transferPrefix(srcPrefix, dstPrefix) shouldBe a[Right[_, _]]
+
+        s3Client.getObjectMetadata(dst.namespace, dst.path)
+          .getStorageClass shouldBe StorageClass.OneZoneInfrequentAccess.toString
+      }
+    }
+  }
 }

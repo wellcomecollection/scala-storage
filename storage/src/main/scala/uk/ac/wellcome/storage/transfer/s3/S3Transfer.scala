@@ -3,7 +3,11 @@ package uk.ac.wellcome.storage.transfer.s3
 import java.io.InputStream
 
 import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.S3ObjectInputStream
+import com.amazonaws.services.s3.model.{
+  CopyObjectRequest,
+  S3ObjectInputStream,
+  StorageClass
+}
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import org.apache.commons.io.IOUtils
 import uk.ac.wellcome.storage.ObjectLocation
@@ -11,7 +15,9 @@ import uk.ac.wellcome.storage.transfer._
 
 import scala.util.{Failure, Success, Try}
 
-class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
+class S3Transfer(
+  storageClass: StorageClass = StorageClass.StandardInfrequentAccess
+)(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
   private val transferManager = TransferManagerBuilder.standard
     .withS3Client(s3Client)
     .build
@@ -73,24 +79,25 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
 
   private def runTransfer(
     src: ObjectLocation,
-    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] =
+    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
+    val copyRequest = new CopyObjectRequest(src.namespace, src.path, dst.namespace, dst.path)
+      .withStorageClass(storageClass)
+
     for {
       transfer <- Try {
         // This code will throw if the source object doesn't exist.
-        transferManager.copy(
-          src.namespace,
-          src.path,
-          dst.namespace,
-          dst.path
-        )
+        transferManager.copy(copyRequest)
       } match {
         case Success(request) => Right(request)
-        case Failure(err)     => Left(TransferSourceFailure(src, dst, err))
+        case Failure(err) => Left(TransferSourceFailure(src, dst, err))
       }
 
-      result <- Try { transfer.waitForCopyResult() } match {
-        case Success(_)   => Right(TransferPerformed(src, dst))
+      result <- Try {
+        transfer.waitForCopyResult()
+      } match {
+        case Success(_) => Right(TransferPerformed(src, dst))
         case Failure(err) => Left(TransferDestinationFailure(src, dst, err))
       }
     } yield result
+  }
 }
