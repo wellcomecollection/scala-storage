@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.25.0 - 2019-12-09
+
+Add a parameter to `S3Transfer` and `S3PrefixTransfer` that allows you to specify the storage class of copied objects.
+
 ## v7.24.3 - 2019-09-18
 
 If you try to read an object from S3 with `S3StreamStore` and you get a rate limiting error from S3 (_Please reduce your request rate_), the error is marked as retryable.
