@@ -96,7 +96,7 @@ Most of our services run on container hosts with limited disk space. Working wit
 
 These libraries are used as part of the [Wellcome Digital Platform][platform].
 
-[platform]: https://github.com/wellcometrust/platform
+[platform]: https://github.com/wellcomecollection/platform
 
 ## Installation
 
