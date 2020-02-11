@@ -1,6 +1,6 @@
 # scala-storage
 
-[![Build Status](https://travis-ci.org/wellcometrust/scala-storage.svg?branch=master)](https://travis-ci.org/wellcometrust/scala-storage)
+[![Build Status](https://travis-ci.org/wellcomecollection/scala-storage.svg?branch=master)](https://travis-ci.org/wellcomecollection/scala-storage)
 
 This is a Scala library for working with storage providers such as DynamoDB and S3.
 
@@ -8,7 +8,7 @@ This is a Scala library for working with storage providers such as DynamoDB and 
 
 The library includes classes for:
 
-- [`listing`](https://github.com/wellcometrust/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/listing): Listing things from a provider e.g. listing keys in an S3 bucket.
+- [`listing`](https://github.com/wellcomecollection/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/listing): Listing things from a provider e.g. listing keys in an S3 bucket.
 
     ```scala
     trait Listing[Prefix, Result] {
@@ -16,7 +16,7 @@ The library includes classes for:
     }
     ```
 
-- [`locking`](https://github.com/wellcometrust/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/locking): Distributed process locking.
+- [`locking`](https://github.com/wellcomecollection/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/locking): Distributed process locking.
 
     We run services in parallel, accessing shared data stores. In some cases, we only want one worker to be able to access those resources at a time. The locking service gives us a generic way of controlling access to resources. This is especially useful when the underlying resource does not support locking. For example, we use this to prevent concurrent writes to S3.
 
@@ -31,7 +31,7 @@ The library includes classes for:
     Here the locking service will try to acquire a lock on the identifiers 1, 2 and 3. It releases the locks when the process completes. If another worker tries to lock on any of these identifiers it will fail.
 
 
-- [`maxima`](https://github.com/wellcometrust/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/maxima): Find the maximum valued thing in a store.
+- [`maxima`](https://github.com/wellcomecollection/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/maxima): Find the maximum valued thing in a store.
 
     For example, suppose we are storing multiple versions of files. We might have a database like this:
 
@@ -48,7 +48,7 @@ The library includes classes for:
 
     In the DynamoDB implementation, it finds the greatest value of the range key for a given value of the hash key.
 
-- [`store`](https://github.com/wellcometrust/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/store): We start with a base trait for getting and putting to a storage provider. Then we can compose this to add more operations in a generic way.
+- [`store`](https://github.com/wellcomecollection/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/store): We start with a base trait for getting and putting to a storage provider. Then we can compose this to add more operations in a generic way.
 
     - `StreamStore`: Getting/putting Java `InputStream` instances.
 
@@ -60,9 +60,9 @@ The library includes classes for:
 
     - `VersionedHybridStore`: A combination of the `HybridStore` and the `VersionedStore`, which allows us to store multiple versions of a large document with atomic updates.
 
-- [`streaming`](https://github.com/wellcometrust/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/streaming): Convert Java/Scala classes to and from an `InputStream`.
+- [`streaming`](https://github.com/wellcomecollection/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/streaming): Convert Java/Scala classes to and from an `InputStream`.
 
-- [`transfer`](https://github.com/wellcometrust/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/transfer): Transferring things within a storage provider, including transfer by prefix
+- [`transfer`](https://github.com/wellcomecollection/scala-storage/tree/master/storage/src/main/scala/uk/ac/wellcome/storage/transfer): Transferring things within a storage provider, including transfer by prefix
 
     For example, this allows us to copy a folder in S3 to another location.
 
