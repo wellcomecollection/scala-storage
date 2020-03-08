@@ -25,23 +25,7 @@ class S3Transfer(
 
   override def transfer(
     src: ObjectLocation,
-    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
-    def compare(
-      srcStream: InputStream,
-      dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation],
-                                      TransferNoOp[ObjectLocation]] = {
-      if (IOUtils.contentEquals(srcStream, dstStream)) {
-        Right(TransferNoOp(src, dst))
-      } else {
-        Left(TransferOverwriteFailure(src, dst))
-      }
-    }
-
-    def getStream(location: ObjectLocation): Try[S3ObjectInputStream] =
-      Try {
-        s3Client.getObject(location.namespace, location.path)
-      }.map { _.getObjectContent }
-
+    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] =
     getStream(dst) match {
       // If the destination object doesn't exist, we can go ahead and
       // start the transfer.
@@ -53,7 +37,12 @@ class S3Transfer(
           // If both the source and the destination exist, we can skip
           // the copy operation.
           case Success(srcStream) =>
-            val result = compare(srcStream, dstStream)
+            val result = compare(
+              src = src,
+              dst = dst,
+              srcStream = srcStream,
+              dstStream = dstStream
+            )
 
             // Remember to close the streams afterwards, or we might get
             // errors like
@@ -79,7 +68,23 @@ class S3Transfer(
             Left(TransferSourceFailure(src, dst, err))
         }
     }
-  }
+
+  private def compare(
+               src: ObjectLocation,
+               dst: ObjectLocation,
+               srcStream: InputStream,
+               dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation],
+    TransferNoOp[ObjectLocation]] =
+    if (IOUtils.contentEquals(srcStream, dstStream)) {
+      Right(TransferNoOp(src, dst))
+    } else {
+      Left(TransferOverwriteFailure(src, dst))
+    }
+
+  private def getStream(location: ObjectLocation): Try[S3ObjectInputStream] =
+    Try {
+      s3Client.getObject(location.namespace, location.path)
+    }.map { _.getObjectContent }
 
   private def runTransfer(
     src: ObjectLocation,
