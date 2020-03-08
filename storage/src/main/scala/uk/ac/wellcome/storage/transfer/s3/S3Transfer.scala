@@ -19,6 +19,9 @@ class S3Transfer(
   storageClass: StorageClass = StorageClass.StandardInfrequentAccess
 )(implicit s3Client: AmazonS3)
     extends Transfer[ObjectLocation] {
+
+  import uk.ac.wellcome.storage.RetryOps._
+
   private val transferManager = TransferManagerBuilder.standard
     .withS3Client(s3Client)
     .build
@@ -27,10 +30,18 @@ class S3Transfer(
     src: ObjectLocation,
     dst: ObjectLocation): Either[TransferFailure, TransferSuccess] =
     getStream(dst) match {
+
       // If the destination object doesn't exist, we can go ahead and
       // start the transfer.
+      //
+      // We have seen once case where the S3 CopyObject API returned
+      // a 500 error, in a bag with multiple 20GB+ files, so we do need
+      // to be able to retry failures here.
       case Failure(_) =>
-        runTransfer(src, dst)
+        def singleTransfer: Either[TransferFailure, TransferSuccess] =
+          runTransfer(src, dst)
+
+        singleTransfer.retry(maxAttempts = 3)
 
       case Success(dstStream) =>
         getStream(src) match {
