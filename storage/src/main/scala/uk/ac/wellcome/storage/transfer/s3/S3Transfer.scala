@@ -64,7 +64,9 @@ class S3Transfer(
             // See: https://github.com/wellcometrust/platform/issues/3600
             //      https://github.com/aws/aws-sdk-java/issues/269
             //
+            srcStream.abort()
             srcStream.close()
+            dstStream.abort()
             dstStream.close()
 
             result
@@ -73,6 +75,7 @@ class S3Transfer(
             // As above, we need to abort the input stream so we don't leave streams
             // open or get warnings from the SDK.
             dstStream.abort()
+            dstStream.close()
             Left(TransferSourceFailure(src, dst, err))
         }
     }
