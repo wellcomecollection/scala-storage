@@ -19,41 +19,41 @@ class S3Transfer(
   storageClass: StorageClass = StorageClass.StandardInfrequentAccess
 )(implicit s3Client: AmazonS3)
     extends Transfer[ObjectLocation] {
+
+  import uk.ac.wellcome.storage.RetryOps._
+
   private val transferManager = TransferManagerBuilder.standard
     .withS3Client(s3Client)
     .build
 
   override def transfer(
     src: ObjectLocation,
-    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
-    def compare(
-      srcStream: InputStream,
-      dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation],
-                                      TransferNoOp[ObjectLocation]] = {
-      if (IOUtils.contentEquals(srcStream, dstStream)) {
-        Right(TransferNoOp(src, dst))
-      } else {
-        Left(TransferOverwriteFailure(src, dst))
-      }
-    }
-
-    def getStream(location: ObjectLocation): Try[S3ObjectInputStream] =
-      Try {
-        s3Client.getObject(location.namespace, location.path)
-      }.map { _.getObjectContent }
-
+    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] =
     getStream(dst) match {
+
       // If the destination object doesn't exist, we can go ahead and
       // start the transfer.
+      //
+      // We have seen once case where the S3 CopyObject API returned
+      // a 500 error, in a bag with multiple 20GB+ files, so we do need
+      // to be able to retry failures here.
       case Failure(_) =>
-        runTransfer(src, dst)
+        def singleTransfer: Either[TransferFailure, TransferSuccess] =
+          runTransfer(src, dst)
+
+        singleTransfer.retry(maxAttempts = 3)
 
       case Success(dstStream) =>
         getStream(src) match {
           // If both the source and the destination exist, we can skip
           // the copy operation.
           case Success(srcStream) =>
-            val result = compare(srcStream, dstStream)
+            val result = compare(
+              src = src,
+              dst = dst,
+              srcStream = srcStream,
+              dstStream = dstStream
+            )
 
             // Remember to close the streams afterwards, or we might get
             // errors like
@@ -64,7 +64,9 @@ class S3Transfer(
             // See: https://github.com/wellcometrust/platform/issues/3600
             //      https://github.com/aws/aws-sdk-java/issues/269
             //
+            srcStream.abort()
             srcStream.close()
+            dstStream.abort()
             dstStream.close()
 
             result
@@ -73,10 +75,27 @@ class S3Transfer(
             // As above, we need to abort the input stream so we don't leave streams
             // open or get warnings from the SDK.
             dstStream.abort()
+            dstStream.close()
             Left(TransferSourceFailure(src, dst, err))
         }
     }
-  }
+
+  private def compare(
+    src: ObjectLocation,
+    dst: ObjectLocation,
+    srcStream: InputStream,
+    dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation],
+                                    TransferNoOp[ObjectLocation]] =
+    if (IOUtils.contentEquals(srcStream, dstStream)) {
+      Right(TransferNoOp(src, dst))
+    } else {
+      Left(TransferOverwriteFailure(src, dst))
+    }
+
+  private def getStream(location: ObjectLocation): Try[S3ObjectInputStream] =
+    Try {
+      s3Client.getObject(location.namespace, location.path)
+    }.map { _.getObjectContent }
 
   private def runTransfer(
     src: ObjectLocation,

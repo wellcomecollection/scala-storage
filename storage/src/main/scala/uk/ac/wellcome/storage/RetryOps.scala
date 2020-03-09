@@ -48,4 +48,13 @@ object RetryOps extends Logging {
           Left(err)
       }
   }
+
+  // Syntactic sugar for retrying a function that doesn't take any arguments.
+  implicit class RetryNoArgs[Out, OutError](f: => Either[OutError, Out]) {
+    def retry(maxAttempts: Int = 1): Either[OutError, Out] = {
+      val fWithUnit: Unit => Either[OutError, Out] = (_: Unit) => f
+
+      fWithUnit.retry(maxAttempts)(())
+    }
+  }
 }
