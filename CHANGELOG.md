@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v7.25.1 - 2020-03-09
+
+When using `S3Transfer`, a failed copy operation will be retried up to three times before failing.
+
 ## v7.25.0 - 2019-12-09
 
 Add a parameter to `S3Transfer` and `S3PrefixTransfer` that allows you to specify the storage class of copied objects.
