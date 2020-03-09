@@ -81,11 +81,11 @@ class S3Transfer(
     }
 
   private def compare(
-               src: ObjectLocation,
-               dst: ObjectLocation,
-               srcStream: InputStream,
-               dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation],
-    TransferNoOp[ObjectLocation]] =
+    src: ObjectLocation,
+    dst: ObjectLocation,
+    srcStream: InputStream,
+    dstStream: InputStream): Either[TransferOverwriteFailure[ObjectLocation],
+                                    TransferNoOp[ObjectLocation]] =
     if (IOUtils.contentEquals(srcStream, dstStream)) {
       Right(TransferNoOp(src, dst))
     } else {
