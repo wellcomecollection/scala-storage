@@ -1,12 +1,11 @@
 package uk.ac.wellcome.storage.store
 
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.generators.RandomThings
-import uk.ac.wellcome.storage.streaming.{
-  InputStreamWithLength,
-  InputStreamWithLengthAndMetadata
-}
+import uk.ac.wellcome.storage.streaming.{InputStreamWithLength, InputStreamWithLengthAndMetadata}
 import uk.ac.wellcome.storage._
 
 trait HybridStoreTestCases[IndexedStoreId,
@@ -19,7 +18,7 @@ trait HybridStoreTestCases[IndexedStoreId,
                              IndexedStoreId,
                              HybridIndexedStoreEntry[TypedStoreId, Metadata]],
                            HybridStoreContext]
-    extends FunSpec
+    extends AnyFunSpec
     with StoreTestCases[
       IndexedStoreId,
       HybridStoreEntry[T, Metadata],

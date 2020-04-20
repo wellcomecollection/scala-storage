@@ -6,7 +6,9 @@ import java.util.UUID
 
 import org.scanamo.syntax._
 import org.scanamo.DynamoFormat
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 import org.scanamo.auto._
@@ -15,7 +17,7 @@ import org.scanamo.{Table => ScanamoTable}
 import org.scanamo.time.JavaTimeFormats._
 
 trait DynamoFormatTestCases[T]
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with DynamoFixtures
     with EitherValues {

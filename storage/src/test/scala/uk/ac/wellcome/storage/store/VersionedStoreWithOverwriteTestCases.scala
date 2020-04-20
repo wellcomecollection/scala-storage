@@ -1,13 +1,15 @@
 package uk.ac.wellcome.storage.store
 
 import grizzled.slf4j.Logging
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.store.fixtures.VersionedStoreFixtures
 
 trait VersionedStoreWithOverwriteTestCases[Id, T, VersionedStoreContext]
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with EitherValues
     with Logging

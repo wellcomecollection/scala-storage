@@ -1,8 +1,10 @@
 package uk.ac.wellcome.storage
 
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class RetryOpsTest extends FunSpec with Matchers with EitherValues {
+class RetryOpsTest extends AnyFunSpec with Matchers with EitherValues {
   import RetryOps._
 
   it("if N=1 is a Right[…], it succeeds") {

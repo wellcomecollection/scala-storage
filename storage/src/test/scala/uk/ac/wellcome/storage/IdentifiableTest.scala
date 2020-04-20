@@ -1,8 +1,9 @@
 package uk.ac.wellcome.storage
 
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class IdentifiableTest extends FunSpec with Matchers {
+class IdentifiableTest extends AnyFunSpec with Matchers {
   it("creates an IdentityKey for Version[Id, V]") {
     val version = Version(id = "b1234", version = 5)
     version.asKey shouldBe IdentityKey("b1234/5")

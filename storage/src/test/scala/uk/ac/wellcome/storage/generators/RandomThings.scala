@@ -2,7 +2,7 @@ package uk.ac.wellcome.storage.generators
 
 import java.io.{ByteArrayInputStream, InputStream}
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.Random
 

@@ -1,12 +1,14 @@
 package uk.ac.wellcome.storage.maxima
 
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.{IdentityKey, NoMaximaValueError, Version}
 import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 
 trait MaximaTestCases
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with RecordGenerators
     with EitherValues {

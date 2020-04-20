@@ -1,12 +1,11 @@
 package uk.ac.wellcome.storage.store
 
-import org.scalatest.{Assertion, FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.Assertion
+import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.IncorrectStreamLengthError
-import uk.ac.wellcome.storage.store.fixtures.{
-  ReplayableStreamFixtures,
-  StreamStoreFixtures
-}
+import uk.ac.wellcome.storage.store.fixtures.{ReplayableStreamFixtures, StreamStoreFixtures}
 import uk.ac.wellcome.storage.streaming._
 
 // TODO: Strictly speaking, a StreamingStore just cares about a vanilla InputStream,
@@ -19,7 +18,7 @@ trait StreamStoreTestCases[
   Namespace,
   StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata],
   StreamStoreContext]
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with StreamAssertions
     with ReplayableStreamFixtures

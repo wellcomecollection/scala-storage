@@ -2,9 +2,9 @@ import sbt._
 
 object WellcomeDependencies {
   private lazy val versions = new {
-    val fixtures = "1.0.0"
-    val json = "1.1.1"
-    val typesafe = "1.0.0"
+    val fixtures = "1.2.0"
+    val json = "2.0.1"
+    val typesafe = "2.0.0"
   }
 
   val fixturesLibrary: Seq[ModuleID] = Seq(
@@ -30,14 +30,16 @@ object Dependencies {
     val aws = "1.11.504"
 
     val logback = "1.1.8"
-    val mockito = "1.9.5"
-    val scalatest = "3.0.1"
+    val mockito = "1.10.19"
+    val scalatest = "3.1.1"
+    val scalatestplusMockito = "3.1.0.0"
     val scanamo = "1.0.0-M10"
     val apacheCommons = "2.6"
   }
 
   val testDependencies = Seq(
     "org.scalatest" %% "scalatest" % versions.scalatest % Test,
+    "org.scalatestplus" %% "mockito-1-10" % versions.scalatestplusMockito % Test,
     "org.mockito" % "mockito-core" % versions.mockito % Test
   )
 

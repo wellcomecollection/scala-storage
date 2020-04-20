@@ -1,18 +1,16 @@
 package uk.ac.wellcome.storage.store.dynamo
 
-import com.amazonaws.services.dynamodbv2.model.{
-  AmazonDynamoDBException,
-  ConditionalCheckFailedException,
-  ResourceNotFoundException
-}
-import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
+import com.amazonaws.services.dynamodbv2.model.{AmazonDynamoDBException, ConditionalCheckFailedException, ResourceNotFoundException}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Assertion, EitherValues}
 import uk.ac.wellcome.storage.{RetryableError, Version}
 import uk.ac.wellcome.storage.dynamo.DynamoEntry
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
 
 trait DynamoWritableTestCases[Ident, T, EntryType <: DynamoEntry[Ident, T]]
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with DynamoFixtures
     with EitherValues {

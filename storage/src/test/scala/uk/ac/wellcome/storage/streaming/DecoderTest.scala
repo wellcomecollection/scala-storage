@@ -8,7 +8,9 @@ import io.circe.Decoder.Result
 import io.circe.HCursor
 import io.circe.parser.parse
 import org.apache.commons.io.IOUtils
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.generators.RandomThings
@@ -16,7 +18,7 @@ import uk.ac.wellcome.storage.generators.RandomThings
 import scala.util.Random
 
 class DecoderTest
-    extends FunSpec
+    extends AnyFunSpec
     with EitherValues
     with Matchers
     with RandomThings {

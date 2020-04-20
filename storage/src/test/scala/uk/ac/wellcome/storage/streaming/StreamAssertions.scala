@@ -4,7 +4,8 @@ import java.io.{ByteArrayInputStream, InputStream}
 import java.nio.charset.StandardCharsets
 
 import org.apache.commons.io.IOUtils
-import org.scalatest.{Assertion, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.matchers.should.Matchers
 
 trait StreamAssertions extends Matchers {
   def assertStreamsEqual(x: InputStream, y: InputStream): Assertion =
