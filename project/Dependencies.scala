@@ -31,7 +31,7 @@ object Dependencies {
 
     val logback = "1.1.8"
     val mockito = "1.9.5"
-    val scalatest = "3.0.1"
+    val scalatest = "3.1.1"
     val scanamo = "1.0.0-M10"
     val apacheCommons = "2.6"
   }
