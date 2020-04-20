@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v8.0.0 - 2020-04-20
+
+Upgrade akka and scalatest
+
 ## v7.25.1 - 2020-03-09
 
 When using `S3Transfer`, a failed copy operation will be retried up to three times before failing.
