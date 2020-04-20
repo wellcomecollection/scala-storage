@@ -7,15 +7,11 @@ import com.amazonaws.services.dynamodbv2.model._
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scanamo.auto._
 import org.scanamo.time.JavaTimeFormats._
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures.Table
-import uk.ac.wellcome.storage.locking.{
-  LockDaoTestCases,
-  LockFailure,
-  UnlockFailure
-}
+import uk.ac.wellcome.storage.locking.{LockDaoTestCases, LockFailure, UnlockFailure}
 
 class DynamoLockDaoTest
     extends LockDaoTestCases[String, UUID, Table]

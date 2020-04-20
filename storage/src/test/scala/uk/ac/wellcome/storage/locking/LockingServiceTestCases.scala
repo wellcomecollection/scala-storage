@@ -1,7 +1,8 @@
 package uk.ac.wellcome.storage.locking
 
 import cats.implicits._
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.fixtures.LockingServiceFixtures
 import uk.ac.wellcome.storage.locking.memory.PermanentLock
@@ -9,7 +10,7 @@ import uk.ac.wellcome.storage.locking.memory.PermanentLock
 import scala.util.Try
 
 trait LockingServiceTestCases[Ident, ContextId, LockDaoContext]
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with LockingServiceFixtures[Ident, ContextId, LockDaoContext] {
   def getCurrentLocks(lockDao: LockDaoStub,

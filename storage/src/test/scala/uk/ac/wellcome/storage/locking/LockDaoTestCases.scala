@@ -3,14 +3,16 @@ package uk.ac.wellcome.storage.locking
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.runtime.BoxedUnit
 
 trait LockDaoTestCases[Ident, ContextId, LockDaoContext]
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with EitherValues
     with ScalaFutures

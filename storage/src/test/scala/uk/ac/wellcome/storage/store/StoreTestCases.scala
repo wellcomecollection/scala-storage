@@ -1,11 +1,12 @@
 package uk.ac.wellcome.storage.store
 
-import org.scalatest.{EitherValues, FunSpec}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.EitherValues
 import uk.ac.wellcome.storage.store.fixtures.StoreFixtures
 import uk.ac.wellcome.storage.{Identified, NotFoundError, WriteError}
 
 trait StoreTestCases[Id, T, Namespace, StoreContext]
-    extends FunSpec
+    extends AnyFunSpec
     with EitherValues
     with StoreFixtures[Id, T, Namespace, StoreContext] {
 

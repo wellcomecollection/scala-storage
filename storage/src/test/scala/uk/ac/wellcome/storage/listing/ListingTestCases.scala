@@ -1,6 +1,8 @@
 package uk.ac.wellcome.storage.listing
 
-import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Assertion, EitherValues}
 import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
 import uk.ac.wellcome.storage.listing.fixtures.ListingFixtures
 
@@ -9,7 +11,7 @@ trait ListingTestCases[Ident,
                        ListingResult,
                        ListingImpl <: Listing[Prefix, ListingResult],
                        ListingContext]
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with EitherValues
     with ObjectLocationGenerators

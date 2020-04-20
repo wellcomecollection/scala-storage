@@ -2,7 +2,9 @@ package uk.ac.wellcome.storage.store
 
 import grizzled.slf4j.Logging
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.maxima.Maxima
 import uk.ac.wellcome.storage.maxima.memory.MemoryMaxima
@@ -12,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class VersionedStoreRaceConditionsTest
-  extends FunSpec
+  extends AnyFunSpec
     with Matchers
     with ScalaFutures
     with EitherValues

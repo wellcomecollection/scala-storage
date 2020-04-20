@@ -1,8 +1,9 @@
 package uk.ac.wellcome.storage
 
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class ObjectLocationPrefixTest extends FunSpec with Matchers {
+class ObjectLocationPrefixTest extends AnyFunSpec with Matchers {
   val namespace = "my_great_namespace"
 
   it("normalizes the location") {

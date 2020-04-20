@@ -1,10 +1,9 @@
 package uk.ac.wellcome.storage.store.dynamo
 
-import com.amazonaws.services.dynamodbv2.model.{
-  AmazonDynamoDBException,
-  ResourceNotFoundException
-}
-import org.scalatest.{Assertion, EitherValues, FunSpec, Matchers}
+import com.amazonaws.services.dynamodbv2.model.{AmazonDynamoDBException, ResourceNotFoundException}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Assertion, EitherValues}
 import org.scanamo.{Table => ScanamoTable}
 import uk.ac.wellcome.storage.dynamo.DynamoEntry
 import uk.ac.wellcome.storage.fixtures.DynamoFixtures
@@ -15,7 +14,7 @@ import org.scanamo.auto._
 
 trait DynamoReadableTestCases[
   DynamoIdent, EntryType <: DynamoEntry[String, Record]]
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with DynamoFixtures
     with EitherValues

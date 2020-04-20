@@ -3,7 +3,9 @@ package uk.ac.wellcome.storage.streaming
 import java.nio.charset.StandardCharsets
 
 import io.circe.Json
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.json.JsonUtil._
 import uk.ac.wellcome.storage.LossyEncodingDetected
 import uk.ac.wellcome.storage.generators.RandomThings
@@ -11,7 +13,7 @@ import uk.ac.wellcome.storage.generators.RandomThings
 import scala.util.Random
 
 class CodecTest
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with EitherValues
     with RandomThings {

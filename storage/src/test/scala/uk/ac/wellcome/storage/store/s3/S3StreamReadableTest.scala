@@ -2,14 +2,16 @@ package uk.ac.wellcome.storage.store.s3
 
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.AmazonS3Exception
-import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito._
 import org.mockito.Matchers._
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import uk.ac.wellcome.storage.{DoesNotExistError, StoreReadError}
 import uk.ac.wellcome.storage.fixtures.S3Fixtures
 
-class S3StreamReadableTest extends FunSpec with Matchers with S3Fixtures with EitherValues with MockitoSugar {
+class S3StreamReadableTest extends AnyFunSpec with Matchers with S3Fixtures with EitherValues with MockitoSugar {
   def createS3ReadableWith(client: AmazonS3, retries: Int = 1): S3StreamReadable =
     new S3StreamReadable {
       override implicit val s3Client: AmazonS3 = client

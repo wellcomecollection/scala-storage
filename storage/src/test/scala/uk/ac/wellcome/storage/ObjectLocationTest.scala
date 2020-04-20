@@ -1,8 +1,9 @@
 package uk.ac.wellcome.storage
 
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class ObjectLocationTest extends FunSpec with Matchers {
+class ObjectLocationTest extends AnyFunSpec with Matchers {
   val namespace = "my_great_namespace"
 
   it("can join with a single path") {

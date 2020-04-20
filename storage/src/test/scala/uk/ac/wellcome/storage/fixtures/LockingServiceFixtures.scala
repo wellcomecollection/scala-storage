@@ -1,7 +1,8 @@
 package uk.ac.wellcome.storage.fixtures
 
 import grizzled.slf4j.Logging
-import org.scalatest.{Assertion, EitherValues, Matchers, TryValues}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Assertion, EitherValues, TryValues}
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.generators.RandomThings
 import uk.ac.wellcome.storage.locking._

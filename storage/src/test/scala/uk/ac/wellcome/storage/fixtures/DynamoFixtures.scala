@@ -3,7 +3,7 @@ package uk.ac.wellcome.storage.fixtures
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model._
 import com.amazonaws.services.dynamodbv2.util.TableUtils.waitUntilActive
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import org.scanamo.error.DynamoReadError
 import org.scanamo.query.UniqueKey

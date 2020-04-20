@@ -1,6 +1,8 @@
 package uk.ac.wellcome.storage.transfer
 
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.storage.Identified
 import uk.ac.wellcome.storage.store.Store
 import uk.ac.wellcome.storage.store.fixtures.NamespaceFixtures
@@ -8,7 +10,7 @@ import uk.ac.wellcome.storage.transfer.fixtures.TransferFixtures
 
 trait TransferTestCases[
   Location, T, Namespace, StoreImpl <: Store[Location, T]]
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with EitherValues
     with TransferFixtures[Location, T, StoreImpl]
