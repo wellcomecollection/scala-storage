@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v8.1.0 - 2020-04-30
+
+Upgrade json library to 2.1.0
+
 ## v8.0.0 - 2020-04-20
 
 Upgrade akka and scalatest
