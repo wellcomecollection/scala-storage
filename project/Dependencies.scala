@@ -3,7 +3,7 @@ import sbt._
 object WellcomeDependencies {
   private lazy val versions = new {
     val fixtures = "1.2.0"
-    val json = "2.0.1"
+    val json = "2.1.0"
     val typesafe = "2.0.0"
   }
 
