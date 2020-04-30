@@ -18,7 +18,8 @@ trait PrefixTransfer[Prefix, Location] extends Logging {
   private def copyPrefix(
     iterator: Iterable[Location],
     srcPrefix: Prefix,
-    dstPrefix: Prefix
+    dstPrefix: Prefix,
+    checkForExisting: Boolean
   ): Either[PrefixTransferFailure, PrefixTransferSuccess] = {
     var successes = 0
     var failures = 0
@@ -36,7 +37,9 @@ trait PrefixTransfer[Prefix, Location] extends Logging {
                 dst = buildDstLocation(
                   srcPrefix = srcPrefix,
                   dstPrefix = dstPrefix,
-                  srcLocation = srcLocation)
+                  srcLocation = srcLocation
+                ),
+                checkForExisting = checkForExisting
               )
             )
           }
@@ -60,14 +63,20 @@ trait PrefixTransfer[Prefix, Location] extends Logging {
 
   def transferPrefix(
     srcPrefix: Prefix,
-    dstPrefix: Prefix
+    dstPrefix: Prefix,
+    checkForExisting: Boolean = true
   ): Either[TransferFailure, PrefixTransferSuccess] = {
     listing.list(srcPrefix) match {
       case Left(error) =>
         Left(PrefixTransferListingFailure(srcPrefix, error.e))
 
       case Right(iterable) =>
-        copyPrefix(iterable, srcPrefix, dstPrefix)
+        copyPrefix(
+          iterator = iterable,
+          srcPrefix = srcPrefix,
+          dstPrefix = dstPrefix,
+          checkForExisting = checkForExisting
+        )
     }
   }
 }
