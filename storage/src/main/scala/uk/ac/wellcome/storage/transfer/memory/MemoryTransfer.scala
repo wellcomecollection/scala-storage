@@ -6,7 +6,9 @@ import uk.ac.wellcome.storage.transfer._
 trait MemoryTransfer[Ident, T]
     extends Transfer[Ident]
     with MemoryStoreBase[Ident, T] {
-  override def transferWithCheckForExisting(src: Ident, dst: Ident): Either[TransferFailure, TransferSuccess] =
+  override def transferWithCheckForExisting(
+    src: Ident,
+    dst: Ident): Either[TransferFailure, TransferSuccess] =
     (entries.get(src), entries.get(dst)) match {
       case (Some(srcT), Some(dstT)) if srcT == dstT =>
         Right(TransferNoOp(src, dst))
@@ -19,7 +21,9 @@ trait MemoryTransfer[Ident, T]
         Left(TransferSourceFailure(src, dst))
     }
 
-  override def transferWithOverwrites(src: Ident, dst: Ident): Either[TransferFailure, TransferSuccess] =
+  override def transferWithOverwrites(
+    src: Ident,
+    dst: Ident): Either[TransferFailure, TransferSuccess] =
     entries.get(src) match {
       case Some(srcT) =>
         entries = entries ++ Map(dst -> srcT)
