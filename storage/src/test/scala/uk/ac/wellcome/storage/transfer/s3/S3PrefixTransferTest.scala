@@ -92,7 +92,8 @@ class S3PrefixTransferTest
     implicit val transfer: S3Transfer = new S3Transfer() {
       override def transfer(
         src: ObjectLocation,
-        dst: ObjectLocation): Either[TransferFailure, TransferSuccess] =
+        dst: ObjectLocation,
+        checkForExisting: Boolean = true): Either[TransferFailure, TransferSuccess] =
         Left(TransferSourceFailure(src, dst))
     }
 

@@ -97,7 +97,8 @@ class MemoryPrefixTransferTest
       new InnerMemoryPrefixTransfer(store.entries) {
         override def transfer(
           src: String,
-          dst: String): Either[TransferFailure, TransferSuccess] =
+          dst: String,
+          checkForExisting: Boolean = true): Either[TransferFailure, TransferSuccess] =
           Left(TransferSourceFailure(src, dst))
       }
     )

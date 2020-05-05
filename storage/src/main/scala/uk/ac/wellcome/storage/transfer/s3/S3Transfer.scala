@@ -26,7 +26,16 @@ class S3Transfer(
     .withS3Client(s3Client)
     .build
 
-  override def transfer(
+  override def transferWithOverwrites(
+    src: ObjectLocation,
+    dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
+    def singleTransfer: Either[TransferFailure, TransferSuccess] =
+      runTransfer(src, dst)
+
+    singleTransfer.retry(maxAttempts = 3)
+  }
+
+  override def transferWithCheckForExisting(
     src: ObjectLocation,
     dst: ObjectLocation): Either[TransferFailure, TransferSuccess] =
     getStream(dst) match {
@@ -38,10 +47,7 @@ class S3Transfer(
       // a 500 error, in a bag with multiple 20GB+ files, so we do need
       // to be able to retry failures here.
       case Failure(_) =>
-        def singleTransfer: Either[TransferFailure, TransferSuccess] =
-          runTransfer(src, dst)
-
-        singleTransfer.retry(maxAttempts = 3)
+        transferWithOverwrites(src, dst)
 
       case Success(dstStream) =>
         getStream(src) match {

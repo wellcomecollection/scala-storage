@@ -221,5 +221,70 @@ trait PrefixTransferTestCases[
         }
       }
     }
+
+    it("fails if you try to overwrite an existing object") {
+      withNamespace { implicit namespace =>
+        val srcPrefix = createPrefix
+        val dstPrefix = createPrefix
+
+        val srcLocation = createLocationFrom(srcPrefix, suffix = "1.txt")
+        val dstLocation = createLocationFrom(dstPrefix, suffix = "1.txt")
+
+        val srcT = createT
+        val dstT = createT
+
+        withPrefixTransferStore(initialEntries = Map(srcLocation -> srcT, dstLocation -> dstT)) {
+          implicit store =>
+            withPrefixTransfer { prefixTransfer =>
+              val result = prefixTransfer.transferPrefix(
+                srcPrefix = srcPrefix,
+                dstPrefix = dstPrefix
+              )
+
+              result.left.value shouldBe a[PrefixTransferFailure]
+
+              store.get(srcLocation).right.value shouldBe Identified(
+                srcLocation,
+                srcT)
+              store.get(dstLocation).right.value shouldBe Identified(
+                dstLocation,
+                dstT)
+            }
+        }
+      }
+    }
+
+    it("overwrites an existing object if checkForExisting=false") {
+      withNamespace { implicit namespace =>
+        val srcPrefix = createPrefix
+        val dstPrefix = createPrefix
+
+        val srcLocation = createLocationFrom(srcPrefix, suffix = "1.txt")
+        val dstLocation = createLocationFrom(dstPrefix, suffix = "1.txt")
+
+        val srcT = createT
+        val dstT = createT
+
+        withPrefixTransferStore(initialEntries = Map(srcLocation -> srcT, dstLocation -> dstT)) {
+          implicit store =>
+            withPrefixTransfer { prefixTransfer =>
+              val result = prefixTransfer.transferPrefix(
+                srcPrefix = srcPrefix,
+                dstPrefix = dstPrefix,
+                checkForExisting = false
+              )
+
+              result.right.value shouldBe PrefixTransferSuccess(1)
+
+              store.get(srcLocation).right.value shouldBe Identified(
+                srcLocation,
+                srcT)
+              store.get(dstLocation).right.value shouldBe Identified(
+                dstLocation,
+                srcT)
+            }
+        }
+      }
+    }
   }
 }

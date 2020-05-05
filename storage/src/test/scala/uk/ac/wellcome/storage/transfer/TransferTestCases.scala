@@ -114,5 +114,47 @@ trait TransferTestCases[
         }
       }
     }
+
+    it("fails if the source is absent checkForExisting=false") {
+      withNamespace { implicit namespace =>
+        val src = createSrcLocation
+        val dst = createDstLocation
+
+        withTransferStore(initialEntries = Map.empty) { implicit store =>
+          withTransfer { transfer =>
+            val err = transfer.transfer(src, dst, checkForExisting = false).left.get
+            err shouldBe a[TransferSourceFailure[_]]
+            err
+              .asInstanceOf[TransferSourceFailure[Location]]
+              .source shouldBe src
+            err
+              .asInstanceOf[TransferSourceFailure[Location]]
+              .destination shouldBe dst
+          }
+        }
+      }
+    }
+
+    it("overwrites the destination if checkForExisting=false") {
+      withNamespace { implicit namespace =>
+        val src = createSrcLocation
+        val dst = createDstLocation
+
+        val srcT = createT
+        val dstT = createT
+
+        withTransferStore(initialEntries = Map(src -> srcT, dst -> dstT)) {
+          implicit store =>
+            withTransfer { transfer =>
+              transfer
+                .transfer(src, dst, checkForExisting = false)
+                .right.value shouldBe TransferPerformed(src, dst)
+
+              store.get(src) shouldBe Right(Identified(src, srcT))
+              store.get(dst) shouldBe Right(Identified(dst, srcT))
+            }
+        }
+      }
+    }
   }
 }
