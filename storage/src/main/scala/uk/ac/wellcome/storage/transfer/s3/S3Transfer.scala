@@ -5,8 +5,7 @@ import java.io.InputStream
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{
   CopyObjectRequest,
-  S3ObjectInputStream,
-  StorageClass
+  S3ObjectInputStream
 }
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import org.apache.commons.io.IOUtils
@@ -15,9 +14,7 @@ import uk.ac.wellcome.storage.transfer._
 
 import scala.util.{Failure, Success, Try}
 
-class S3Transfer(
-  storageClass: StorageClass = StorageClass.StandardInfrequentAccess
-)(implicit s3Client: AmazonS3)
+class S3Transfer(implicit s3Client: AmazonS3)
     extends Transfer[ObjectLocation] {
 
   import uk.ac.wellcome.storage.RetryOps._
@@ -108,7 +105,6 @@ class S3Transfer(
     dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
     val copyRequest =
       new CopyObjectRequest(src.namespace, src.path, dst.namespace, dst.path)
-        .withStorageClass(storageClass)
 
     for {
       transfer <- Try {

@@ -1,6 +1,5 @@
 package uk.ac.wellcome.storage.transfer.s3
 
-import com.amazonaws.services.s3.model.StorageClass
 import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
 import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
@@ -48,25 +47,6 @@ class S3TransferTest
             .value shouldBe a[TransferSourceFailure[_]]
         }
       }
-    }
-  }
-
-  it("uses the specified storage class for the copied object") {
-    withLocalS3Bucket { bucket =>
-      val src = createObjectLocationWith(bucket)
-      val dst = createObjectLocationWith(bucket)
-
-      val contents = randomAlphanumeric
-      s3Client.putObject(src.namespace, src.path, contents)
-
-      val transfer = new S3Transfer(
-        storageClass = StorageClass.OneZoneInfrequentAccess
-      )
-
-      transfer.transfer(src, dst) shouldBe a[Right[_, _]]
-
-      s3Client.getObjectMetadata(dst.namespace, dst.path)
-        .getStorageClass shouldBe StorageClass.OneZoneInfrequentAccess.toString
     }
   }
 }
