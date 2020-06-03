@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v8.3.0 - 2020-06-03
+
+Remove the code for handling storage classes from S3Transfer and S3PrefixTransfer; we manage all this with lifecycle rules on our S3 buckets.
+
 ## v8.2.0 - 2020-05-05
 
 This adds a new argument to `Transfer.transfer()` and `PrefixTransfer.transferPrefix()`.
