@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v8.6.0 - 2020-06-05
+
+When you copy objects with `S3Transfer`, the tags are not copied.
+
 ## v8.5.0 - 2020-06-05
 
 This adds a new trait `Tags` for managing Tags in storage resources.
