@@ -11,14 +11,14 @@ trait StreamAssertions extends Matchers {
   def assertStreamsEqual(x: InputStream, y: InputStream): Assertion =
     IOUtils.contentEquals(x, y) shouldBe true
 
-  def assertStreamEquals(inputStream: InputStream with HasLength,
+  def assertStreamEquals(inputStream: InputStreamWithLength,
                          string: String): Assertion =
     assertStreamEquals(
       inputStream,
       string,
       expectedLength = string.getBytes.length)
 
-  def assertStreamEquals(inputStream: InputStream with HasLength,
+  def assertStreamEquals(inputStream: InputStreamWithLength,
                          string: String,
                          expectedLength: Long): Assertion =
     assertStreamEquals(
@@ -27,7 +27,7 @@ trait StreamAssertions extends Matchers {
       expectedLength = expectedLength
     )
 
-  def assertStreamEquals(inputStream: InputStream with HasLength,
+  def assertStreamEquals(inputStream: InputStreamWithLength,
                          bytes: Array[Byte],
                          expectedLength: Long): Assertion = {
     inputStream.length shouldBe expectedLength

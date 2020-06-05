@@ -1,23 +1,16 @@
 package uk.ac.wellcome.storage.store.s3
 
-import java.nio.charset.StandardCharsets
-
 import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import com.amazonaws.services.s3.transfer.{TransferManagerBuilder, Upload}
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.store.Writable
-import uk.ac.wellcome.storage.streaming.{
-  Codec,
-  InputStreamWithLengthAndMetadata
-}
+import uk.ac.wellcome.storage.streaming.InputStreamWithLength
 
-import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
-trait S3StreamWritable
-    extends Writable[ObjectLocation, InputStreamWithLengthAndMetadata] {
+trait S3StreamWritable extends Writable[ObjectLocation, InputStreamWithLength] {
   implicit val s3Client: AmazonS3
 
   private val transferManager = TransferManagerBuilder.standard
@@ -51,41 +44,15 @@ trait S3StreamWritable
   // https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html
   private val MAX_KEY_BYTE_LENGTH = 1024
 
-  private def coerceMetadata(metadata: Map[String, String])
-    : Either[MetadataCoercionFailure, Map[String, String]] = {
-    val results = metadata.map {
-      case (k, v) =>
-        for {
-          key <- Codec.coerce(StandardCharsets.US_ASCII)(k)
-          value <- Codec.coerce(StandardCharsets.US_ASCII)(v)
-        } yield (key, value)
-    }
-
-    val failure = results.collect { case Left(e)   => e } toList
-    val success = results.collect { case Right(kv) => kv } toList
-
-    val mappedSuccess = success.map {
-      case (k, v) => k -> v
-    }.toMap
-
-    Either.cond(
-      failure.isEmpty,
-      mappedSuccess,
-      MetadataCoercionFailure(failure, success)
-    )
-  }
-
   private def createPutObjectRequest(
     location: ObjectLocation,
-    stream: InputStreamWithLengthAndMetadata,
-    metadataMap: Map[String, String]
+    stream: InputStreamWithLength,
   ): Either[WriteError, PutObjectRequest] = {
     val keyByteLength = location.path.getBytes.length
 
     val metadata = new ObjectMetadata()
 
     metadata.setContentLength(stream.length)
-    metadata.setUserMetadata(metadataMap.asJava)
 
     val request = new PutObjectRequest(
       location.namespace,
@@ -109,9 +76,8 @@ trait S3StreamWritable
   private def uploadWithTransferManager(
     putObjectRequest: PutObjectRequest,
     location: ObjectLocation,
-    inputStream: InputStreamWithLengthAndMetadata
-  ): Either[WriteError,
-            Identified[ObjectLocation, InputStreamWithLengthAndMetadata]] =
+    inputStream: InputStreamWithLength
+  ): Either[WriteError, Identified[ObjectLocation, InputStreamWithLength]] =
     Try {
       val upload: Upload = transferManager
         .upload(putObjectRequest)
@@ -123,13 +89,9 @@ trait S3StreamWritable
     }
 
   override def put(location: ObjectLocation)(
-    inputStream: InputStreamWithLengthAndMetadata): WriteEither =
+    inputStream: InputStreamWithLength): WriteEither =
     for {
-      metadataMap <- coerceMetadata(inputStream.metadata)
-      putObjectRequest <- createPutObjectRequest(
-        location,
-        inputStream,
-        metadataMap)
+      putObjectRequest <- createPutObjectRequest(location, inputStream)
       result <- uploadWithTransferManager(
         putObjectRequest,
         location,

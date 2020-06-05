@@ -1,7 +1,6 @@
 package uk.ac.wellcome.storage.store.memory
 
 import uk.ac.wellcome.fixtures.TestWith
-import uk.ac.wellcome.storage.store.TypedStoreEntry
 import uk.ac.wellcome.storage.store.fixtures.TypedStoreFixtures
 import uk.ac.wellcome.storage.streaming.Codec
 
@@ -12,9 +11,9 @@ trait MemoryTypedStoreFixtures[Ident, T]
       T,
       MemoryStreamStore[Ident],
       MemoryTypedStore[Ident, T],
-      MemoryStore[Ident, MemoryStreamStoreEntry]] {
+      MemoryStore[Ident, Array[Byte]]] {
   def withTypedStore[R](streamStore: MemoryStreamStore[Ident],
-                        initialEntries: Map[Ident, TypedStoreEntry[T]])(
+                        initialEntries: Map[Ident, T])(
     testWith: TestWith[MemoryTypedStore[Ident, T], R])(
     implicit codec: Codec[T]): R = {
     implicit val memoryStreamStore: MemoryStreamStore[Ident] = streamStore
@@ -25,7 +24,7 @@ trait MemoryTypedStoreFixtures[Ident, T]
   }
 
   def withMemoryTypedStoreImpl[R](
-    initialEntries: Map[Ident, TypedStoreEntry[T]])(
+    initialEntries: Map[Ident, T])(
     testWith: TestWith[MemoryTypedStore[Ident, T], R])(
     implicit streamStore: MemoryStreamStore[Ident],
     codec: Codec[T]): R =

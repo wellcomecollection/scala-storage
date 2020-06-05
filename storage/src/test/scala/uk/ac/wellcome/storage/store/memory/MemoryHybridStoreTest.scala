@@ -91,8 +91,7 @@ class MemoryHybridStoreTest
 
     testWith(
       new MemoryTypedStoreImpl(initialEntries = Map.empty) {
-        override def put(id: String)(
-          entry: TypedStoreEntry[Record]): WriteEither =
+        override def put(id: String)(entry: Record): WriteEither =
           Left(StoreWriteError(new Error("BOOM!")))
       }
     )

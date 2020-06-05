@@ -1,13 +1,10 @@
 package uk.ac.wellcome.storage.streaming
 
-import java.nio.charset.StandardCharsets
-
 import io.circe.Json
-import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.EitherValues
+import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.json.JsonUtil._
-import uk.ac.wellcome.storage.LossyEncodingDetected
 import uk.ac.wellcome.storage.generators.RandomThings
 
 import scala.util.Random
@@ -51,26 +48,6 @@ class CodecTest
 
           val stream = typeCodec[NamedThing].toStream(thing).right.value
           typeCodec[NamedThing].fromStream(stream).right.value shouldBe thing
-        }
-      }
-    }
-
-    describe("methods") {
-      describe("coerce") {
-        it("can coerce a valid string into a StandardCharset") {
-          val randomString = randomLowercaseLatinAlphabetString()
-
-          Codec
-            .coerce(StandardCharsets.UTF_8)(randomString)
-            .right
-            .value shouldBe randomString
-        }
-
-        it("errors when coercing an invalid string into a StandardCharset") {
-          Codec
-            .coerce(StandardCharsets.US_ASCII)(randomUTF16String)
-            .left
-            .value shouldBe a[LossyEncodingDetected]
         }
       }
     }

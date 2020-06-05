@@ -4,34 +4,26 @@ import grizzled.slf4j.Logging
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.store.StreamStore
 import uk.ac.wellcome.storage.streaming.Codec._
-import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
+import uk.ac.wellcome.storage.streaming.InputStreamWithLength
 
-class MemoryStreamStore[Ident](
-  val memoryStore: MemoryStore[Ident, MemoryStreamStoreEntry])
-    extends StreamStore[Ident, InputStreamWithLengthAndMetadata]
+class MemoryStreamStore[Ident](val memoryStore: MemoryStore[Ident, Array[Byte]])
+    extends StreamStore[Ident]
     with Logging {
   override def get(id: Ident): ReadEither =
     for {
       entry <- memoryStore.get(id)
-      internalEntry = entry.identifiedT
+      bytes = entry.identifiedT
 
       // This is sort of cheating, but since we created these streams the lengths
       // should never be incorrect, and it means we can't get an EncoderError
       // (a WriteError) from inside a REad method.
-      inputStream = bytesCodec.toStream(internalEntry.bytes).right.get
+      inputStream = bytesCodec.toStream(bytes).right.get
+    } yield Identified(id, inputStream)
 
-      result = InputStreamWithLengthAndMetadata(
-        inputStream,
-        internalEntry.metadata)
-    } yield Identified(id, result)
-
-  override def put(id: Ident)(
-    entry: InputStreamWithLengthAndMetadata): WriteEither =
+  override def put(id: Ident)(entry: InputStreamWithLength): WriteEither =
     bytesCodec.fromStream(entry) match {
       case Right(bytes) =>
-        val internalEntry =
-          MemoryStreamStoreEntry(bytes, metadata = entry.metadata)
-        memoryStore.put(id)(internalEntry).map { _ =>
+        memoryStore.put(id)(bytes).map { _ =>
           Identified(id, entry)
         }
 
@@ -44,13 +36,8 @@ class MemoryStreamStore[Ident](
 object MemoryStreamStore {
   def apply[Ident](): MemoryStreamStore[Ident] = {
     val memoryStore =
-      new MemoryStore[Ident, MemoryStreamStoreEntry](initialEntries = Map.empty)
+      new MemoryStore[Ident, Array[Byte]](initialEntries = Map.empty)
 
     new MemoryStreamStore[Ident](memoryStore)
   }
 }
-
-case class MemoryStreamStoreEntry(
-  bytes: Array[Byte],
-  metadata: Map[String, String]
-)

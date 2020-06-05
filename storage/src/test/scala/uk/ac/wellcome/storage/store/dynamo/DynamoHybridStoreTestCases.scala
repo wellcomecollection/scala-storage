@@ -62,7 +62,7 @@ trait DynamoHybridStoreTestCases[
     testWith(
       new S3TypedStore[Record]()(codec, s3StreamStore) {
         override def put(id: ObjectLocation)(
-          entry: TypedStoreEntry[Record]): WriteEither =
+          entry: Record): WriteEither =
           Left(StoreWriteError(new Error("BOOM!")))
       }
     )

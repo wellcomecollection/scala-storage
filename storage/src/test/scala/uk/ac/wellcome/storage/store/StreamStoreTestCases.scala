@@ -8,15 +8,10 @@ import uk.ac.wellcome.storage.IncorrectStreamLengthError
 import uk.ac.wellcome.storage.store.fixtures.{ReplayableStreamFixtures, StreamStoreFixtures}
 import uk.ac.wellcome.storage.streaming._
 
-// TODO: Strictly speaking, a StreamingStore just cares about a vanilla InputStream,
-// and we should put the `HasLength` and `HasMetadata` test cases into separate
-// traits.  This starts to get awkward with the underlying StoreTestCases trait
-// if you want them both, so I've left it for now.  Would be nice to fix another time.
-//
 trait StreamStoreTestCases[
   Ident,
   Namespace,
-  StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata],
+  StreamStoreImpl <: StreamStore[Ident],
   StreamStoreContext]
     extends AnyFunSpec
     with Matchers
@@ -25,12 +20,12 @@ trait StreamStoreTestCases[
     with StreamStoreFixtures[Ident, StreamStoreImpl, StreamStoreContext]
     with StoreWithOverwritesTestCases[
       Ident,
-      InputStreamWithLengthAndMetadata,
+      InputStreamWithLength,
       Namespace,
       StreamStoreContext] {
 
   override def withStoreImpl[R](
-    initialEntries: Map[Ident, InputStreamWithLengthAndMetadata],
+    initialEntries: Map[Ident, InputStreamWithLength],
     storeContext: StreamStoreContext)(testWith: TestWith[StoreImpl, R]): R =
     withStreamStoreImpl(storeContext, initialEntries) { streamStore =>
       testWith(streamStore)
@@ -45,16 +40,13 @@ trait StreamStoreTestCases[
   override def createT: ReplayableStream =
     createReplayableStream
 
-  override def assertEqualT(
-    original: InputStreamWithLengthAndMetadata,
-    stored: InputStreamWithLengthAndMetadata): Assertion = {
-    original.metadata shouldBe stored.metadata
-
+  override def assertEqualT(original: InputStreamWithLength, stored: InputStreamWithLength): Assertion = {
     val originalBytes = original.asInstanceOf[ReplayableStream].originalBytes
     assertStreamEquals(
       stored,
       originalBytes,
-      expectedLength = originalBytes.length)
+      expectedLength = originalBytes.length
+    )
   }
 
   describe("it behaves as a StreamStore") {
@@ -62,8 +54,7 @@ trait StreamStoreTestCases[
       it("can get a stream without metadata") {
         withNamespace { implicit namespace =>
           val id = createId
-          val initialEntry =
-            ReplayableStream(randomBytes(), metadata = Map.empty)
+          val initialEntry = ReplayableStream(randomBytes())
 
           withStoreImpl(initialEntries = Map(id -> initialEntry)) { store =>
             val retrievedEntry = store.get(id).right.value
@@ -77,7 +68,7 @@ trait StreamStoreTestCases[
         withNamespace { implicit namespace =>
           val id = createId
           val initialEntry =
-            ReplayableStream(randomBytes(), metadata = createValidMetadata)
+            ReplayableStream(randomBytes())
 
           withStoreImpl(initialEntries = Map(id -> initialEntry)) { store =>
             val retrievedEntry = store.get(id).right.value
@@ -92,7 +83,7 @@ trait StreamStoreTestCases[
       it("can put a stream without metadata") {
         withNamespace { implicit namespace =>
           val id = createId
-          val entry = ReplayableStream(randomBytes(), metadata = Map.empty)
+          val entry = ReplayableStream(randomBytes())
 
           withStoreImpl(initialEntries = Map.empty) { store =>
             store.put(id)(entry) shouldBe a[Right[_, _]]
@@ -103,8 +94,7 @@ trait StreamStoreTestCases[
       it("can put a stream with metadata") {
         withNamespace { implicit namespace =>
           val id = createId
-          val entry =
-            ReplayableStream(randomBytes(), metadata = createValidMetadata)
+          val entry = ReplayableStream(randomBytes())
 
           withStoreImpl(initialEntries = Map.empty) { store =>
             store.put(id)(entry) shouldBe a[Right[_, _]]
@@ -117,8 +107,7 @@ trait StreamStoreTestCases[
           val bytes = randomBytes()
           val brokenStream = new ReplayableStream(
             bytes,
-            length = bytes.length + 1,
-            metadata = createValidMetadata
+            length = bytes.length + 1
           )
 
           withStoreImpl(initialEntries = Map.empty) { store =>
@@ -134,8 +123,7 @@ trait StreamStoreTestCases[
           val bytes = randomBytes()
           val brokenStream = new ReplayableStream(
             bytes,
-            length = bytes.length - 1,
-            metadata = createValidMetadata
+            length = bytes.length - 1
           )
 
           withStoreImpl(initialEntries = Map.empty) { store =>

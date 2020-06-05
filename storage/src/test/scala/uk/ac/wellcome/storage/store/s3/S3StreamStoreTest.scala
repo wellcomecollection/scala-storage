@@ -108,7 +108,7 @@ class S3StreamStoreTest
           val tooLongPath = randomStringOfByteLength(1025)()
           val id = createId.copy(path = tooLongPath)
 
-          val entry = ReplayableStream(randomBytes(), metadata = Map.empty)
+          val entry = ReplayableStream(randomBytes())
 
           withStoreImpl(initialEntries = Map.empty) { store =>
             val value = store.put(id)(entry).left.value

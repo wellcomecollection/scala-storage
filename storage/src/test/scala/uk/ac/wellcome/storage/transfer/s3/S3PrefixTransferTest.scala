@@ -2,16 +2,11 @@ package uk.ac.wellcome.storage.transfer.s3
 
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
-import uk.ac.wellcome.storage.generators.{
-  MetadataGenerators,
-  Record,
-  RecordGenerators
-}
+import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
 import uk.ac.wellcome.storage.listing.s3.{
   S3ObjectLocationListing,
   S3ObjectSummaryListing
 }
-import uk.ac.wellcome.storage.store.TypedStoreEntry
 import uk.ac.wellcome.storage.store.fixtures.BucketNamespaceFixtures
 import uk.ac.wellcome.storage.store.s3.{
   S3StreamStore,
@@ -30,14 +25,13 @@ class S3PrefixTransferTest
       ObjectLocation,
       ObjectLocationPrefix,
       Bucket,
-      TypedStoreEntry[Record],
+      Record,
       S3TypedStore[Record]]
     with BucketNamespaceFixtures
-    with MetadataGenerators
     with RecordGenerators
     with S3TypedStoreFixtures[Record] {
   override def withPrefixTransferStore[R](
-    initialEntries: Map[ObjectLocation, TypedStoreEntry[Record]])(
+    initialEntries: Map[ObjectLocation, Record])(
     testWith: TestWith[S3TypedStore[Record], R]): R = {
     val streamStore = new S3StreamStore()
 
@@ -106,6 +100,5 @@ class S3PrefixTransferTest
                                   suffix: String): ObjectLocation =
     prefix.asLocation(suffix)
 
-  override def createT: TypedStoreEntry[Record] =
-    TypedStoreEntry(createRecord, metadata = createValidMetadata)
+  override def createT: Record = createRecord
 }

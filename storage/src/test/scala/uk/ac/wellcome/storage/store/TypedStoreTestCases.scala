@@ -9,22 +9,17 @@ import uk.ac.wellcome.storage.store.fixtures.TypedStoreFixtures
 import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming.{
   Codec,
-  InputStreamWithLength,
-  InputStreamWithLengthAndMetadata
+  InputStreamWithLength
 }
 
 trait TypedStoreTestCases[
   Ident,
   T,
   Namespace,
-  StreamStoreImpl <: StreamStore[Ident, InputStreamWithLengthAndMetadata],
+  StreamStoreImpl <: StreamStore[Ident],
   TypedStoreImpl <: TypedStore[Ident, T],
   StreamStoreContext]
-    extends StoreWithOverwritesTestCases[
-      Ident,
-      TypedStoreEntry[T],
-      Namespace,
-      StreamStoreContext]
+    extends StoreWithOverwritesTestCases[Ident, T, Namespace, StreamStoreContext]
     with TypedStoreFixtures[
       Ident,
       T,
@@ -34,7 +29,7 @@ trait TypedStoreTestCases[
     with RandomThings {
 
   override def withStoreImpl[R](
-    initialEntries: Map[Ident, TypedStoreEntry[T]],
+    initialEntries: Map[Ident, T],
     storeContext: StreamStoreContext)(testWith: TestWith[StoreImpl, R]): R =
     withTypedStoreImpl(storeContext, initialEntries) { typedStore =>
       testWith(typedStore)

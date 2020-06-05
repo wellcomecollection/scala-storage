@@ -5,46 +5,12 @@ import java.nio.charset.{Charset, StandardCharsets}
 
 import io.circe
 import io.circe.Json
-import uk.ac.wellcome.storage.{
-  CharsetDecodingError,
-  CharsetEncodingError,
-  CodecError,
-  LossyEncodingDetected
-}
-
-import scala.util.{Failure, Success, Try}
 
 trait Codec[T] extends Encoder[T] with Decoder[T]
 
 object Codec {
   import EncoderInstances._
   import DecoderInstances._
-
-  def coerce(charset: Charset)(
-    startingString: String): Either[CodecError, String] =
-    for {
-
-      // TODO: We don't have any tests for these for comprehensions.
-      // If we can find strings that will throw these errors, we should add tests.
-      encodedByteBuffer <- Try(charset.encode(startingString)) match {
-        case Success(s) => Right(s)
-        case Failure(e) => Left(CharsetEncodingError(e))
-      }
-
-      decodedCharBuffer <- Try(charset.decode(encodedByteBuffer)) match {
-        case Success(s) => Right(s)
-        case Failure(e) => Left(CharsetDecodingError(e))
-      }
-
-      result <- if (startingString == decodedCharBuffer.array.mkString) {
-        Right(decodedCharBuffer.array.mkString)
-      } else {
-        Left(
-          LossyEncodingDetected(
-            startingString,
-            decodedCharBuffer.array.mkString))
-      }
-    } yield result
 
   implicit val bytesCodec: Codec[Array[Byte]] = new Codec[Array[Byte]] {
     override def fromStream(
