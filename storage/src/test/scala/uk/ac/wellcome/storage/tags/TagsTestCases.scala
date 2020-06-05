@@ -36,5 +36,28 @@ trait TagsTestCases[Ident] extends AnyFunSpec with Matchers with EitherValues wi
         }
       }
     }
+
+    describe("put()") {
+      it("can write new tags to an identifier") {
+        val objectIdent = createIdent
+        val objectTags = createTags
+
+        withTags(initialTags = Map(objectIdent -> Map.empty)) { tags =>
+          tags.put(id = objectIdent, tags = objectTags) shouldBe Right(objectTags)
+          tags.get(id = objectIdent).right.value shouldBe objectTags
+        }
+      }
+
+      it("replaces the existing tags for an identifier") {
+        val objectIdent = createIdent
+        val oldTags = createTags
+        val newTags = createTags
+
+        withTags(initialTags = Map(objectIdent -> oldTags)) { tags =>
+          tags.put(id = objectIdent, tags = newTags) shouldBe Right(newTags)
+          tags.get(id = objectIdent).right.value shouldBe newTags
+        }
+      }
+    }
   }
 }
