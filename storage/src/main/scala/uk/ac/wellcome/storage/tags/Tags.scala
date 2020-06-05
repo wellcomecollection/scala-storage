@@ -6,15 +6,19 @@ import uk.ac.wellcome.storage._
 trait Tags[Ident] extends Logging {
   def get(id: Ident): Either[ReadError, Map[String, String]]
 
-  protected def put(id: Ident, tags: Map[String, String]): Either[WriteError, Map[String, String]]
+  protected def put(
+    id: Ident,
+    tags: Map[String, String]): Either[WriteError, Map[String, String]]
 
   def update(id: Ident)(
-    updateFunction: Map[String, String] => Either[UpdateFunctionError, Map[String, String]]): Either[UpdateError, Map[String, String]] = {
+    updateFunction: Map[String, String] => Either[UpdateFunctionError,
+                                                  Map[String, String]])
+    : Either[UpdateError, Map[String, String]] = {
     info(s"Tags on $id: updating tags")
 
     for {
       existingTags <- get(id) match {
-        case Right(value) => Right(value)
+        case Right(value)                 => Right(value)
         case Left(err: DoesNotExistError) => Left(UpdateNoSourceError(err))
         case Left(err)                    => Left(UpdateReadError(err))
       }

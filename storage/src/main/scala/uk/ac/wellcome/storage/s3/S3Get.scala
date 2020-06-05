@@ -19,28 +19,29 @@ object S3Get extends Logging {
     retryableGet(location)
   }
 
-  private def getOnce[T](getFunction: ObjectLocation => T): ObjectLocation => Either[ReadError, T] =
+  private def getOnce[T](
+    getFunction: ObjectLocation => T): ObjectLocation => Either[ReadError, T] =
     (location: ObjectLocation) =>
       Try { getFunction(location) } match {
         case Success(t)   => Right(t)
         case Failure(err) => Left(buildGetError(err))
-      }
+    }
 
   private def buildGetError(throwable: Throwable): ReadError =
     throwable match {
       case exc: AmazonS3Exception
-        if exc.getMessage.startsWith("The specified key does not exist") ||
-          exc.getMessage.startsWith("The specified bucket does not exist") =>
+          if exc.getMessage.startsWith("The specified key does not exist") ||
+            exc.getMessage.startsWith("The specified bucket does not exist") =>
         DoesNotExistError(exc)
 
       case exc: AmazonS3Exception
-        if exc.getMessage.startsWith("The specified bucket is not valid") =>
+          if exc.getMessage.startsWith("The specified bucket is not valid") =>
         StoreReadError(exc)
 
       case exc: AmazonS3Exception
-        if exc.getMessage.startsWith(
-          "We encountered an internal error. Please try again.") ||
-          exc.getMessage.startsWith("Please reduce your request rate.") =>
+          if exc.getMessage.startsWith(
+            "We encountered an internal error. Please try again.") ||
+            exc.getMessage.startsWith("Please reduce your request rate.") =>
         new StoreReadError(exc) with RetryableError
 
       case exc: SocketTimeoutException =>
