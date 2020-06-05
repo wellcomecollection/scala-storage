@@ -3,12 +3,17 @@ package uk.ac.wellcome.storage.transfer.s3
 import java.io.InputStream
 
 import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.{CopyObjectRequest, S3ObjectInputStream}
+import com.amazonaws.services.s3.model.{
+  CopyObjectRequest,
+  ObjectTagging,
+  S3ObjectInputStream
+}
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import org.apache.commons.io.IOUtils
 import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.transfer._
 
+import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
@@ -99,8 +104,13 @@ class S3Transfer(implicit s3Client: AmazonS3) extends Transfer[ObjectLocation] {
   private def runTransfer(
     src: ObjectLocation,
     dst: ObjectLocation): Either[TransferFailure, TransferSuccess] = {
+
+    // We use tags in the verifier in the storage service to check if we've already
+    // verified an object.  For safety, we drop all the tags every time an object
+    // gets rewritten or copied around.
     val copyRequest =
       new CopyObjectRequest(src.namespace, src.path, dst.namespace, dst.path)
+        .withNewObjectTagging(new ObjectTagging(List().asJava))
 
     for {
       transfer <- Try {
