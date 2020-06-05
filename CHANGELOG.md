@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v8.4.0 - 2020-06-05
+
+This removes all the logic for handling metadata in S3StreamStore and S3TypedStore, which we've never used.  We'll replace it with classes for interacting with S3 tags.
+
 ## v8.3.0 - 2020-06-03
 
 Remove the code for handling storage classes from S3Transfer and S3PrefixTransfer; we manage all this with lifecycle rules on our S3 buckets.
