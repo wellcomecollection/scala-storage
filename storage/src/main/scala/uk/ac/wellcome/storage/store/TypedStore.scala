@@ -1,9 +1,6 @@
 package uk.ac.wellcome.storage.store
 
-import uk.ac.wellcome.storage.streaming.{
-  Codec,
-  InputStreamWithLength
-}
+import uk.ac.wellcome.storage.streaming.{Codec, InputStreamWithLength}
 import uk.ac.wellcome.storage._
 
 import scala.util.{Failure, Success, Try}

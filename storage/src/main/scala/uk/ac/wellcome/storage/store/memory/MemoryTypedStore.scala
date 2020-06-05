@@ -4,9 +4,8 @@ import org.apache.commons.io.IOUtils
 import uk.ac.wellcome.storage.store._
 import uk.ac.wellcome.storage.streaming.Codec
 
-class MemoryTypedStore[Ident, T](
-  initialEntries: Map[Ident, T] =
-    Map.empty[Ident, T])(
+class MemoryTypedStore[Ident, T](initialEntries: Map[Ident, T] =
+                                   Map.empty[Ident, T])(
   implicit val streamStore: MemoryStreamStore[Ident],
   val codec: Codec[T]
 ) extends TypedStore[Ident, T] {

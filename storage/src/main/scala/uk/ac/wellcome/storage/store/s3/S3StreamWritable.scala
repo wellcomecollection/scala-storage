@@ -10,8 +10,7 @@ import uk.ac.wellcome.storage.streaming.InputStreamWithLength
 
 import scala.util.{Failure, Success, Try}
 
-trait S3StreamWritable
-    extends Writable[ObjectLocation, InputStreamWithLength] {
+trait S3StreamWritable extends Writable[ObjectLocation, InputStreamWithLength] {
   implicit val s3Client: AmazonS3
 
   private val transferManager = TransferManagerBuilder.standard
@@ -78,8 +77,7 @@ trait S3StreamWritable
     putObjectRequest: PutObjectRequest,
     location: ObjectLocation,
     inputStream: InputStreamWithLength
-  ): Either[WriteError,
-            Identified[ObjectLocation, InputStreamWithLength]] =
+  ): Either[WriteError, Identified[ObjectLocation, InputStreamWithLength]] =
     Try {
       val upload: Upload = transferManager
         .upload(putObjectRequest)

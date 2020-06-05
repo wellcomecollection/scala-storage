@@ -6,8 +6,7 @@ import uk.ac.wellcome.storage.store.StreamStore
 import uk.ac.wellcome.storage.streaming.Codec._
 import uk.ac.wellcome.storage.streaming.InputStreamWithLength
 
-class MemoryStreamStore[Ident](
-  val memoryStore: MemoryStore[Ident, Array[Byte]])
+class MemoryStreamStore[Ident](val memoryStore: MemoryStore[Ident, Array[Byte]])
     extends StreamStore[Ident]
     with Logging {
   override def get(id: Ident): ReadEither =
@@ -21,8 +20,7 @@ class MemoryStreamStore[Ident](
       inputStream = bytesCodec.toStream(bytes).right.get
     } yield Identified(id, inputStream)
 
-  override def put(id: Ident)(
-    entry: InputStreamWithLength): WriteEither =
+  override def put(id: Ident)(entry: InputStreamWithLength): WriteEither =
     bytesCodec.fromStream(entry) match {
       case Right(bytes) =>
         memoryStore.put(id)(bytes).map { _ =>
