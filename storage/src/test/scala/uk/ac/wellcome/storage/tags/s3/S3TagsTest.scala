@@ -21,7 +21,7 @@ class S3TagsTest extends AnyFunSpec with Matchers with TagsTestCases[ObjectLocat
   override def withTags[R](initialTags: Map[ObjectLocation, Map[String, String]])(testWith: TestWith[Tags[ObjectLocation], R]): R = {
     initialTags
       .foreach { case (location, tags) =>
-        s3Client.putObject(location.namespace, location.path, randomAlphanumeric)
+        putObject(location)
 
         val tagSet = tags
           .map { case (k, v) => new Tag(k, v) }
@@ -60,7 +60,7 @@ class S3TagsTest extends AnyFunSpec with Matchers with TagsTestCases[ObjectLocat
 
       withLocalS3Bucket { bucket =>
         val location = createObjectLocationWith(bucket)
-        s3Client.putObject(location.namespace, location.path, randomAlphanumeric)
+        putObject(location)
 
         val result =
           s3Tags
@@ -77,7 +77,7 @@ class S3TagsTest extends AnyFunSpec with Matchers with TagsTestCases[ObjectLocat
     it("if the tag name is empty") {
       withLocalS3Bucket { bucket =>
         val location = createObjectLocationWith(bucket)
-        s3Client.putObject(location.namespace, location.path, randomAlphanumeric)
+        putObject(location)
 
         val result =
           s3Tags
@@ -96,7 +96,7 @@ class S3TagsTest extends AnyFunSpec with Matchers with TagsTestCases[ObjectLocat
       // https://docs.aws.amazon.com/AmazonS3/latest/dev/object-tagging.html
       withLocalS3Bucket { bucket =>
         val location = createObjectLocationWith(bucket)
-        s3Client.putObject(location.namespace, location.path, randomAlphanumeric)
+        putObject(location)
 
         val result =
           s3Tags
@@ -115,7 +115,7 @@ class S3TagsTest extends AnyFunSpec with Matchers with TagsTestCases[ObjectLocat
       // https://docs.aws.amazon.com/AmazonS3/latest/dev/object-tagging.html
       withLocalS3Bucket { bucket =>
         val location = createObjectLocationWith(bucket)
-        s3Client.putObject(location.namespace, location.path, randomAlphanumeric)
+        putObject(location)
 
         val result =
           s3Tags
@@ -129,6 +129,9 @@ class S3TagsTest extends AnyFunSpec with Matchers with TagsTestCases[ObjectLocat
       }
     }
   }
+
+  private def putObject(location: ObjectLocation): Unit =
+    s3Client.putObject(location.namespace, location.path, s"<Written by ${this.getClass.getName}")
 
   private def assertIsS3Exception(result: Either[UpdateError, Map[String, String]])(assert: String => Assertion): Assertion = {
     val err = result.left.value
