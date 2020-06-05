@@ -82,7 +82,7 @@ class MemoryVersionedHybridStoreTest
     with MemoryMaxima[String, HybridIndexedStoreEntry[String, Record]]
 
     val memoryStoreForStreamStore =
-      new MemoryStore[String, MemoryStreamStoreEntry](Map.empty)
+      new MemoryStore[String, Array[Byte]](Map.empty)
     val streamStore = new MemoryStreamStore[String](memoryStoreForStreamStore)
     val typedStore =
       new MemoryTypedStore[String, Record](Map.empty)(streamStore, codec)

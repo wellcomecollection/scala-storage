@@ -31,8 +31,9 @@ trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
 
       metadata = indexedStoreEntry.metadata
       hybridEntry: HybridStoreEntry[T, Metadata] = HybridStoreEntry(
-        typeStoreEntry.identifiedT.t,
-        metadata)
+        t = typeStoreEntry.identifiedT,
+        metadata = metadata
+      )
 
     } yield Identified(id, hybridEntry)
 
@@ -40,7 +41,7 @@ trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
   // suggests an internal error in the store, so we don't want to bubble up
   // the DoesNotExistError directly.
   protected def getTypedStoreEntry(typedStoreId: TypedStoreId)
-    : Either[ReadError, Identified[TypedStoreId, TypedStoreEntry[T]]] =
+    : Either[ReadError, Identified[TypedStoreId, T]] =
     typedStore.get(typedStoreId) match {
       case Right(t) => Right(t)
       case Left(err: DoesNotExistError) =>
@@ -53,8 +54,7 @@ trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
     val typeStoreId = createTypeStoreId(id)
 
     for {
-      putTypeResult <- typedStore.put(typeStoreId)(
-        TypedStoreEntry(t.t, Map.empty))
+      putTypeResult <- typedStore.put(typeStoreId)(t.t)
 
       locationEntry = HybridIndexedStoreEntry(
         typedStoreId = putTypeResult.id,
@@ -68,8 +68,8 @@ trait HybridStore[IndexedStoreId, TypedStoreId, T, Metadata]
       }
 
       hybridEntry = HybridStoreEntry(
-        putTypeResult.identifiedT.t,
-        putVersionedResult.identifiedT.metadata
+        t = putTypeResult.identifiedT,
+        metadata = putVersionedResult.identifiedT.metadata
       )
 
     } yield Identified(putVersionedResult.id, hybridEntry)

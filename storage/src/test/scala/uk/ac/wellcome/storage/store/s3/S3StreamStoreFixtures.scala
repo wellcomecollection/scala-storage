@@ -4,14 +4,14 @@ import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.fixtures.S3Fixtures
 import uk.ac.wellcome.storage.store.fixtures.StreamStoreFixtures
-import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
+import uk.ac.wellcome.storage.streaming.InputStreamWithLength
 
 trait S3StreamStoreFixtures
     extends StreamStoreFixtures[ObjectLocation, S3StreamStore, Unit]
     with S3Fixtures {
   override def withStreamStoreImpl[R](
     context: Unit,
-    initialEntries: Map[ObjectLocation, InputStreamWithLengthAndMetadata])(
+    initialEntries: Map[ObjectLocation, InputStreamWithLength])(
     testWith: TestWith[S3StreamStore, R]): R = {
     initialEntries.map {
       case (location, stream) =>

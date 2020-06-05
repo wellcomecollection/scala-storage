@@ -1,7 +1,5 @@
 package uk.ac.wellcome.storage.fixtures
 
-import java.io.InputStream
-
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.iterable.S3Objects
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest, S3ObjectSummary}
@@ -17,7 +15,7 @@ import uk.ac.wellcome.storage.ObjectLocation
 import uk.ac.wellcome.storage.generators.ObjectLocationGenerators
 import uk.ac.wellcome.storage.s3.{S3ClientFactory, S3Config}
 import uk.ac.wellcome.storage.streaming.Codec._
-import uk.ac.wellcome.storage.streaming.{HasLength, HasMetadata, InputStreamWithLength}
+import uk.ac.wellcome.storage.streaming.InputStreamWithLength
 
 import scala.collection.JavaConverters._
 import scala.util.Random
@@ -147,13 +145,9 @@ trait S3Fixtures
       path = key
     )
 
-  def putStream(
-    location: ObjectLocation,
-    inputStream: InputStream with HasLength with HasMetadata): Unit = {
+  def putStream(location: ObjectLocation, inputStream: InputStreamWithLength): Unit = {
     val metadata = new ObjectMetadata()
-
     metadata.setContentLength(inputStream.length)
-    metadata.setUserMetadata(inputStream.metadata.asJava)
 
     val putObjectRequest = new PutObjectRequest(
       location.namespace,

@@ -9,11 +9,10 @@ import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.store.Readable
 import uk.ac.wellcome.storage.streaming._
 
-import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 trait S3StreamReadable
-    extends Readable[ObjectLocation, InputStreamWithLengthAndMetadata]
+    extends Readable[ObjectLocation, InputStreamWithLength]
     with Logging {
   implicit val s3Client: AmazonS3
   val maxRetries: Int
@@ -30,7 +29,13 @@ trait S3StreamReadable
     Try(s3Client.getObject(location.namespace, location.path)) match {
       case Success(retrievedObject: S3Object) =>
         Right(
-          Identified(location, buildStoreEntry(retrievedObject))
+          Identified(
+            location,
+            new InputStreamWithLength(
+              retrievedObject.getObjectContent,
+              length = retrievedObject.getObjectMetadata.getContentLength
+            )
+          )
         )
       case Failure(err) => Left(buildGetError(err))
     }
@@ -60,24 +65,4 @@ trait S3StreamReadable
         warn(s"Unrecognised error inside S3StreamStore.get: $throwable")
         StoreReadError(throwable)
     }
-
-  private def buildStoreEntry(
-    s3Object: S3Object): InputStreamWithLengthAndMetadata = {
-    // We get a mutable.Map from the S3 SDK, but we want an immutable Map to pass
-    // out to the codebase, hence this slightly odd construction!
-    val userMetadata = s3Object.getObjectMetadata.getUserMetadata
-    val metadata = userMetadata
-      .keySet()
-      .asScala
-      .map { k =>
-        (k, userMetadata.get(k))
-      }
-      .toMap
-
-    new InputStreamWithLengthAndMetadata(
-      s3Object.getObjectContent,
-      length = s3Object.getObjectMetadata.getContentLength,
-      metadata = metadata
-    )
-  }
 }

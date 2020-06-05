@@ -1,8 +1,5 @@
 package uk.ac.wellcome.storage.store
 
-import java.io.InputStream
+import uk.ac.wellcome.storage.streaming.InputStreamWithLength
 
-import uk.ac.wellcome.storage.streaming.HasLength
-
-trait StreamStore[Ident, IS <: InputStream with HasLength]
-    extends Store[Ident, IS]
+trait StreamStore[Ident] extends Store[Ident, InputStreamWithLength]

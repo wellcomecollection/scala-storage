@@ -43,17 +43,6 @@ case class IncorrectStreamLengthError(e: Throwable = new Error())
 
 case class JsonEncodingError(e: Throwable) extends EncoderError
 
-case class CharsetEncodingError(e: Throwable = new Error())
-    extends CodecError
-    with EncoderError
-
-case class LossyEncodingDetected(
-  startingString: String,
-  decodedString: String,
-  e: Throwable = new Error()
-) extends CodecError
-    with WriteError
-
 sealed trait ReadError extends StorageError
 sealed trait NotFoundError extends ReadError
 sealed trait VersionError extends StorageError

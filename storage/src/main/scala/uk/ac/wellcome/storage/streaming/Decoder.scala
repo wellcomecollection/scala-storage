@@ -37,7 +37,7 @@ object DecoderInstances {
     originalStream: InputStream,
     bytes: Array[Byte]): Either[DecoderError, Array[Byte]] =
     originalStream match {
-      case is: InputStream with HasLength => {
+      case is: InputStreamWithLength => {
         if (bytes.length == is.length)
           Right(bytes)
         else

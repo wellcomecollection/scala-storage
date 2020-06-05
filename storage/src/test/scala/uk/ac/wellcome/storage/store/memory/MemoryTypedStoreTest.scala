@@ -4,14 +4,10 @@ import java.io.InputStream
 
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
-import uk.ac.wellcome.storage.generators.{
-  MetadataGenerators,
-  Record,
-  RecordGenerators
-}
+import uk.ac.wellcome.storage.generators.{MetadataGenerators, Record, RecordGenerators}
+import uk.ac.wellcome.storage.store.TypedStoreTestCases
 import uk.ac.wellcome.storage.store.fixtures.StringNamespaceFixtures
-import uk.ac.wellcome.storage.store.{TypedStoreEntry, TypedStoreTestCases}
-import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
+import uk.ac.wellcome.storage.streaming.InputStreamWithLength
 
 class MemoryTypedStoreTest
     extends TypedStoreTestCases[
@@ -20,25 +16,24 @@ class MemoryTypedStoreTest
       String,
       MemoryStreamStore[String],
       MemoryTypedStore[String, Record],
-      MemoryStore[String, MemoryStreamStoreEntry]]
+      MemoryStore[String, Array[Byte]]]
     with MemoryTypedStoreFixtures[String, Record]
     with MetadataGenerators
     with RecordGenerators
     with StringNamespaceFixtures {
-  override def createT: TypedStoreEntry[Record] =
-    TypedStoreEntry(createRecord, metadata = createValidMetadata)
+  override def createT: Record = createRecord
 
   override def withBrokenStreamStore[R](
     testWith: TestWith[MemoryStreamStore[String], R]): R = {
-    val brokenMemoryStore = new MemoryStore[String, MemoryStreamStoreEntry](
+    val brokenMemoryStore = new MemoryStore[String, Array[Byte]](
       initialEntries = Map.empty) {
       override def get(id: String)
-        : Either[ReadError, Identified[String, MemoryStreamStoreEntry]] = Left(
+        : Either[ReadError, Identified[String, Array[Byte]]] = Left(
         StoreReadError(new Throwable("get: BOOM!"))
       )
 
-      override def put(id: String)(t: MemoryStreamStoreEntry)
-        : Either[WriteError, Identified[String, MemoryStreamStoreEntry]] =
+      override def put(id: String)(bytes: Array[Byte])
+        : Either[WriteError, Identified[String, Array[Byte]]] =
         Left(
           StoreWriteError(
             new Throwable("put: BOOM!")
@@ -53,7 +48,7 @@ class MemoryTypedStoreTest
 
   override def withSingleValueStreamStore[R](rawStream: InputStream)(
     testWith: TestWith[MemoryStreamStore[String], R]): R = {
-    val memoryStore = new MemoryStore[String, MemoryStreamStoreEntry](
+    val memoryStore = new MemoryStore[String, Array[Byte]](
       initialEntries = Map.empty)
 
     testWith(
@@ -61,10 +56,8 @@ class MemoryTypedStoreTest
         override def get(id: String): ReadEither = Right(
           Identified(
             id,
-            new InputStreamWithLengthAndMetadata(
-              rawStream,
-              length = 0,
-              metadata = Map.empty))
+            new InputStreamWithLength(rawStream, length = 0)
+          )
         )
       }
     )

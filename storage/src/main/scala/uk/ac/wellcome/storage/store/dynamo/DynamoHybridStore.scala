@@ -22,7 +22,7 @@ class DynamoHybridStore[T, Metadata](prefix: ObjectLocationPrefix)(
       UUID.randomUUID().toString + ".json")
 
   override protected def getTypedStoreEntry(typedStoreId: ObjectLocation)
-    : Either[ReadError, Identified[ObjectLocation, TypedStoreEntry[T]]] =
+    : Either[ReadError, Identified[ObjectLocation, T]] =
     super.getTypedStoreEntry(typedStoreId) match {
       case Right(t) => Right(t)
       case Left(err: StoreReadError)

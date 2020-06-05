@@ -2,17 +2,15 @@ package uk.ac.wellcome.storage.store
 
 import uk.ac.wellcome.storage.streaming.{
   Codec,
-  InputStreamWithLengthAndMetadata
+  InputStreamWithLength
 }
 import uk.ac.wellcome.storage._
 
 import scala.util.{Failure, Success, Try}
 
-case class TypedStoreEntry[T](t: T, metadata: Map[String, String])
-
-trait TypedStore[Ident, T] extends Store[Ident, TypedStoreEntry[T]] {
+trait TypedStore[Ident, T] extends Store[Ident, T] {
   implicit val codec: Codec[T]
-  implicit val streamStore: StreamStore[Ident, InputStreamWithLengthAndMetadata]
+  implicit val streamStore: StreamStore[Ident]
 
   override def get(id: Ident): ReadEither =
     for {
@@ -21,11 +19,10 @@ trait TypedStore[Ident, T] extends Store[Ident, TypedStoreEntry[T]] {
         case value => Right(value)
       }
       t <- ensureStreamClosed(internalEntry, decodeResult)
-      entry = TypedStoreEntry(t, internalEntry.identifiedT.metadata)
-    } yield Identified(id, entry)
+    } yield Identified(id, t)
 
   private def ensureStreamClosed(
-    entry: Identified[Ident, InputStreamWithLengthAndMetadata],
+    entry: Identified[Ident, InputStreamWithLength],
     decodeResult: Either[DecoderError, T]): Either[ReadError, T] = {
     val underlying = entry.identifiedT
 
@@ -41,14 +38,9 @@ trait TypedStore[Ident, T] extends Store[Ident, TypedStoreEntry[T]] {
     }
   }
 
-  override def put(id: Ident)(entry: TypedStoreEntry[T]): WriteEither =
+  override def put(id: Ident)(t: T): WriteEither =
     for {
-      stream <- codec.toStream(entry.t)
-      _ <- streamStore.put(id)(
-        InputStreamWithLengthAndMetadata(
-          stream,
-          metadata = entry.metadata
-        )
-      )
-    } yield Identified(id, entry)
+      stream <- codec.toStream(t)
+      _ <- streamStore.put(id)(stream)
+    } yield Identified(id, t)
 }

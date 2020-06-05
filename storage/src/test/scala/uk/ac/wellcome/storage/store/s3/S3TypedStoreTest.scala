@@ -5,16 +5,10 @@ import java.io.InputStream
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage._
 import uk.ac.wellcome.storage.fixtures.S3Fixtures.Bucket
-import uk.ac.wellcome.storage.generators.{
-  MetadataGenerators,
-  Record,
-  RecordGenerators
-}
+import uk.ac.wellcome.storage.generators.{Record, RecordGenerators}
+import uk.ac.wellcome.storage.store.TypedStoreTestCases
 import uk.ac.wellcome.storage.store.fixtures.BucketNamespaceFixtures
-import uk.ac.wellcome.storage.store.{TypedStoreEntry, TypedStoreTestCases}
-import uk.ac.wellcome.storage.streaming.InputStreamWithLengthAndMetadata
-
-import scala.util.Random
+import uk.ac.wellcome.storage.streaming.InputStreamWithLength
 
 class S3TypedStoreTest
     extends TypedStoreTestCases[
@@ -25,7 +19,6 @@ class S3TypedStoreTest
       S3TypedStore[Record],
       Unit]
     with S3TypedStoreFixtures[Record]
-    with MetadataGenerators
     with RecordGenerators
     with BucketNamespaceFixtures {
   override def withBrokenStreamStore[R](
@@ -36,7 +29,7 @@ class S3TypedStoreTest
       )
 
       override def put(location: ObjectLocation)(
-        inputStream: InputStreamWithLengthAndMetadata): WriteEither = Left(
+        inputStream: InputStreamWithLength): WriteEither = Left(
         StoreWriteError(
           new Throwable("put: BOOM!")
         )
@@ -53,45 +46,18 @@ class S3TypedStoreTest
         Right(
           Identified(
             location,
-            new InputStreamWithLengthAndMetadata(
-              rawStream,
-              length = 0,
-              metadata = Map.empty))
+            new InputStreamWithLength(rawStream, length = 0)
+          )
         )
     }
 
     testWith(s3StreamStore)
   }
 
-  override def createT: TypedStoreEntry[Record] =
-    TypedStoreEntry(createRecord, metadata = createValidMetadata)
+  override def createT: Record =
+    createRecord
 
   describe("S3TypedStore") {
-    it("errors when given metadata that cannot be stored in S3") {
-      withLocalS3Bucket { bucket =>
-        withStoreImpl(initialEntries = Map.empty) { store: StoreImpl =>
-          val location = createId(bucket)
-          val entry = createT
-
-          // The S3 API will only accept metadata strings
-          // that can be represented in US-ASCII
-          // See: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html#UserMetadata
-          val invalidMetadata =
-            (1 to 10).map { _ =>
-              (
-                Random.nextString(8),
-                Random.nextString(8)
-              )
-            }.toMap
-
-          val invalidEntry = entry.copy(metadata = invalidMetadata)
-          val result = store.put(location)(invalidEntry)
-
-          result.left.value shouldBe a[MetadataCoercionFailure]
-        }
-      }
-    }
-
     it("errors if the object key is too long") {
       withNamespace { implicit namespace =>
         // Maximum length of an s3 key is 1024 bytes as of 25/06/2019

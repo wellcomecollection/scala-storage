@@ -5,7 +5,7 @@ import org.scalatest.EitherValues
 import org.scalatest.matchers.should.Matchers
 import uk.ac.wellcome.fixtures.TestWith
 import uk.ac.wellcome.storage.generators.RandomThings
-import uk.ac.wellcome.storage.streaming.{InputStreamWithLength, InputStreamWithLengthAndMetadata}
+import uk.ac.wellcome.storage.streaming.InputStreamWithLength
 import uk.ac.wellcome.storage._
 
 trait HybridStoreTestCases[IndexedStoreId,
@@ -102,9 +102,7 @@ trait HybridStoreTestCases[IndexedStoreId,
 
                   val typedResult = typedStore.get(typedStoreId)
                   val typedValue = typedResult.right.value
-                  typedValue.identifiedT shouldBe TypedStoreEntry(
-                    hybridStoreEntry.t,
-                    Map.empty)
+                  typedValue.identifiedT shouldBe hybridStoreEntry.t
                 }
               }
             }
@@ -250,17 +248,13 @@ trait HybridStoreTestCases[IndexedStoreId,
                       indexedStore.get(id).right.value.identifiedT.typedStoreId
 
                     val byteLength = 256
-                    val inputStream = randomInputStream(byteLength)
-                    val inputStreamWithLength =
-                      new InputStreamWithLength(inputStream, byteLength)
-
-                    val inputStreamWithLengthAndMetadata =
-                      InputStreamWithLengthAndMetadata(
-                        inputStreamWithLength,
-                        Map.empty)
+                    val inputStream = new InputStreamWithLength(
+                      randomInputStream(byteLength),
+                      length = byteLength
+                    )
 
                     typedStore.streamStore.put(typeStoreId)(
-                      inputStreamWithLengthAndMetadata) shouldBe a[Right[_, _]]
+                      inputStream) shouldBe a[Right[_, _]]
 
                     val value = hybridStoreImpl.get(id).left.value
 

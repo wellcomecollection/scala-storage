@@ -8,6 +8,6 @@ class MemoryStreamStoreTest
       String,
       String,
       MemoryStreamStore[String],
-      MemoryStore[String, MemoryStreamStoreEntry]]
+      MemoryStore[String, Array[Byte]]]
     with MemoryStreamStoreFixtures[String]
     with StringNamespaceFixtures
