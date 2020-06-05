@@ -19,7 +19,7 @@ sealed trait BackendError
 sealed trait UpdateError extends StorageError
 sealed trait UpdateFunctionError extends UpdateError
 
-case class UpdateNoSourceError(err: NoVersionExistsError) extends UpdateError {
+case class UpdateNoSourceError(err: NotFoundError) extends UpdateError {
   val e: Throwable = err.e
 }
 case class UpdateReadError(err: ReadError) extends UpdateError {
